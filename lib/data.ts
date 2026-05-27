@@ -1,92 +1,109 @@
 import {
   Activity,
+  BadgeCheck,
+  CalendarDays,
   Dumbbell,
   Flower2,
   HeartPulse,
-  Orbit,
   ShieldCheck,
-  UsersRound
+  Sparkles
 } from "lucide-react";
 
 export const navItems = [
-  { label: "Home", href: "#home" },
-  { label: "About", href: "#about" },
-  { label: "Services", href: "#services" },
-  { label: "Workshops", href: "#workshops" },
+  { label: "Offerings", href: "#offerings" },
   { label: "Testimonials", href: "#testimonials" },
+  { label: "About", href: "#about" },
+  { label: "Certificates", href: "#certificates" },
   { label: "Contact", href: "#contact" }
 ];
 
+export const registrationFormUrl = "https://forms.gle/Xq6GKUNNpde3B5CTA";
+
 export const offerings = [
   {
-    title: "Yoga Classes",
+    title: "Online Yoga Workshop",
+    eyebrow: "Current workshop",
+    theme: "Lower Body & Hip Mobility",
+    date: "31st May",
+    duration: "Single online session",
+    mode: "Online",
+    status: "Registrations open",
+    formUrl: registrationFormUrl,
+    icon: CalendarDays,
     description:
-      "Breath-led yoga that builds awareness, mobility, balance, and emotional steadiness without turning practice into performance.",
-    icon: Flower2,
-    tone: "from-dusty_olive-900/90 via-linen/85 to-almond_cream-600/80"
+      "A practical session for people who sit for long hours and feel stiffness in the hips, lower back, glutes, hamstrings, or legs.",
+    details: [
+      "Lower body mobility drills",
+      "Hip-opening movements",
+      "Glute and hamstring activation",
+      "Gentle stretches and breath-led movement"
+    ],
+    bestFor: "Desk-job professionals, students, freelancers, and anyone who wants a lighter lower body."
   },
   {
-    title: "Strength Training",
+    title: "One Month Yoga Class",
+    eyebrow: "Theme-based class",
+    theme: "Theme to be announced",
+    date: "Starting soon",
+    duration: "One month",
+    mode: "Online",
+    status: "Interest list open",
+    formUrl: registrationFormUrl,
+    icon: Sparkles,
     description:
-      "Progressive personal training for stronger muscles, better posture, confidence, and sustainable strength without punishment.",
-    icon: Dumbbell,
-    tone: "from-camel-800/75 via-almond_cream-600/80 to-linen/90"
-  },
-  {
-    title: "Mobility Coaching",
-    description:
-      "Joint-friendly mobility, active flexibility, and movement control for hips, spine, shoulders, and daily ease.",
-    icon: Orbit,
-    tone: "from-mist/55 via-cream/80 to-linen/90"
-  },
-  {
-    title: "Online Coaching",
-    description:
-      "Structured remote coaching with form feedback, weekly plans, habit support, and realistic progress tracking.",
-    icon: Activity,
-    tone: "from-stone/70 via-almond_cream-700/80 to-linen/90"
-  },
-  {
-    title: "Group Classes",
-    description:
-      "Warm community classes that combine movement, strength, breath, and support without comparison or pressure.",
-    icon: UsersRound,
-    tone: "from-sage/70 via-dusty_olive-900/70 to-linen/90"
-  },
-  {
-    title: "Prehab/Rehab-Informed Training",
-    description:
-      "Intelligent movement guidance for rebuilding trust in the body through stability, pacing, and gentle progression.",
-    icon: ShieldCheck,
-    tone: "from-ebony-900/80 via-almond_cream-700/80 to-linen/90"
-  },
-  {
-    title: "PCOS-Aware Movement",
-    description:
-      "Training that respects energy, stress, recovery, strength, and consistency for people navigating PCOS.",
-    icon: HeartPulse,
-    tone: "from-terracotta/20 via-blush/55 to-linen/90"
+      "A month-long online yoga class built around one focused theme, with steady practice, simple progression, and space to build consistency.",
+    details: [
+      "Theme-led weekly progression",
+      "Accessible yoga and mobility",
+      "Breathwork and recovery support",
+      "Options for different starting points"
+    ],
+    bestFor: "Anyone who wants a structured month of practice before committing to a longer routine."
   }
 ];
 
-export const workshops = [
+export const certificates = [
   {
-    date: "June 22",
-    title: "Strength Without Punishment",
-    description:
-      "A workshop on building strength with body trust, progressive training, and nervous-system aware pacing."
+    title: "RYT 200",
+    issuer: "Samyak Yoga",
+    focus: "Yoga teaching foundation across asana, breath, sequencing, and embodied class facilitation.",
+    category: "Yoga",
+    icon: Flower2
   },
   {
-    date: "July 13",
-    title: "Mobility for Real Life",
-    description:
-      "Hips, spine, shoulders, and breath practices for people who feel stiff, tired, or disconnected."
+    title: "Certified Personal Trainer",
+    issuer: "Level 5",
+    focus: "Foundational personal training knowledge for coaching, progression, form, and client support.",
+    category: "Strength",
+    icon: Dumbbell
   },
   {
-    date: "August 10",
-    title: "PCOS-Aware Movement Lab",
-    description:
-      "A practical session on training consistency, recovery, stress, and strength while navigating PCOS."
+    title: "Diploma in Personal Training",
+    issuer: "Shreya Mugabast",
+    focus: "Structured programming, coaching systems, safe adaptation, and sustainable strength support.",
+    category: "Strength",
+    icon: BadgeCheck
+  },
+  {
+    title: "Strength & Conditioning Specialist",
+    issuer: "Level 6",
+    focus: "Performance-informed strength and conditioning principles for progressive, sustainable training.",
+    category: "Strength",
+    icon: Activity
+  },
+  {
+    title: "Prehab & Rehab Specialist",
+    issuer: "Shreya Mugabast",
+    focus: "Joint-friendly progressions, stability, recovery awareness, and rebuilding movement confidence.",
+    category: "Recovery",
+    icon: ShieldCheck
+  },
+  {
+    title: "Sports & Exercise Nutrition",
+    issuer: "Shreya Mugabast",
+    focus: "Nutrition education that supports energy, recovery, training consistency, and strength goals.",
+    category: "Nutrition",
+    icon: HeartPulse
   }
 ];
 
@@ -102,14 +119,14 @@ export const testimonials = [
     quote:
       "The group classes feel warm and real. Nobody is performing. We show up, move, laugh, and leave steadier.",
     name: "Rhea S.",
-    detail: "Online group class member",
-    type: "Class screenshot"
+    detail: "Online movement student",
+    type: "Class message"
   },
   {
     quote:
       "PCOS made consistency feel impossible. Her approach helped me train with my body instead of fighting it.",
     name: "Maya K.",
-    detail: "Online coaching student",
-    type: "Community message"
+    detail: "Coaching student",
+    type: "Community note"
   }
 ];

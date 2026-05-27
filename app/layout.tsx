@@ -2,22 +2,21 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Yin for Yoga | Yoga, Strength & Movement Coaching",
+  title: "Yin for Yoga | Online Yoga Workshops & Classes",
   description:
-    "Grounded yoga, strength training, mobility, prehab, rehab-informed coaching, PCOS-aware movement, and sustainable fitness rooted in real transformation.",
+    "View current Yin for Yoga online workshops and theme-based yoga classes, then register through a simple Google Form with payment details.",
   keywords: [
     "yoga instructor",
-    "strength training",
+    "online yoga class",
     "mobility coaching",
-    "prehab",
-    "rehab",
+    "yoga registration",
     "yoga workshops",
     "mindful movement"
   ],
   openGraph: {
-    title: "Yin for Yoga | Mindful Movement Coaching",
+    title: "Yin for Yoga | Online Yoga Workshops & Classes",
     description:
-    "Grounded strength, intelligent movement, emotional safety, and authentic transformation.",
+    "Current online yoga offerings with simple Google Form registration.",
     type: "website"
   }
 };

@@ -6,26 +6,26 @@
   color-scheme: light;
   --font-cormorant: "Cormorant Garamond", "Playfair Display", Georgia, serif;
   --font-manrope: Manrope, Inter, "Segoe UI", system-ui, sans-serif;
-  --surface: #fffcf2;
-  --surface-soft: #ede0d4;
-  --ink: #252422;
-  --muted: #635b53;
-  --panel: rgba(255, 252, 242, 0.76);
-  --panel-strong: rgba(255, 252, 242, 0.92);
-  --ring: rgba(127, 85, 57, 0.2);
-  --grain-opacity: 0.18;
+  --surface: #fbfaf6;
+  --surface-soft: #e1e8e2;
+  --ink: #1f2933;
+  --muted: #5f6f69;
+  --panel: rgba(251, 250, 246, 0.78);
+  --panel-strong: rgba(251, 250, 246, 0.94);
+  --ring: rgba(47, 93, 80, 0.16);
+  --grain-opacity: 0.08;
 }
 
 .dark {
   color-scheme: dark;
-  --surface: #19110b;
-  --surface-soft: #252422;
-  --ink: #fffcf2;
-  --muted: #dbd0c1;
-  --panel: rgba(37, 36, 34, 0.74);
-  --panel-strong: rgba(37, 36, 34, 0.92);
-  --ring: rgba(237, 224, 212, 0.18);
-  --grain-opacity: 0.22;
+  --surface: #17201d;
+  --surface-soft: #1f2933;
+  --ink: #fbfaf6;
+  --muted: #bfd3c7;
+  --panel: rgba(31, 41, 51, 0.74);
+  --panel-strong: rgba(31, 41, 51, 0.92);
+  --ring: rgba(225, 232, 226, 0.16);
+  --grain-opacity: 0.1;
 }
 
 * {
@@ -40,10 +40,9 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   background:
-    radial-gradient(circle at 10% 10%, rgba(201, 203, 163, 0.34), transparent 28rem),
-    radial-gradient(circle at 82% 4%, rgba(255, 225, 168, 0.28), transparent 25rem),
-    radial-gradient(circle at 74% 72%, rgba(226, 109, 92, 0.15), transparent 24rem),
-    radial-gradient(circle at 18% 85%, rgba(207, 219, 213, 0.32), transparent 26rem),
+    radial-gradient(circle at 10% 10%, rgba(185, 208, 196, 0.42), transparent 28rem),
+    radial-gradient(circle at 82% 4%, rgba(217, 101, 75, 0.12), transparent 25rem),
+    radial-gradient(circle at 18% 85%, rgba(225, 232, 226, 0.58), transparent 26rem),
     linear-gradient(135deg, var(--surface), var(--surface-soft));
   color: var(--ink);
   text-rendering: geometricPrecision;
@@ -67,7 +66,7 @@ body::before {
 }
 
 ::selection {
-  background: rgba(245, 203, 92, 0.48);
+  background: rgba(235, 94, 40, 0.36);
 }
 
 @keyframes grain-drift {
@@ -89,14 +88,14 @@ body::before {
 
 .wood-panel {
   background:
-    linear-gradient(135deg, rgba(237, 224, 212, 0.08), rgba(0, 0, 0, 0.16)),
-    repeating-linear-gradient(94deg, rgba(237, 224, 212, 0.045) 0 2px, rgba(0, 0, 0, 0.04) 2px 7px, transparent 7px 18px),
-    linear-gradient(135deg, #7f5539, #472d30 48%, #252422 100%);
+    linear-gradient(135deg, rgba(255, 252, 242, 0.08), rgba(0, 0, 0, 0.16)),
+    repeating-linear-gradient(94deg, rgba(255, 252, 242, 0.045) 0 2px, rgba(0, 0, 0, 0.04) 2px 7px, transparent 7px 18px),
+    linear-gradient(135deg, #2f5d50, #1f2933 100%);
 }
 
 .earth-rule {
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(127, 85, 57, 0.34), transparent);
+  background: linear-gradient(90deg, transparent, rgba(64, 61, 57, 0.34), transparent);
 }
 
 .screenshot-grain {
@@ -114,6 +113,30 @@ body::before {
     radial-gradient(circle at 10% 20%, rgba(255,255,255,0.9) 0 1px, transparent 1px),
     radial-gradient(circle at 80% 60%, rgba(0,0,0,0.45) 0 1px, transparent 1px);
   background-size: 14px 14px, 21px 21px;
+}
+
+.crushed-paper {
+  position: relative;
+  background:
+    linear-gradient(118deg, rgba(255, 255, 255, 0.58), transparent 22%, rgba(0, 0, 0, 0.08) 23%, transparent 28%),
+    linear-gradient(62deg, transparent 0 34%, rgba(255, 255, 255, 0.5) 35%, transparent 43%),
+    linear-gradient(145deg, rgba(0, 0, 0, 0.09), transparent 18%, rgba(255, 255, 255, 0.5) 42%, transparent 58%, rgba(0, 0, 0, 0.07)),
+    repeating-linear-gradient(92deg, rgba(65, 72, 51, 0.045) 0 1px, transparent 1px 7px),
+    #fff8df;
+}
+
+.crushed-paper::after {
+  pointer-events: none;
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.26;
+  mix-blend-mode: multiply;
+  background-image:
+    radial-gradient(circle at 18% 22%, rgba(255, 255, 255, 0.95) 0 1px, transparent 1px),
+    radial-gradient(circle at 78% 68%, rgba(37, 36, 34, 0.42) 0 1px, transparent 1px),
+    linear-gradient(132deg, transparent 0 47%, rgba(71, 45, 48, 0.12) 48%, transparent 52%);
+  background-size: 13px 13px, 17px 17px, 100% 100%;
 }
 
 .organic-radius {

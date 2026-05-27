@@ -1,0 +1,11 @@
+name = "yinforyoga-payment-webhook"
+main = "src/index.js"
+compatibility_date = "2026-05-22"
+
+[vars]
+EVENT_TITLE = "Yin For Yoga Session"
+EVENT_LOCATION = "Online"
+EVENT_DESCRIPTION = "Thank you for booking your Yin For Yoga session."
+EVENT_START_ISO = "2026-06-01T07:00:00+05:30"
+EVENT_END_ISO = "2026-06-01T08:00:00+05:30"
+EMAIL_FROM = "Yin For Yoga <bookings@example.com>"

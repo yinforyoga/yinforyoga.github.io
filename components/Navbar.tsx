@@ -50,7 +50,7 @@ export function Navbar() {
   return (
     <header className="fixed inset-x-0 top-0 z-50 px-4 pt-4">
       <div className="mx-auto flex max-w-7xl items-center justify-between rounded-full border border-coffee_bean-500/10 bg-linen/70 px-4 py-3 shadow-soft backdrop-blur-2xl transition dark:border-almond_cream-700/10 dark:bg-bark/72">
-        <a href="#home" className="flex items-center gap-3">
+        <a href="#offerings" className="flex items-center gap-3">
           <span className="grid h-9 w-9 place-items-center rounded-full border border-coffee_bean-800/30 bg-gradient-to-br from-coffee_bean-500 via-walnut to-bark text-sm font-bold text-linen shadow-innerGlow dark:border-almond_cream-600/20 dark:from-almond_cream-800 dark:via-camel-700 dark:to-coffee_bean-600 dark:text-bark">
             Y
           </span>

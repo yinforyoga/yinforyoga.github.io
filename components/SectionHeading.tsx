@@ -27,14 +27,14 @@ export function SectionHeading({
         {eyebrow}
       </p>
       <h2
-        className={`text-balance font-serif text-5xl font-medium leading-[0.98] md:text-7xl ${
+        className={`text-balance font-serif text-3xl font-medium leading-tight md:text-5xl ${
           inverse ? "text-linen" : "text-forest dark:text-linen"
         }`}
       >
         {title}
       </h2>
       <p
-        className={`mt-6 text-base leading-8 md:text-lg ${
+        className={`mt-5 text-sm leading-7 md:text-base ${
           inverse ? "text-linen/68" : "text-[color:var(--muted)]"
         }`}
       >
