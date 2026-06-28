@@ -411,9 +411,6 @@ function CertificateCard({
           <p className="mt-2 text-sm font-bold text-walnut/70 dark:text-stone">
             {certificate.issuer}
           </p>
-          <p className="mt-4 text-sm leading-7 text-[color:var(--muted)]">
-            {certificate.focus}
-          </p>
           <span className="mt-5 inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.18em] text-forest transition group-hover:text-ember dark:text-sage">
             View certificate <ExternalLink size={14} />
           </span>
