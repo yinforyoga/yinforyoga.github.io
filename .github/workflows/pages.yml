@@ -34,8 +34,6 @@ jobs:
 
       - name: Build static site
         run: npm run build:pages
-        env:
-          GITHUB_PAGES: "true"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
