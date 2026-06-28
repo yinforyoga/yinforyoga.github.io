@@ -299,6 +299,7 @@ function CertificateCard({
     focus: string;
     category: string;
     fileUrl: string;
+    previewAspectRatio: string;
     icon: LucideIcon;
   };
   delay: number;
@@ -339,11 +340,13 @@ function CertificateCard({
         </a>
 
         <div className="pointer-events-none absolute left-1/2 top-full z-30 mt-4 hidden w-[min(20rem,calc(100vw-3rem))] -translate-x-1/2 rounded-[18px] border border-walnut/14 bg-linen p-2 opacity-0 shadow-earthy transition duration-200 group-hover:opacity-100 group-focus-within:opacity-100 dark:border-white/14 dark:bg-bark md:block xl:left-auto xl:right-0 xl:translate-x-0">
-          <iframe
-            src={previewUrl}
-            title={`${certificate.title} certificate preview`}
-            className="h-[26rem] w-full rounded-[12px] bg-white"
-          />
+          <div className="overflow-hidden rounded-[12px] bg-white" style={{ aspectRatio: certificate.previewAspectRatio }}>
+            <iframe
+              src={previewUrl}
+              title={`${certificate.title} certificate preview`}
+              className="h-full w-full bg-white"
+            />
+          </div>
         </div>
       </div>
     </FadeUp>

@@ -68,6 +68,7 @@ export const certificates = [
     focus: "Yoga teaching foundation across asana, breath, sequencing, and embodied class facilitation.",
     category: "Yoga",
     fileUrl: "/certifications/RYT%20200%20-%20Samyak%20Yoga.pdf",
+    previewAspectRatio: "595.28 / 841.89",
     icon: Flower2
   },
   {
@@ -76,6 +77,7 @@ export const certificates = [
     focus: "Foundational personal training knowledge for coaching, progression, form, and client support.",
     category: "Strength",
     fileUrl: "/certifications/Certified%20Personal%20Trainer%20(Level%205).pdf",
+    previewAspectRatio: "841.89 / 595.28",
     icon: Dumbbell
   },
   {
@@ -84,6 +86,7 @@ export const certificates = [
     focus: "Structured programming, coaching systems, safe adaptation, and sustainable strength support.",
     category: "Strength",
     fileUrl: "/certifications/Diploma%20in%20Personal%20Training%20Shreya%20Mugabast%20%E2%80%93%201406513.pdf",
+    previewAspectRatio: "841.89 / 595.28",
     icon: BadgeCheck
   },
   {
@@ -92,6 +95,7 @@ export const certificates = [
     focus: "Performance-informed strength and conditioning principles for progressive, sustainable training.",
     category: "Strength",
     fileUrl: "/certifications/Strength%20%26%20Conditioning%20Training%20Specialist%20(Level%206).pdf",
+    previewAspectRatio: "841.89 / 595.28",
     icon: Activity
   },
   {
@@ -100,6 +104,7 @@ export const certificates = [
     focus: "Joint-friendly progressions, stability, recovery awareness, and rebuilding movement confidence.",
     category: "Recovery",
     fileUrl: "/certifications/PREHAB%20%26%20REHAB%20SPECIALIST%20Shreya%20Mugabast%20053113.pdf",
+    previewAspectRatio: "841.89 / 595.28",
     icon: ShieldCheck
   },
   {
@@ -108,6 +113,7 @@ export const certificates = [
     focus: "Nutrition education that supports energy, recovery, training consistency, and strength goals.",
     category: "Nutrition",
     fileUrl: "/certifications/Sports%20%26%20Exercise%20Nutrition%20Shreya%20Mugabast%20%E2%80%93%20032931.pdf",
+    previewAspectRatio: "841.89 / 595.28",
     icon: HeartPulse
   }
 ];
