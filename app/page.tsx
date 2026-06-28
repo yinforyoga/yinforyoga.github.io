@@ -280,36 +280,73 @@ function Certificates() {
           copy="A clear view of the education behind the practice across yoga, strength, recovery, nutrition, and body-aware movement."
         />
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {certificates.map((certificate, index) => {
-            const Icon = certificate.icon;
-
-            return (
-              <FadeUp key={certificate.title} delay={index * 0.04}>
-                <article className="min-h-full rounded-[24px] border border-walnut/10 bg-linen/78 p-5 shadow-innerGlow dark:border-white/10 dark:bg-white/5">
-                  <div className="mb-5 flex items-center justify-between gap-4">
-                    <div className="grid h-11 w-11 place-items-center rounded-full bg-stone/56 text-bark dark:bg-white/10 dark:text-linen">
-                      <Icon size={21} />
-                    </div>
-                    <span className="rounded-full bg-ember px-3 py-1.5 text-[0.68rem] font-extrabold uppercase tracking-[0.18em] text-linen">
-                      {certificate.category}
-                    </span>
-                  </div>
-                  <h3 className="font-serif text-2xl leading-tight text-bark dark:text-linen">
-                    {certificate.title}
-                  </h3>
-                  <p className="mt-2 text-sm font-bold text-walnut/70 dark:text-stone">
-                    {certificate.issuer}
-                  </p>
-                  <p className="mt-4 text-sm leading-7 text-[color:var(--muted)]">
-                    {certificate.focus}
-                  </p>
-                </article>
-              </FadeUp>
-            );
-          })}
+          {certificates.map((certificate, index) => (
+            <CertificateCard key={certificate.title} certificate={certificate} delay={index * 0.04} />
+          ))}
         </div>
       </div>
     </section>
+  );
+}
+
+function CertificateCard({
+  certificate,
+  delay
+}: {
+  certificate: {
+    title: string;
+    issuer: string;
+    focus: string;
+    category: string;
+    fileUrl: string;
+    icon: LucideIcon;
+  };
+  delay: number;
+}) {
+  const Icon = certificate.icon;
+  const previewUrl = `${certificate.fileUrl}#page=1&toolbar=0&navpanes=0&scrollbar=0`;
+
+  return (
+    <FadeUp delay={delay}>
+      <div className="group relative min-h-full">
+        <a
+          href={certificate.fileUrl}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={`Open ${certificate.title} certificate in a new tab`}
+          className="block min-h-full rounded-[24px] border border-walnut/10 bg-linen/78 p-5 shadow-innerGlow outline-none transition hover:-translate-y-1 hover:border-ember/40 hover:shadow-earthy focus-visible:-translate-y-1 focus-visible:border-ember focus-visible:ring-4 focus-visible:ring-ember/18 dark:border-white/10 dark:bg-white/5"
+        >
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <div className="grid h-11 w-11 place-items-center rounded-full bg-stone/56 text-bark dark:bg-white/10 dark:text-linen">
+              <Icon size={21} />
+            </div>
+            <span className="rounded-full bg-ember px-3 py-1.5 text-[0.68rem] font-extrabold uppercase tracking-[0.18em] text-linen">
+              {certificate.category}
+            </span>
+          </div>
+          <h3 className="font-serif text-2xl leading-tight text-bark dark:text-linen">
+            {certificate.title}
+          </h3>
+          <p className="mt-2 text-sm font-bold text-walnut/70 dark:text-stone">
+            {certificate.issuer}
+          </p>
+          <p className="mt-4 text-sm leading-7 text-[color:var(--muted)]">
+            {certificate.focus}
+          </p>
+          <span className="mt-5 inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.18em] text-forest transition group-hover:text-ember dark:text-sage">
+            View certificate <ExternalLink size={14} />
+          </span>
+        </a>
+
+        <div className="pointer-events-none absolute left-1/2 top-full z-30 mt-4 hidden w-[min(20rem,calc(100vw-3rem))] -translate-x-1/2 rounded-[18px] border border-walnut/14 bg-linen p-2 opacity-0 shadow-earthy transition duration-200 group-hover:opacity-100 group-focus-within:opacity-100 dark:border-white/14 dark:bg-bark md:block xl:left-auto xl:right-0 xl:translate-x-0">
+          <iframe
+            src={previewUrl}
+            title={`${certificate.title} certificate preview`}
+            className="h-[26rem] w-full rounded-[12px] bg-white"
+          />
+        </div>
+      </div>
+    </FadeUp>
   );
 }
 
