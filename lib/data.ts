@@ -73,8 +73,8 @@ export const certificates = [
     icon: Flower2
   },
   {
-    title: "Certified Personal Trainer",
-    issuer: "Level 5",
+    title: "Certified Personal Trainer (L5)",
+    issuer: "Prehab 121",
     focus: "Foundational personal training knowledge for coaching, progression, form, and client support.",
     category: "Strength",
     fileUrl: "/certifications/Certified%20Personal%20Trainer%20(Level%205).pdf",
@@ -84,7 +84,7 @@ export const certificates = [
   },
   {
     title: "Diploma in Personal Training",
-    issuer: "Shreya Mugabast",
+    issuer: "Prehab 121",
     focus: "Structured programming, coaching systems, safe adaptation, and sustainable strength support.",
     category: "Strength",
     fileUrl: "/certifications/Diploma%20in%20Personal%20Training%20Shreya%20Mugabast%20%E2%80%93%201406513.pdf",
@@ -93,8 +93,8 @@ export const certificates = [
     icon: BadgeCheck
   },
   {
-    title: "Strength & Conditioning Specialist",
-    issuer: "Level 6",
+    title: "Strength & Conditioning Specialist (L6)",
+    issuer: "Prehab 121",
     focus: "Performance-informed strength and conditioning principles for progressive, sustainable training.",
     category: "Strength",
     fileUrl: "/certifications/Strength%20%26%20Conditioning%20Training%20Specialist%20(Level%206).pdf",
@@ -104,7 +104,7 @@ export const certificates = [
   },
   {
     title: "Prehab & Rehab Specialist",
-    issuer: "Shreya Mugabast",
+    issuer: "Prehab 121",
     focus: "Joint-friendly progressions, stability, recovery awareness, and rebuilding movement confidence.",
     category: "Recovery",
     fileUrl: "/certifications/PREHAB%20%26%20REHAB%20SPECIALIST%20Shreya%20Mugabast%20053113.pdf",
@@ -114,7 +114,7 @@ export const certificates = [
   },
   {
     title: "Sports & Exercise Nutrition",
-    issuer: "Shreya Mugabast",
+    issuer: "Prehab 121",
     focus: "Nutrition education that supports energy, recovery, training consistency, and strength goals.",
     category: "Nutrition",
     fileUrl: "/certifications/Sports%20%26%20Exercise%20Nutrition%20Shreya%20Mugabast%20%E2%80%93%20032931.pdf",
