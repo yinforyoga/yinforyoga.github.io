@@ -69,6 +69,7 @@ export const certificates = [
     category: "Yoga",
     fileUrl: "/certifications/RYT%20200%20-%20Samyak%20Yoga.pdf",
     previewAspectRatio: "595.28 / 841.89",
+    previewImageUrl: "/certifications/previews/ryt-200-samyak-yoga.png",
     icon: Flower2
   },
   {
@@ -78,6 +79,7 @@ export const certificates = [
     category: "Strength",
     fileUrl: "/certifications/Certified%20Personal%20Trainer%20(Level%205).pdf",
     previewAspectRatio: "841.89 / 595.28",
+    previewImageUrl: "/certifications/previews/certified-personal-trainer-level-5.png",
     icon: Dumbbell
   },
   {
@@ -87,6 +89,7 @@ export const certificates = [
     category: "Strength",
     fileUrl: "/certifications/Diploma%20in%20Personal%20Training%20Shreya%20Mugabast%20%E2%80%93%201406513.pdf",
     previewAspectRatio: "841.89 / 595.28",
+    previewImageUrl: "/certifications/previews/diploma-personal-training.png",
     icon: BadgeCheck
   },
   {
@@ -96,6 +99,7 @@ export const certificates = [
     category: "Strength",
     fileUrl: "/certifications/Strength%20%26%20Conditioning%20Training%20Specialist%20(Level%206).pdf",
     previewAspectRatio: "841.89 / 595.28",
+    previewImageUrl: "/certifications/previews/strength-conditioning-specialist.png",
     icon: Activity
   },
   {
@@ -105,6 +109,7 @@ export const certificates = [
     category: "Recovery",
     fileUrl: "/certifications/PREHAB%20%26%20REHAB%20SPECIALIST%20Shreya%20Mugabast%20053113.pdf",
     previewAspectRatio: "841.89 / 595.28",
+    previewImageUrl: "/certifications/previews/prehab-rehab-specialist.png",
     icon: ShieldCheck
   },
   {
@@ -114,6 +119,7 @@ export const certificates = [
     category: "Nutrition",
     fileUrl: "/certifications/Sports%20%26%20Exercise%20Nutrition%20Shreya%20Mugabast%20%E2%80%93%20032931.pdf",
     previewAspectRatio: "841.89 / 595.28",
+    previewImageUrl: "/certifications/previews/sports-exercise-nutrition.png",
     icon: HeartPulse
   }
 ];

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
@@ -15,6 +16,41 @@ import { FadeUp, MotionSection } from "@/components/MotionPrimitives";
 import { Navbar } from "@/components/Navbar";
 import { SectionHeading } from "@/components/SectionHeading";
 import { ThemeProvider } from "@/components/ThemeProvider";
+
+type Certificate = (typeof certificates)[number];
+
+type CertificatePreview = {
+  certificate: Certificate;
+  left: number;
+  top: number;
+  width: number;
+};
+
+function getPreviewRatio(certificate: Pick<Certificate, "previewAspectRatio">) {
+  const [width, height] = certificate.previewAspectRatio.split("/").map((value) => Number(value.trim()));
+
+  return width / height;
+}
+
+function getPreviewPlacement(certificate: Certificate, x: number, y: number) {
+  const ratio = getPreviewRatio(certificate);
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const gap = 12;
+  const padding = 16;
+  const width = Math.min(416, viewportWidth * 0.42, (viewportHeight - padding * 2) * ratio);
+  const height = width / ratio;
+  const hasRoomRight = x + gap + width <= viewportWidth - padding;
+  const hasRoomBelow = y + gap + height <= viewportHeight - padding;
+  const preferredLeft = hasRoomRight ? x + gap : x - gap - width;
+  const preferredTop = hasRoomBelow ? y + gap : y - gap - height;
+
+  return {
+    left: Math.max(padding, Math.min(preferredLeft, viewportWidth - width - padding)),
+    top: Math.max(padding, Math.min(preferredTop, viewportHeight - height - padding)),
+    width
+  };
+}
 
 export default function Home() {
   return (
@@ -271,6 +307,15 @@ function About() {
 }
 
 function Certificates() {
+  const [preview, setPreview] = useState<CertificatePreview | null>(null);
+
+  const showPreview = (certificate: Certificate, x: number, y: number) => {
+    setPreview({
+      certificate,
+      ...getPreviewPlacement(certificate, x, y)
+    });
+  };
+
   return (
     <section id="certificates" className="bg-stone/24 py-20 dark:bg-white/[0.03] md:py-24">
       <div className="section-shell">
@@ -281,9 +326,32 @@ function Certificates() {
         />
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {certificates.map((certificate, index) => (
-            <CertificateCard key={certificate.title} certificate={certificate} delay={index * 0.04} />
+            <CertificateCard
+              key={certificate.title}
+              certificate={certificate}
+              delay={index * 0.04}
+              isPreviewed={preview?.certificate.title === certificate.title}
+              onPreview={showPreview}
+              onPreviewEnd={() => setPreview(null)}
+            />
           ))}
         </div>
+      </div>
+
+      {preview ? (
+        <CertificatePreviewPopover preview={preview} />
+      ) : null}
+
+      <div aria-hidden="true" className="pointer-events-none absolute h-px w-px overflow-hidden opacity-0">
+        {certificates.map((certificate) => (
+          <img
+            key={certificate.previewImageUrl}
+            src={certificate.previewImageUrl}
+            alt=""
+            loading="eager"
+            decoding="async"
+          />
+        ))}
       </div>
     </section>
   );
@@ -291,31 +359,43 @@ function Certificates() {
 
 function CertificateCard({
   certificate,
-  delay
+  delay,
+  isPreviewed,
+  onPreview,
+  onPreviewEnd
 }: {
-  certificate: {
-    title: string;
-    issuer: string;
-    focus: string;
-    category: string;
-    fileUrl: string;
-    previewAspectRatio: string;
-    icon: LucideIcon;
-  };
+  certificate: Certificate;
   delay: number;
+  isPreviewed: boolean;
+  onPreview: (certificate: Certificate, x: number, y: number) => void;
+  onPreviewEnd: () => void;
 }) {
   const Icon = certificate.icon;
-  const previewUrl = `${certificate.fileUrl}#page=1&toolbar=0&navpanes=0&scrollbar=0`;
+  const handleFocus = (event: React.FocusEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    onPreview(certificate, rect.right, rect.top);
+  };
 
   return (
     <FadeUp delay={delay}>
-      <div className="group relative min-h-full">
+      <div
+        className="group relative min-h-full"
+        onMouseEnter={(event) => onPreview(certificate, event.clientX, event.clientY)}
+        onMouseMove={(event) => onPreview(certificate, event.clientX, event.clientY)}
+        onMouseLeave={onPreviewEnd}
+        onFocusCapture={handleFocus}
+        onBlurCapture={onPreviewEnd}
+      >
         <a
           href={certificate.fileUrl}
           target="_blank"
           rel="noreferrer"
           aria-label={`Open ${certificate.title} certificate in a new tab`}
-          className="block min-h-full rounded-[24px] border border-walnut/10 bg-linen/78 p-5 shadow-innerGlow outline-none transition hover:-translate-y-1 hover:border-ember/40 hover:shadow-earthy focus-visible:-translate-y-1 focus-visible:border-ember focus-visible:ring-4 focus-visible:ring-ember/18 dark:border-white/10 dark:bg-white/5"
+          className={`block min-h-full rounded-[24px] border bg-linen/78 p-5 shadow-innerGlow outline-none transition hover:-translate-y-1 hover:border-ember/40 hover:shadow-earthy focus-visible:-translate-y-1 focus-visible:border-ember focus-visible:ring-4 focus-visible:ring-ember/18 dark:bg-white/5 ${
+            isPreviewed
+              ? "border-ember/48 dark:border-ember/55"
+              : "border-walnut/10 dark:border-white/10"
+          }`}
         >
           <div className="mb-5 flex items-center justify-between gap-4">
             <div className="grid h-11 w-11 place-items-center rounded-full bg-stone/56 text-bark dark:bg-white/10 dark:text-linen">
@@ -338,18 +418,35 @@ function CertificateCard({
             View certificate <ExternalLink size={14} />
           </span>
         </a>
-
-        <div className="pointer-events-none absolute left-1/2 top-full z-30 mt-4 hidden w-[min(20rem,calc(100vw-3rem))] -translate-x-1/2 rounded-[18px] border border-walnut/14 bg-linen p-2 opacity-0 shadow-earthy transition duration-200 group-hover:opacity-100 group-focus-within:opacity-100 dark:border-white/14 dark:bg-bark md:block xl:left-auto xl:right-0 xl:translate-x-0">
-          <div className="overflow-hidden rounded-[12px] bg-white" style={{ aspectRatio: certificate.previewAspectRatio }}>
-            <iframe
-              src={previewUrl}
-              title={`${certificate.title} certificate preview`}
-              className="h-full w-full bg-white"
-            />
-          </div>
-        </div>
       </div>
     </FadeUp>
+  );
+}
+
+function CertificatePreviewPopover({ preview }: { preview: CertificatePreview }) {
+  return (
+    <div
+      aria-hidden="true"
+      data-cert-preview="popover"
+      className="pointer-events-none fixed z-50 hidden rounded-[18px] border border-walnut/14 bg-linen p-2 opacity-100 shadow-earthy transition-opacity duration-150 dark:border-white/14 dark:bg-bark md:block"
+      style={{
+        left: preview.left,
+        top: preview.top,
+        width: preview.width
+      }}
+    >
+      <div
+        className="overflow-hidden rounded-[12px] bg-white"
+        style={{ aspectRatio: preview.certificate.previewAspectRatio }}
+      >
+        <img
+          src={preview.certificate.previewImageUrl}
+          alt=""
+          className="h-full w-full object-contain"
+          draggable={false}
+        />
+      </div>
+    </div>
   );
 }
 
