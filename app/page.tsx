@@ -63,7 +63,6 @@ export default function Home() {
         <Certificates />
         <Contact />
       </main>
-      <Footer />
     </ThemeProvider>
   );
 }
@@ -105,9 +104,6 @@ function Offerings() {
       <div className="absolute inset-x-0 top-0 -z-10 h-[520px] bg-[linear-gradient(180deg,rgba(204,197,185,0.42),rgba(255,252,242,0))] dark:bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(25,17,11,0))]" />
       <div className="section-shell">
         <FadeUp className="max-w-3xl">
-          <p className="mb-4 text-xs font-extrabold uppercase tracking-[0.28em] text-moss dark:text-sage">
-            Yin for Yoga
-          </p>
           <h1 className="text-balance font-serif text-4xl font-medium leading-tight text-bark dark:text-linen md:text-5xl">
             Online yoga offerings you can view, choose, and register for.
           </h1>
@@ -454,39 +450,18 @@ function Contact() {
         <div>
           <SectionHeading
             eyebrow="Contact"
-            title="Questions before registering?"
-            copy="Registration happens through the Google Form. You can also reach out on Instagram or email if you want to confirm whether an offering is right for you."
+            title="Get in touch."
+            copy=""
           />
           <FadeUp className="flex flex-col gap-3 sm:flex-row">
-            <RegisterButton href={registrationFormUrl} label="Register" />
             <a href="https://instagram.com/yourhandle" className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-walnut/18 bg-linen/54 px-5 text-sm font-bold text-bark backdrop-blur transition hover:-translate-y-0.5 hover:bg-stone/45 dark:border-white/10 dark:bg-white/5 dark:text-linen">
               <Instagram size={17} /> Instagram
             </a>
-            <a href="mailto:hello@yinforyoga.com" className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-walnut/18 bg-linen/54 px-5 text-sm font-bold text-bark backdrop-blur transition hover:-translate-y-0.5 hover:bg-stone/45 dark:border-white/10 dark:bg-white/5 dark:text-linen">
+            <a href="mailto:yinforyoga@gmail.com" className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-walnut/18 bg-linen/54 px-5 text-sm font-bold text-bark backdrop-blur transition hover:-translate-y-0.5 hover:bg-stone/45 dark:border-white/10 dark:bg-white/5 dark:text-linen">
               <Mail size={17} /> Email
             </a>
           </FadeUp>
         </div>
-        <FadeUp delay={0.08}>
-          <div className="wood-panel rounded-[28px] p-6 text-linen md:p-7">
-            <p className="text-xs font-extrabold uppercase tracking-[0.26em] text-stone">
-              Google Form handles
-            </p>
-            <div className="mt-6 grid gap-4">
-              {[
-                "Participant details",
-                "Payment QR and transaction reference",
-                "Health or injury information",
-                "Email confirmation after payment"
-              ].map((item) => (
-                <div key={item} className="flex items-center justify-between gap-4 border-b border-linen/14 pb-4">
-                  <span className="font-serif text-2xl leading-tight">{item}</span>
-                  <ExternalLink className="shrink-0 text-ember" size={17} />
-                </div>
-              ))}
-            </div>
-          </div>
-        </FadeUp>
       </div>
     </section>
   );
