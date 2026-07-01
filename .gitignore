@@ -5,3 +5,6 @@ out/
 dev-server.log
 dev-server.err.log
 npm-debug.log*
+
+# macOS
+.DS_Store
