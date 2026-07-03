@@ -9,9 +9,14 @@ import {
   ExternalLink,
   Instagram,
   Mail,
-  MoveRight
+  MoveRight,
 } from "lucide-react";
-import { certificates, offerings, registrationFormUrl, testimonials } from "@/lib/data";
+import {
+  certificates,
+  offerings,
+  registrationFormUrl,
+  testimonials,
+} from "@/lib/data";
 import { FadeUp, MotionSection } from "@/components/MotionPrimitives";
 import { Navbar } from "@/components/Navbar";
 import { SectionHeading } from "@/components/SectionHeading";
@@ -26,8 +31,15 @@ type CertificatePreview = {
   width: number;
 };
 
+const siteMode = process.env.NEXT_PUBLIC_SITE_MODE ?? "auto";
+const shouldShowConstructionPage =
+  siteMode === "construction" ||
+  (siteMode !== "full" && process.env.NODE_ENV === "production");
+
 function getPreviewRatio(certificate: Pick<Certificate, "previewAspectRatio">) {
-  const [width, height] = certificate.previewAspectRatio.split("/").map((value) => Number(value.trim()));
+  const [width, height] = certificate.previewAspectRatio
+    .split("/")
+    .map((value) => Number(value.trim()));
 
   return width / height;
 }
@@ -38,7 +50,11 @@ function getPreviewPlacement(certificate: Certificate, x: number, y: number) {
   const viewportHeight = window.innerHeight;
   const gap = 12;
   const padding = 16;
-  const width = Math.min(416, viewportWidth * 0.42, (viewportHeight - padding * 2) * ratio);
+  const width = Math.min(
+    416,
+    viewportWidth * 0.42,
+    (viewportHeight - padding * 2) * ratio,
+  );
   const height = width / ratio;
   const hasRoomRight = x + gap + width <= viewportWidth - padding;
   const hasRoomBelow = y + gap + height <= viewportHeight - padding;
@@ -46,13 +62,23 @@ function getPreviewPlacement(certificate: Certificate, x: number, y: number) {
   const preferredTop = hasRoomBelow ? y + gap : y - gap - height;
 
   return {
-    left: Math.max(padding, Math.min(preferredLeft, viewportWidth - width - padding)),
-    top: Math.max(padding, Math.min(preferredTop, viewportHeight - height - padding)),
-    width
+    left: Math.max(
+      padding,
+      Math.min(preferredLeft, viewportWidth - width - padding),
+    ),
+    top: Math.max(
+      padding,
+      Math.min(preferredTop, viewportHeight - height - padding),
+    ),
+    width,
   };
 }
 
 export default function Home() {
+  if (shouldShowConstructionPage) {
+    return <ConstructionPage />;
+  }
+
   return (
     <ThemeProvider>
       <Navbar />
@@ -67,10 +93,44 @@ export default function Home() {
   );
 }
 
+function ConstructionPage() {
+  return (
+    <main className="grid min-h-screen place-items-center px-5 py-12">
+      <section className="w-full max-w-3xl text-center">
+        <p className="text-xs font-extrabold uppercase tracking-[0.28em] text-ember">
+          Yin for Yoga
+        </p>
+        <h1 className="mt-5 text-balance font-serif text-5xl font-medium leading-none text-bark dark:text-linen md:text-7xl">
+          Website is taking shape.
+        </h1>
+        <p className="mx-auto mt-6 max-w-xl text-base leading-8 text-[color:var(--muted)] md:text-lg">
+          The full site is being prepared with current classes, workshops, and
+          registration details. Until then, you can reach out directly for
+          updates.
+        </p>
+        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <a
+            href="mailto:yinforyoga@gmail.com"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-forest px-5 text-sm font-bold text-linen shadow-soft transition hover:-translate-y-0.5 hover:bg-ember"
+          >
+            <Mail size={17} /> Email
+          </a>
+          <a
+            href="https://instagram.com/yinforyoga"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-walnut/18 bg-linen/54 px-5 text-sm font-bold text-bark backdrop-blur transition hover:-translate-y-0.5 hover:bg-stone/45 dark:border-white/10 dark:bg-white/5 dark:text-linen"
+          >
+            <Instagram size={17} /> Instagram
+          </a>
+        </div>
+      </section>
+    </main>
+  );
+}
+
 function RegisterButton({
   href,
   label = "Register",
-  className = ""
+  className = "",
 }: {
   href: string;
   label?: string;
@@ -91,16 +151,22 @@ function RegisterButton({
 
 function RegistrationNote({ inverse = false }: { inverse?: boolean }) {
   return (
-    <p className={`text-sm leading-6 ${inverse ? "text-linen/72" : "text-[color:var(--muted)]"}`}>
-      Registration opens in Google Forms. The form includes the payment QR and collects the
-      details needed to send a confirmation email after payment is completed.
+    <p
+      className={`text-sm leading-6 ${inverse ? "text-linen/72" : "text-[color:var(--muted)]"}`}
+    >
+      Registration opens in Google Forms. The form includes the payment QR and
+      collects the details needed to send a confirmation email after payment is
+      completed.
     </p>
   );
 }
 
 function Offerings() {
   return (
-    <section id="offerings" className="relative px-4 pb-16 pt-28 md:pb-20 md:pt-32">
+    <section
+      id="offerings"
+      className="relative px-4 pb-16 pt-28 md:pb-20 md:pt-32"
+    >
       <div className="absolute inset-x-0 top-0 -z-10 h-[520px] bg-[linear-gradient(180deg,rgba(204,197,185,0.42),rgba(255,252,242,0))] dark:bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(25,17,11,0))]" />
       <div className="section-shell">
         <FadeUp className="max-w-3xl">
@@ -108,21 +174,33 @@ function Offerings() {
             Online yoga offerings you can view, choose, and register for.
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-[color:var(--muted)]">
-            Current workshops and classes are listed first so visitors can quickly see what is
-            available. New offerings can be added to the same section as they are announced.
+            Current workshops and classes are listed first so visitors can
+            quickly see what is available. New offerings can be added to the
+            same section as they are announced.
           </p>
         </FadeUp>
 
         <div className="mt-10 grid gap-5 lg:grid-cols-2">
           {offerings.map((offering, index) => (
-            <OfferingCard key={offering.title} offering={offering} delay={index * 0.08} />
+            <OfferingCard
+              key={offering.title}
+              offering={offering}
+              delay={index * 0.08}
+            />
           ))}
         </div>
 
-        <FadeUp delay={0.16} className="mt-6 rounded-[24px] border border-walnut/10 bg-linen/72 p-5 shadow-innerGlow backdrop-blur dark:border-white/10 dark:bg-white/5">
+        <FadeUp
+          delay={0.16}
+          className="mt-6 rounded-[24px] border border-walnut/10 bg-linen/72 p-5 shadow-innerGlow backdrop-blur dark:border-white/10 dark:bg-white/5"
+        >
           <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-center">
             <RegistrationNote />
-            <RegisterButton href={registrationFormUrl} label="Open Form" className="md:justify-self-end" />
+            <RegisterButton
+              href={registrationFormUrl}
+              label="Open Form"
+              className="md:justify-self-end"
+            />
           </div>
         </FadeUp>
       </div>
@@ -132,7 +210,7 @@ function Offerings() {
 
 function OfferingCard({
   offering,
-  delay
+  delay,
 }: {
   offering: {
     title: string;
@@ -174,8 +252,12 @@ function OfferingCard({
           </span>
         </div>
 
-        <p className="mt-5 text-base font-bold text-bark dark:text-linen">{offering.theme}</p>
-        <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">{offering.description}</p>
+        <p className="mt-5 text-base font-bold text-bark dark:text-linen">
+          {offering.theme}
+        </p>
+        <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">
+          {offering.description}
+        </p>
 
         <div className="mt-5 grid gap-3 text-sm sm:grid-cols-3">
           <Info label="Date" value={offering.date} />
@@ -185,7 +267,10 @@ function OfferingCard({
 
         <div className="mt-6 grid gap-3">
           {offering.details.map((detail) => (
-            <div key={detail} className="flex gap-3 text-sm leading-6 text-[color:var(--muted)]">
+            <div
+              key={detail}
+              className="flex gap-3 text-sm leading-6 text-[color:var(--muted)]"
+            >
               <CheckCircle2 className="mt-0.5 shrink-0 text-ember" size={17} />
               <span>{detail}</span>
             </div>
@@ -193,7 +278,9 @@ function OfferingCard({
         </div>
 
         <p className="mt-5 rounded-[20px] bg-stone/24 p-4 text-sm leading-6 text-[color:var(--muted)] dark:bg-white/5">
-          <span className="font-bold text-bark dark:text-linen">Best for: </span>
+          <span className="font-bold text-bark dark:text-linen">
+            Best for:{" "}
+          </span>
           {offering.bestFor}
         </p>
 
@@ -236,10 +323,14 @@ function Testimonials() {
                 <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-walnut">
                   {testimonial.type}
                 </p>
-                <p className="mt-5 font-serif text-2xl leading-snug">"{testimonial.quote}"</p>
+                <p className="mt-5 font-serif text-2xl leading-snug">
+                  "{testimonial.quote}"
+                </p>
                 <div className="mt-5 border-t border-bark/10 pt-4">
                   <p className="font-bold">{testimonial.name}</p>
-                  <p className="mt-1 text-sm text-bark/62">{testimonial.detail}</p>
+                  <p className="mt-1 text-sm text-bark/62">
+                    {testimonial.detail}
+                  </p>
                 </div>
               </article>
             </FadeUp>
@@ -255,7 +346,7 @@ function About() {
     "Certified yoga teacher",
     "Strength and personal training",
     "Prehab and rehab-informed",
-    "PCOS-aware movement coaching"
+    "PCOS-aware movement coaching",
   ];
 
   return (
@@ -264,7 +355,8 @@ function About() {
         <FadeUp className="rounded-[28px] border border-walnut/10 bg-linen/76 p-6 shadow-earthy dark:border-white/10 dark:bg-white/5">
           <div className="wood-panel rounded-[22px] p-6 text-linen">
             <p className="font-serif text-3xl leading-tight">
-              I teach movement as a way to rebuild trust, strength, and steadiness from the inside.
+              I teach movement as a way to rebuild trust, strength, and
+              steadiness from the inside.
             </p>
           </div>
           <div className="mt-5 grid gap-3">
@@ -288,12 +380,13 @@ function About() {
           />
           <FadeUp className="space-y-5 text-base leading-8 text-[color:var(--muted)]">
             <p>
-              My sessions blend yoga, functional strength, mobility, recovery, prehab principles,
-              and nervous-system friendly pacing.
+              My sessions blend yoga, functional strength, mobility, recovery,
+              prehab principles, and nervous-system friendly pacing.
             </p>
             <p>
-              The goal is a more capable, confident, resilient relationship with movement, built
-              through practice that feels structured without becoming harsh.
+              The goal is a more capable, confident, resilient relationship with
+              movement, built through practice that feels structured without
+              becoming harsh.
             </p>
           </FadeUp>
         </div>
@@ -308,12 +401,15 @@ function Certificates() {
   const showPreview = (certificate: Certificate, x: number, y: number) => {
     setPreview({
       certificate,
-      ...getPreviewPlacement(certificate, x, y)
+      ...getPreviewPlacement(certificate, x, y),
     });
   };
 
   return (
-    <section id="certificates" className="bg-stone/24 py-20 dark:bg-white/[0.03] md:py-24">
+    <section
+      id="certificates"
+      className="bg-stone/24 py-20 dark:bg-white/[0.03] md:py-24"
+    >
       <div className="section-shell">
         <SectionHeading
           eyebrow="Certifications"
@@ -334,11 +430,12 @@ function Certificates() {
         </div>
       </div>
 
-      {preview ? (
-        <CertificatePreviewPopover preview={preview} />
-      ) : null}
+      {preview ? <CertificatePreviewPopover preview={preview} /> : null}
 
-      <div aria-hidden="true" className="pointer-events-none absolute h-px w-px overflow-hidden opacity-0">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute h-px w-px overflow-hidden opacity-0"
+      >
         {certificates.map((certificate) => (
           <img
             key={certificate.previewImageUrl}
@@ -358,7 +455,7 @@ function CertificateCard({
   delay,
   isPreviewed,
   onPreview,
-  onPreviewEnd
+  onPreviewEnd,
 }: {
   certificate: Certificate;
   delay: number;
@@ -376,8 +473,12 @@ function CertificateCard({
     <FadeUp delay={delay}>
       <div
         className="group relative min-h-full"
-        onMouseEnter={(event) => onPreview(certificate, event.clientX, event.clientY)}
-        onMouseMove={(event) => onPreview(certificate, event.clientX, event.clientY)}
+        onMouseEnter={(event) =>
+          onPreview(certificate, event.clientX, event.clientY)
+        }
+        onMouseMove={(event) =>
+          onPreview(certificate, event.clientX, event.clientY)
+        }
         onMouseLeave={onPreviewEnd}
         onFocusCapture={handleFocus}
         onBlurCapture={onPreviewEnd}
@@ -416,7 +517,11 @@ function CertificateCard({
   );
 }
 
-function CertificatePreviewPopover({ preview }: { preview: CertificatePreview }) {
+function CertificatePreviewPopover({
+  preview,
+}: {
+  preview: CertificatePreview;
+}) {
   return (
     <div
       aria-hidden="true"
@@ -425,7 +530,7 @@ function CertificatePreviewPopover({ preview }: { preview: CertificatePreview })
       style={{
         left: preview.left,
         top: preview.top,
-        width: preview.width
+        width: preview.width,
       }}
     >
       <div
@@ -448,16 +553,18 @@ function Contact() {
     <section id="contact" className="relative py-20 md:py-24">
       <div className="section-shell grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
         <div>
-          <SectionHeading
-            eyebrow="Contact"
-            title="Get in touch."
-            copy=""
-          />
+          <SectionHeading eyebrow="Contact" title="Get in touch." copy="" />
           <FadeUp className="flex flex-col gap-3 sm:flex-row">
-            <a href="https://instagram.com/yinforyoga" className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-walnut/18 bg-linen/54 px-5 text-sm font-bold text-bark backdrop-blur transition hover:-translate-y-0.5 hover:bg-stone/45 dark:border-white/10 dark:bg-white/5 dark:text-linen">
+            <a
+              href="https://instagram.com/yinforyoga"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-walnut/18 bg-linen/54 px-5 text-sm font-bold text-bark backdrop-blur transition hover:-translate-y-0.5 hover:bg-stone/45 dark:border-white/10 dark:bg-white/5 dark:text-linen"
+            >
               <Instagram size={17} /> Instagram
             </a>
-            <a href="mailto:yinforyoga@gmail.com" className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-walnut/18 bg-linen/54 px-5 text-sm font-bold text-bark backdrop-blur transition hover:-translate-y-0.5 hover:bg-stone/45 dark:border-white/10 dark:bg-white/5 dark:text-linen">
+            <a
+              href="mailto:yinforyoga@gmail.com"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-walnut/18 bg-linen/54 px-5 text-sm font-bold text-bark backdrop-blur transition hover:-translate-y-0.5 hover:bg-stone/45 dark:border-white/10 dark:bg-white/5 dark:text-linen"
+            >
               <Mail size={17} /> Email
             </a>
           </FadeUp>
@@ -474,10 +581,16 @@ function Footer() {
         <div>
           <p className="font-serif text-3xl">Yin for Yoga</p>
           <p className="mt-3 max-w-xl text-sm leading-7 text-linen/62">
-            Online yoga workshops and theme-based classes with simple Google Form registration.
+            Online yoga workshops and theme-based classes with simple Google
+            Form registration.
           </p>
         </div>
-        <a href={registrationFormUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm font-extrabold text-linen/80 transition hover:text-ember">
+        <a
+          href={registrationFormUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-2 text-sm font-extrabold text-linen/80 transition hover:text-ember"
+        >
           Register <MoveRight size={16} />
         </a>
       </div>

@@ -10,18 +10,17 @@ export const metadata: Metadata = {
     "online yoga classes",
     "mobility coaching",
     "yoga workshops",
-    "strength training"
+    "strength training",
   ],
   openGraph: {
     title: "Yin for Yoga",
-    description:
-    "Yoga / Strength Training Classes and Portfolio",
-    type: "website"
-  }
+    description: "Yoga / Strength Training Classes and Portfolio",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
-  children
+  children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
