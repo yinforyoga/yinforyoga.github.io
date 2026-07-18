@@ -1,65 +1,122 @@
 import {
   Activity,
   BadgeCheck,
-  CalendarDays,
   Dumbbell,
   Flower2,
   HeartPulse,
   ShieldCheck,
-  Sparkles
+  BicepsFlexed,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
+export type OfferingMode = "Online";
+
+export type OfferingStatus = "Registrations Open";
+
+export type OfferingClassType = "Strength" | "Yoga";
+
+export type OfferingWeekday =
+  "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
+
+export type OfferingMeridiem = "am" | "pm";
+
+export type OfferingTimezone = {
+  id: "Asia/Kolkata";
+  label: "IST";
+  utcOffsetMinutes: 330;
+};
+
+export type OfferingHour12 = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+
+export type OfferingMinute =
+  0 | 5 | 10 | 15 | 20 | 25 | 30 | 35 | 40 | 45 | 50 | 55;
+
+export type OfferingLocalTime = {
+  hour: OfferingHour12;
+  minute?: OfferingMinute;
+  meridiem: OfferingMeridiem;
+};
+
+export type OfferingScheduleItem = {
+  days: OfferingWeekday[];
+  classType: OfferingClassType;
+  optional?: boolean;
+};
+
+export type OfferingSchedule = {
+  startTime: OfferingLocalTime;
+  endTime: OfferingLocalTime;
+  timezone: OfferingTimezone;
+  split: OfferingScheduleItem[];
+};
+
+export type Offering = {
+  title: string;
+  eyebrow: string;
+  theme: string;
+  schedule: OfferingSchedule;
+  mode: OfferingMode;
+  status: OfferingStatus;
+  formUrl: string;
+  icon: LucideIcon;
+  description: string;
+  details: string[];
+  bestFor: string[];
+};
 
 export const navItems = [
   { label: "Offerings", href: "#offerings" },
   { label: "Testimonials", href: "#testimonials" },
-  { label: "About", href: "#about" },
   { label: "Certificates", href: "#certificates" },
-  { label: "Contact", href: "#contact" }
+  { label: "Contact", href: "#contact" },
 ];
 
-export const registrationFormUrl = "https://forms.gle/Xq6GKUNNpde3B5CTA";
+export const registrationFormUrl = "https://forms.gle/...";
 
-export const offerings = [
+export const offerings: Offering[] = [
   {
-    title: "Online Yoga Workshop",
-    eyebrow: "Current workshop",
-    theme: "Lower Body & Hip Mobility",
-    date: "31st May",
-    duration: "Single online session",
+    title: "Yin for Strength",
+    eyebrow: "Ongoing",
+    theme: "Regular strength training and yoga group classes",
+    schedule: {
+      startTime: { hour: 5, meridiem: "pm" },
+      endTime: { hour: 6, meridiem: "pm" },
+      timezone: {
+        id: "Asia/Kolkata",
+        label: "IST",
+        utcOffsetMinutes: 330,
+      },
+      split: [
+        {
+          days: ["Mon", "Wed", "Fri"],
+          classType: "Strength",
+        },
+        {
+          days: ["Tue"],
+          classType: "Yoga",
+          optional: true,
+        },
+      ],
+    },
     mode: "Online",
-    status: "Registrations open",
+    status: "Registrations Open",
     formUrl: registrationFormUrl,
-    icon: CalendarDays,
+    icon: BicepsFlexed,
     description:
-      "A practical session for people who sit for long hours and feel stiffness in the hips, lower back, glutes, hamstrings, or legs.",
+      "Train from the comfort of your home with a one-hour guided session each day. No workout planning required. Just show up and move.",
     details: [
-      "Lower body mobility drills",
-      "Hip-opening movements",
-      "Glute and hamstring activation",
-      "Gentle stretches and breath-led movement"
+      "Fat loss",
+      "Lean muscle gain",
+      "Structured strength training",
+      "A supportive, active community",
     ],
-    bestFor: "Desk-job professionals, students, freelancers, and anyone who wants a lighter lower body."
+    bestFor: [
+      "Busy professionals who struggle to make time for the gym",
+      "People who want guided workouts without planning every session",
+      "Frequent travelers",
+      "Anyone who finds gym spaces intimidating",
+    ],
   },
-  {
-    title: "One Month Yoga Class",
-    eyebrow: "Theme-based class",
-    theme: "Theme to be announced",
-    date: "Starting soon",
-    duration: "One month",
-    mode: "Online",
-    status: "Interest list open",
-    formUrl: registrationFormUrl,
-    icon: Sparkles,
-    description:
-      "A month-long online yoga class built around one focused theme, with steady practice, simple progression, and space to build consistency.",
-    details: [
-      "Theme-led weekly progression",
-      "Accessible yoga and mobility",
-      "Breathwork and recovery support",
-      "Options for different starting points"
-    ],
-    bestFor: "Anyone who wants a structured month of practice before committing to a longer routine."
-  }
 ];
 export const certificates = [
   {
@@ -69,7 +126,7 @@ export const certificates = [
     fileUrl: "/certifications/RYT%20200%20-%20Samyak%20Yoga.pdf",
     previewAspectRatio: "595.28 / 841.89",
     previewImageUrl: "/certifications/previews/ryt-200-samyak-yoga.png",
-    icon: Flower2
+    icon: Flower2,
   },
   {
     title: "Certified Personal Trainer (L5)",
@@ -77,45 +134,51 @@ export const certificates = [
     category: "Strength",
     fileUrl: "/certifications/Certified%20Personal%20Trainer%20(Level%205).pdf",
     previewAspectRatio: "841.89 / 595.28",
-    previewImageUrl: "/certifications/previews/certified-personal-trainer-level-5.png",
-    icon: Dumbbell
+    previewImageUrl:
+      "/certifications/previews/certified-personal-trainer-level-5.png",
+    icon: Dumbbell,
   },
   {
     title: "Diploma in Personal Training",
     issuer: "Prehab 121",
     category: "Strength",
-    fileUrl: "/certifications/Diploma%20in%20Personal%20Training%20Shreya%20Mugabast%20%E2%80%93%201406513.pdf",
+    fileUrl:
+      "/certifications/Diploma%20in%20Personal%20Training%20Shreya%20Mugabast%20%E2%80%93%201406513.pdf",
     previewAspectRatio: "841.89 / 595.28",
     previewImageUrl: "/certifications/previews/diploma-personal-training.png",
-    icon: BadgeCheck
+    icon: BadgeCheck,
   },
   {
     title: "Strength & Conditioning Specialist (L6)",
     issuer: "Prehab 121",
     category: "Strength",
-    fileUrl: "/certifications/Strength%20%26%20Conditioning%20Training%20Specialist%20(Level%206).pdf",
+    fileUrl:
+      "/certifications/Strength%20%26%20Conditioning%20Training%20Specialist%20(Level%206).pdf",
     previewAspectRatio: "841.89 / 595.28",
-    previewImageUrl: "/certifications/previews/strength-conditioning-specialist.png",
-    icon: Activity
+    previewImageUrl:
+      "/certifications/previews/strength-conditioning-specialist.png",
+    icon: Activity,
   },
   {
     title: "Prehab & Rehab Specialist",
     issuer: "Prehab 121",
     category: "Recovery",
-    fileUrl: "/certifications/PREHAB%20%26%20REHAB%20SPECIALIST%20Shreya%20Mugabast%20053113.pdf",
+    fileUrl:
+      "/certifications/PREHAB%20%26%20REHAB%20SPECIALIST%20Shreya%20Mugabast%20053113.pdf",
     previewAspectRatio: "841.89 / 595.28",
     previewImageUrl: "/certifications/previews/prehab-rehab-specialist.png",
-    icon: ShieldCheck
+    icon: ShieldCheck,
   },
   {
     title: "Sports & Exercise Nutrition",
     issuer: "Prehab 121",
     category: "Nutrition",
-    fileUrl: "/certifications/Sports%20%26%20Exercise%20Nutrition%20Shreya%20Mugabast%20%E2%80%93%20032931.pdf",
+    fileUrl:
+      "/certifications/Sports%20%26%20Exercise%20Nutrition%20Shreya%20Mugabast%20%E2%80%93%20032931.pdf",
     previewAspectRatio: "841.89 / 595.28",
     previewImageUrl: "/certifications/previews/sports-exercise-nutrition.png",
-    icon: HeartPulse
-  }
+    icon: HeartPulse,
+  },
 ];
 
 export const testimonials = [
@@ -124,20 +187,20 @@ export const testimonials = [
       "I stopped feeling like exercise had to be punishment. I am stronger now, but I also feel safer in my body.",
     name: "Aarohi M.",
     detail: "Personal training client",
-    type: "WhatsApp note"
+    type: "WhatsApp note",
   },
   {
     quote:
       "The group classes feel warm and real. Nobody is performing. We show up, move, laugh, and leave steadier.",
     name: "Rhea S.",
     detail: "Online movement student",
-    type: "Class message"
+    type: "Class message",
   },
   {
     quote:
       "PCOS made consistency feel impossible. Her approach helped me train with my body instead of fighting it.",
     name: "Maya K.",
     detail: "Coaching student",
-    type: "Community note"
-  }
+    type: "Community note",
+  },
 ];

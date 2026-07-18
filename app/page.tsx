@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import type { LucideIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   BadgeCheck,
@@ -13,6 +12,11 @@ import {
 } from "lucide-react";
 import {
   certificates,
+  type Offering,
+  type OfferingLocalTime,
+  type OfferingSchedule,
+  type OfferingScheduleItem,
+  type OfferingWeekday,
   offerings,
   registrationFormUrl,
   testimonials,
@@ -85,7 +89,6 @@ export default function Home() {
       <main className="relative overflow-hidden">
         <Offerings />
         <Testimonials />
-        <About />
         <Certificates />
         <Contact />
       </main>
@@ -149,18 +152,6 @@ function RegisterButton({
   );
 }
 
-function RegistrationNote({ inverse = false }: { inverse?: boolean }) {
-  return (
-    <p
-      className={`text-sm leading-6 ${inverse ? "text-linen/72" : "text-[color:var(--muted)]"}`}
-    >
-      Registration opens in Google Forms. The form includes the payment QR and
-      collects the details needed to send a confirmation email after payment is
-      completed.
-    </p>
-  );
-}
-
 function Offerings() {
   return (
     <section
@@ -189,20 +180,6 @@ function Offerings() {
             />
           ))}
         </div>
-
-        <FadeUp
-          delay={0.16}
-          className="mt-6 rounded-[24px] border border-walnut/10 bg-linen/72 p-5 shadow-innerGlow backdrop-blur dark:border-white/10 dark:bg-white/5"
-        >
-          <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-center">
-            <RegistrationNote />
-            <RegisterButton
-              href={registrationFormUrl}
-              label="Open Form"
-              className="md:justify-self-end"
-            />
-          </div>
-        </FadeUp>
       </div>
     </section>
   );
@@ -212,20 +189,7 @@ function OfferingCard({
   offering,
   delay,
 }: {
-  offering: {
-    title: string;
-    eyebrow: string;
-    theme: string;
-    date: string;
-    duration: string;
-    mode: string;
-    status: string;
-    formUrl: string;
-    icon: LucideIcon;
-    description: string;
-    details: string[];
-    bestFor: string;
-  };
+  offering: Offering;
   delay: number;
 }) {
   const Icon = offering.icon;
@@ -242,14 +206,15 @@ function OfferingCard({
               <p className="text-xs font-extrabold uppercase tracking-[0.24em] text-ember">
                 {offering.eyebrow}
               </p>
-              <h2 className="mt-1 font-serif text-3xl font-medium leading-tight text-bark dark:text-linen">
-                {offering.title}
-              </h2>
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-2">
+                <h2 className="font-serif text-3xl font-medium leading-tight text-bark dark:text-linen">
+                  {offering.title}
+                </h2>
+                <OfferingModeBadge mode={offering.mode} />
+              </div>
             </div>
           </div>
-          <span className="rounded-full bg-stone/46 px-3 py-2 text-xs font-bold text-forest dark:bg-white/10 dark:text-linen">
-            {offering.status}
-          </span>
+          <RegisterButton href={offering.formUrl} label="Register" />
         </div>
 
         <p className="mt-5 text-base font-bold text-bark dark:text-linen">
@@ -259,51 +224,286 @@ function OfferingCard({
           {offering.description}
         </p>
 
-        <div className="mt-5 grid gap-3 text-sm sm:grid-cols-3">
-          <Info label="Date" value={offering.date} />
-          <Info label="Duration" value={offering.duration} />
-          <Info label="Mode" value={offering.mode} />
+        <div className="mt-6 text-sm">
+          <ScheduleInfo schedule={offering.schedule} />
         </div>
 
-        <div className="mt-6 grid gap-3">
-          {offering.details.map((detail) => (
-            <div
-              key={detail}
-              className="flex gap-3 text-sm leading-6 text-[color:var(--muted)]"
-            >
-              <CheckCircle2 className="mt-0.5 shrink-0 text-ember" size={17} />
-              <span>{detail}</span>
-            </div>
-          ))}
-        </div>
-
-        <p className="mt-5 rounded-[20px] bg-stone/24 p-4 text-sm leading-6 text-[color:var(--muted)] dark:bg-white/5">
-          <span className="font-bold text-bark dark:text-linen">
-            Best for:{" "}
-          </span>
-          {offering.bestFor}
-        </p>
-
-        <div className="mt-auto flex flex-col gap-3 pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <RegisterButton href={offering.formUrl} />
-          <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-walnut/72 dark:text-linen/62">
-            Google Form <ExternalLink size={14} />
-          </span>
+        <div className="mt-5 grid gap-6 md:grid-cols-2">
+          <OfferingListInfo title="Details" items={offering.details} />
+          <OfferingListInfo title="Best for" items={offering.bestFor} />
         </div>
       </article>
     </FadeUp>
   );
 }
 
-function Info({ label, value }: { label: string; value: string }) {
+function OfferingListInfo({
+  title,
+  items,
+}: {
+  title: string;
+  items: string[];
+}) {
   return (
-    <div className="rounded-[18px] border border-walnut/10 bg-linen/62 p-3 dark:border-white/10 dark:bg-white/5">
+    <div>
       <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.2em] text-walnut/68 dark:text-stone">
-        {label}
+        {title}
       </p>
-      <p className="mt-1 font-bold text-bark dark:text-linen">{value}</p>
+      <ul className="mt-3 grid gap-2">
+        {items.map((item) => (
+          <li
+            key={item}
+            className="flex gap-3 text-sm leading-6 text-[color:var(--muted)]"
+          >
+            <CheckCircle2 className="mt-0.5 shrink-0 text-ember" size={16} />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
+}
+
+function OfferingModeBadge({ mode }: { mode: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-forest/15 bg-forest/8 px-2.5 py-1 text-[0.68rem] font-extrabold uppercase tracking-[0.14em] text-forest dark:border-linen/15 dark:bg-linen/8 dark:text-linen">
+      <span className="h-1.5 w-1.5 rounded-full bg-ember" />
+      {mode}
+    </span>
+  );
+}
+
+function ScheduleInfo({ schedule }: { schedule: OfferingSchedule }) {
+  const [browserTimeZone, setBrowserTimeZone] = useState<string | null>(null);
+
+  useEffect(() => {
+    setBrowserTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  }, []);
+
+  const displayTimeZone =
+    browserTimeZone && browserTimeZone !== schedule.timezone.id
+      ? browserTimeZone
+      : null;
+
+  return (
+    <div>
+      <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.2em] text-walnut/68 dark:text-stone">
+        Schedule
+      </p>
+      <p className="mt-2 text-sm text-bark dark:text-linen">
+        <FormattedScheduleTime
+          schedule={schedule}
+          timeZone={displayTimeZone}
+        />
+      </p>
+      <ul className="mt-3 grid gap-3">
+        {schedule.split.map((item) => (
+          <li
+            key={`${item.days.join("-")}-${item.classType}`}
+            className="flex flex-wrap items-center gap-x-3 gap-y-2"
+          >
+            <p className="text-xs font-bold leading-5 text-bark dark:text-linen">
+              {item.classType}
+              {item.optional ? (
+                <span className="font-medium text-[color:var(--muted)]">
+                  {" "}
+                  (optional)
+                </span>
+              ) : null}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {getScheduleItemDays(item, schedule, displayTimeZone).map(
+                (day) => (
+                  <span
+                    key={day}
+                    className="rounded-full bg-stone/50 px-2 py-1 text-[0.68rem] font-bold leading-none text-forest dark:bg-white/10 dark:text-linen"
+                  >
+                    {day}
+                  </span>
+                ),
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function FormattedScheduleTime({
+  schedule,
+  timeZone,
+}: {
+  schedule: OfferingSchedule;
+  timeZone: string | null;
+}) {
+  const start = timeZone
+    ? getDateTimeClockParts(
+        getScheduleDate(schedule.startTime, schedule, "Mon"),
+        timeZone,
+      )
+    : formatScheduleClockParts(schedule.startTime);
+  const end = timeZone
+    ? getDateTimeClockParts(
+        getScheduleDate(schedule.endTime, schedule, "Mon"),
+        timeZone,
+      )
+    : formatScheduleClockParts(schedule.endTime);
+
+  return (
+    <>
+      <FormattedClock clock={start.clock} meridiem={start.meridiem} />{" "}
+      - <FormattedClock clock={end.clock} meridiem={end.meridiem} />
+    </>
+  );
+}
+
+function FormattedClock({
+  clock,
+  meridiem,
+}: {
+  clock: string;
+  meridiem: string;
+}) {
+  return (
+    <>
+      <strong className="font-bold">{clock}</strong> {meridiem}
+    </>
+  );
+}
+
+function getConvertedScheduleItemDays(
+  item: OfferingScheduleItem,
+  schedule: OfferingSchedule,
+  timeZone: string,
+) {
+  const convertedDays = item.days.map((day) =>
+    formatDateTimeWeekday(
+      getScheduleDate(schedule.startTime, schedule, day),
+      timeZone,
+    ),
+  );
+
+  return uniqueValues(convertedDays);
+}
+
+function formatScheduleClockParts(time: OfferingLocalTime) {
+  const minuteLabel =
+    time.minute === undefined
+      ? ":00"
+      : `:${String(time.minute).padStart(2, "0")}`;
+
+  return {
+    clock: `${time.hour}${minuteLabel}`,
+    meridiem: time.meridiem,
+  };
+}
+
+function getScheduleItemDays(
+  item: OfferingScheduleItem,
+  schedule: OfferingSchedule,
+  timeZone: string | null,
+) {
+  return timeZone
+    ? getConvertedScheduleItemDays(item, schedule, timeZone)
+    : item.days;
+}
+
+const scheduleWeekdayIndex: Record<OfferingWeekday, number> = {
+  Mon: 0,
+  Tue: 1,
+  Wed: 2,
+  Thu: 3,
+  Fri: 4,
+  Sat: 5,
+  Sun: 6,
+};
+
+const intlWeekdayIndex: Record<string, number> = {
+  Mon: 0,
+  Tue: 1,
+  Wed: 2,
+  Thu: 3,
+  Fri: 4,
+  Sat: 5,
+  Sun: 6,
+};
+
+function getScheduleDate(
+  time: OfferingLocalTime,
+  schedule: OfferingSchedule,
+  weekday: OfferingWeekday,
+) {
+  const sourceWeek = getCurrentSourceWeek(schedule);
+  const hour24 = toHour24(time);
+  const minute = time.minute ?? 0;
+  const sourceDay = sourceWeek.mondayDate + scheduleWeekdayIndex[weekday];
+  const sourceLocalUtc = Date.UTC(
+    sourceWeek.year,
+    sourceWeek.month,
+    sourceDay,
+    hour24,
+    minute,
+  );
+
+  return new Date(
+    sourceLocalUtc - schedule.timezone.utcOffsetMinutes * 60 * 1000,
+  );
+}
+
+function getCurrentSourceWeek(schedule: OfferingSchedule) {
+  const sourceParts = new Intl.DateTimeFormat("en", {
+    day: "numeric",
+    month: "numeric",
+    timeZone: schedule.timezone.id,
+    weekday: "short",
+    year: "numeric",
+  }).formatToParts(new Date());
+  const getPart = (type: Intl.DateTimeFormatPartTypes) =>
+    sourceParts.find((part) => part.type === type)?.value ?? "";
+  const weekday = getPart("weekday");
+  const day = Number(getPart("day"));
+
+  return {
+    day,
+    mondayDate: day - intlWeekdayIndex[weekday],
+    month: Number(getPart("month")) - 1,
+    year: Number(getPart("year")),
+  };
+}
+
+function toHour24(time: OfferingLocalTime) {
+  if (time.meridiem === "am") {
+    return time.hour === 12 ? 0 : time.hour;
+  }
+
+  return time.hour === 12 ? 12 : time.hour + 12;
+}
+
+function getDateTimeClockParts(date: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone,
+  }).formatToParts(date);
+  const getPart = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+
+  return {
+    clock: `${getPart("hour")}:${getPart("minute")}`,
+    meridiem: getPart("dayPeriod").toLowerCase(),
+  };
+}
+
+function formatDateTimeWeekday(date: Date, timeZone: string) {
+  return new Intl.DateTimeFormat("en", {
+    weekday: "short",
+    timeZone,
+  }).format(date);
+}
+
+function uniqueValues<T>(values: T[]) {
+  return Array.from(new Set(values));
 }
 
 function Testimonials() {
@@ -338,60 +538,6 @@ function Testimonials() {
         </div>
       </div>
     </section>
-  );
-}
-
-function About() {
-  const credentials = [
-    "Certified yoga teacher",
-    "Strength and personal training",
-    "Prehab and rehab-informed",
-    "PCOS-aware movement coaching",
-  ];
-
-  return (
-    <MotionSection id="about" className="relative py-20 md:py-24">
-      <div className="section-shell grid gap-10 lg:grid-cols-[0.82fr_1fr]">
-        <FadeUp className="rounded-[28px] border border-walnut/10 bg-linen/76 p-6 shadow-earthy dark:border-white/10 dark:bg-white/5">
-          <div className="wood-panel rounded-[22px] p-6 text-linen">
-            <p className="font-serif text-3xl leading-tight">
-              I teach movement as a way to rebuild trust, strength, and
-              steadiness from the inside.
-            </p>
-          </div>
-          <div className="mt-5 grid gap-3">
-            {credentials.map((item) => (
-              <div
-                key={item}
-                className="flex items-center gap-3 rounded-full border border-walnut/10 bg-linen/60 px-4 py-3 text-sm font-bold text-bark dark:border-white/10 dark:bg-white/5 dark:text-linen"
-              >
-                <BadgeCheck size={16} className="text-ember" />
-                {item}
-              </div>
-            ))}
-          </div>
-        </FadeUp>
-
-        <div>
-          <SectionHeading
-            eyebrow="About me"
-            title="Grounded coaching shaped by lived transformation."
-            copy="Before coaching, I moved through obesity, bullying, PCOS, low confidence, toxic fitness spaces, and corporate burnout. Movement became the place where I reclaimed strength without losing softness."
-          />
-          <FadeUp className="space-y-5 text-base leading-8 text-[color:var(--muted)]">
-            <p>
-              My sessions blend yoga, functional strength, mobility, recovery,
-              prehab principles, and nervous-system friendly pacing.
-            </p>
-            <p>
-              The goal is a more capable, confident, resilient relationship with
-              movement, built through practice that feels structured without
-              becoming harsh.
-            </p>
-          </FadeUp>
-        </div>
-      </div>
-    </MotionSection>
   );
 }
 
