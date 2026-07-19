@@ -7,6 +7,7 @@ import { useTheme } from "./ThemeProvider";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState(navItems[0]?.href ?? "#home");
   const pillRef = useRef<HTMLSpanElement>(null);
   const hoverPillRef = useRef<HTMLSpanElement>(null);
@@ -56,6 +57,8 @@ export function Navbar() {
     let animationFrame = 0;
 
     const updateNavigation = () => {
+      setIsScrolled(window.scrollY > 12);
+
       const sections = sectionIds
         .map((id) => document.getElementById(id))
         .filter((section): section is HTMLElement => Boolean(section));
@@ -107,8 +110,16 @@ export function Navbar() {
   }, []);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 px-4 pt-4">
-      <div className="site-nav mx-auto flex max-w-7xl items-center justify-between rounded-full border px-4 py-3 backdrop-blur-2xl transition">
+    <header
+      className={`fixed inset-x-0 top-0 z-50 transition-[padding] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+        isScrolled ? "px-0 pt-0" : "px-4 pt-4"
+      }`}
+    >
+      <div
+        className={`site-nav mx-auto flex w-full items-center justify-between border px-4 py-3 backdrop-blur-2xl transition-[max-width,border-radius] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+          isScrolled ? "max-w-[100vw] rounded-none" : "max-w-7xl rounded-[32px]"
+        }`}
+      >
         <a href="#offerings" className="flex items-center gap-3">
           <span className="site-nav-mark grid h-9 w-9 place-items-center rounded-full border text-sm font-bold shadow-innerGlow">
             <svg
