@@ -8,6 +8,9 @@ import {
   ShieldCheck,
   StretchHorizontal,
   BicepsFlexed,
+  Sprout,
+  Blocks,
+  RockingChair,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -130,7 +133,7 @@ export const offerings: Offering[] = [
     },
     price: {
       type: "fixed",
-      amountInr: 2500,
+      amountInr: 1600,
       suffix: "/ month",
     },
     mode: "Online",
@@ -157,6 +160,52 @@ export const offerings: Offering[] = [
       { label: "(Yoga) Mat", icon: RectangleHorizontal },
     ],
   },
+  {
+      title: "Yin for Yoga",
+      eyebrow: "Ongoing",
+      theme: "Group Yoga Classes",
+      schedule: {
+        startTime: { hour: 5, meridiem: "pm" },
+        endTime: { hour: 6, meridiem: "pm" },
+        timezone: {
+          id: "Asia/Kolkata",
+          label: "IST",
+          utcOffsetMinutes: 330,
+        },
+        split: [
+          {
+            days: ["Tue", "Thu"],
+            classType: "Yoga",
+          },
+        ],
+      },
+      price: {
+        type: "fixed",
+        amountInr: 2400,
+        suffix: "/ month",
+      },
+      mode: "Online",
+      status: "Registrations Open",
+      formUrl: registrationFormUrl,
+      icon: Sprout,
+      description:
+        "Asana • Pranayama • Meditation",
+      details: [
+        "Mobility",
+        "Mindfulness",
+        "Flexibility",
+      ],
+      bestFor: [
+        "Anyone who wants to practise Yoga regularly",
+        "Beginner and intermediate Yoga practitioners",
+      ],
+      equipment: [
+        { label: "Yoga Mat", icon: RectangleHorizontal },
+        { label: "Yoga Blocks", icon: Blocks },
+        { label: "Yoga Strap", icon: StretchHorizontal},
+        { label: "Yoga (or any) Chair", icon: RockingChair},
+      ],
+    }
 ];
 export const certificates = [
   {

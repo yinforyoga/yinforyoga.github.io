@@ -337,23 +337,30 @@ function EquipmentInfo({
   items: { label: string; icon: LucideIcon }[];
 }) {
   return (
-    <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl bg-stone/25 p-4 dark:bg-white/[0.05] sm:gap-5 sm:p-5">
-      <div className="flex shrink-0 items-center gap-3">
+    <div className="mt-5 flex flex-col gap-5 rounded-2xl bg-stone/25 p-4 dark:bg-white/[0.05] sm:flex-row sm:items-center sm:justify-between sm:p-5">
+      <div className="flex min-w-0 items-center gap-3">
         <span className="grid h-9 w-9 place-items-center rounded-full bg-forest/10 text-forest dark:bg-linen/10 dark:text-linen">
           <PackageOpen aria-hidden="true" size={17} />
         </span>
-        <div>
+        <div className="min-w-0">
           <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.2em] text-walnut/68 dark:text-stone">
             Equipment
           </p>
-          <p className="mt-0.5 text-xs text-[color:var(--muted)]">
+          <p className="mt-0.5 text-[0.68rem] leading-4 text-[color:var(--muted)]">
             Recommended items to support the practice
           </p>
         </div>
       </div>
-      <ul className="ml-auto flex flex-wrap justify-end gap-3">
-        {items.map(({ label, icon: Icon }) => (
-          <li key={label} className="group relative">
+      <ul className="mx-auto grid shrink-0 grid-cols-2 justify-center gap-3 sm:ml-auto sm:mr-0 sm:flex sm:justify-end">
+        {items.map(({ label, icon: Icon }, index) => (
+          <li
+            key={label}
+            className={`group relative ${
+              items.length % 2 === 1 && index === items.length - 1
+                ? "col-span-2 justify-self-center sm:col-span-1"
+                : ""
+            }`}
+          >
             <span
               tabIndex={0}
               aria-label={label}
