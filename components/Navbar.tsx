@@ -1,49 +1,108 @@
 "use client";
 
 import { Menu, Moon, SunMedium, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { navItems } from "@/lib/data";
 import { useTheme } from "./ThemeProvider";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
   const [activeSection, setActiveSection] = useState(navItems[0]?.href ?? "#home");
+  const pillRef = useRef<HTMLSpanElement>(null);
+  const hoverPillRef = useRef<HTMLSpanElement>(null);
+  const hoverFrameRef = useRef(0);
+  const hoverSessionActiveRef = useRef(false);
+  const desktopLinkRefs = useRef<(HTMLAnchorElement | null)[]>([]);
   const { theme, toggleTheme } = useTheme();
+
+  const showHoverPill = (index: number, isActive: boolean) => {
+    const hoverPill = hoverPillRef.current;
+    const pill = pillRef.current;
+    const link = desktopLinkRefs.current[index];
+
+    cancelAnimationFrame(hoverFrameRef.current);
+
+    if (!hoverPill || !pill || !link || isActive) {
+      if (hoverPill) hoverPill.style.opacity = "0";
+      return;
+    }
+
+    if (!hoverSessionActiveRef.current) {
+      hoverPill.style.transition = "none";
+      hoverPill.style.transform = pill.style.transform;
+      hoverPill.style.width = pill.style.width;
+      hoverPill.style.opacity = "0";
+      void hoverPill.offsetWidth;
+      hoverSessionActiveRef.current = true;
+    }
+
+    hoverFrameRef.current = requestAnimationFrame(() => {
+      hoverPill.style.transition = "";
+      hoverPill.style.transform = `translate3d(${link.offsetLeft}px, 0, 0)`;
+      hoverPill.style.width = `${link.offsetWidth}px`;
+      hoverPill.style.opacity = "1";
+    });
+  };
+
+  const hideHoverPill = () => {
+    cancelAnimationFrame(hoverFrameRef.current);
+    hoverSessionActiveRef.current = false;
+    if (hoverPillRef.current) hoverPillRef.current.style.opacity = "0";
+  };
 
   useEffect(() => {
     const sectionIds = navItems.map((item) => item.href.slice(1));
 
-    const updateActiveSection = () => {
-      const scrollLine = window.scrollY + window.innerHeight * 0.35;
-      const pageBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 8;
+    let animationFrame = 0;
+
+    const updateNavigation = () => {
       const sections = sectionIds
         .map((id) => document.getElementById(id))
         .filter((section): section is HTMLElement => Boolean(section));
 
-      if (pageBottom && sections.length > 0) {
-        setActiveSection(`#${sections[sections.length - 1].id}`);
+      if (sections.length === 0) {
         return;
       }
 
-      const currentSection = sections.find((section) => {
-        const top = section.offsetTop;
-        const bottom = top + section.offsetHeight;
+      const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      const anchors = sections.map((section) => Math.min(section.offsetTop, maxScroll));
+      let currentIndex = anchors.findLastIndex((anchor) => anchor <= window.scrollY + 1);
+      currentIndex = Math.max(0, currentIndex);
+      setActiveSection(`#${sections[currentIndex].id}`);
 
-        return top <= scrollLine && bottom > scrollLine;
-      });
-
-      if (currentSection) {
-        setActiveSection(`#${currentSection.id}`);
+      const pill = pillRef.current;
+      const currentLink = desktopLinkRefs.current[currentIndex];
+      if (!pill || !currentLink) {
+        return;
       }
+
+      const nextIndex = Math.min(currentIndex + 1, sections.length - 1);
+      const nextLink = desktopLinkRefs.current[nextIndex] ?? currentLink;
+      const interval = anchors[nextIndex] - anchors[currentIndex];
+      const progress = interval > 0
+        ? Math.min(1, Math.max(0, (window.scrollY - anchors[currentIndex]) / interval))
+        : 0;
+      const left = currentLink.offsetLeft + (nextLink.offsetLeft - currentLink.offsetLeft) * progress;
+      const width = currentLink.offsetWidth + (nextLink.offsetWidth - currentLink.offsetWidth) * progress;
+
+      pill.style.transform = `translate3d(${left}px, 0, 0)`;
+      pill.style.width = `${width}px`;
     };
 
-    updateActiveSection();
-    window.addEventListener("scroll", updateActiveSection, { passive: true });
-    window.addEventListener("resize", updateActiveSection);
+    const scheduleUpdate = () => {
+      cancelAnimationFrame(animationFrame);
+      animationFrame = requestAnimationFrame(updateNavigation);
+    };
+
+    updateNavigation();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
 
     return () => {
-      window.removeEventListener("scroll", updateActiveSection);
-      window.removeEventListener("resize", updateActiveSection);
+      cancelAnimationFrame(animationFrame);
+      cancelAnimationFrame(hoverFrameRef.current);
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
     };
   }, []);
 
@@ -69,18 +128,26 @@ export function Navbar() {
           </span>
         </a>
 
-        <nav className="hidden items-center gap-7 lg:flex" aria-label="Main navigation">
-          {navItems.map((item) => {
+        <nav
+          className="relative hidden items-center gap-7 lg:flex"
+          aria-label="Main navigation"
+          onPointerLeave={hideHoverPill}
+        >
+          <span ref={pillRef} className="site-nav-pill pointer-events-none absolute inset-y-0 left-0" aria-hidden="true" />
+          <span ref={hoverPillRef} className="site-nav-pill-ghost pointer-events-none absolute inset-y-0 left-0" aria-hidden="true" />
+          {navItems.map((item, index) => {
             const isActive = activeSection === item.href;
 
             return (
               <a
                 key={item.href}
+                ref={(element) => { desktopLinkRefs.current[index] = element; }}
                 href={item.href}
                 onClick={() => setActiveSection(item.href)}
+                onPointerEnter={() => showHoverPill(index, isActive)}
                 aria-current={isActive ? "page" : undefined}
-                className={`site-nav-link rounded-full px-3 py-2 text-sm font-semibold transition ${
-                  isActive ? "site-nav-link-active shadow-innerGlow" : "site-nav-link-idle"
+                className={`site-nav-link relative z-10 rounded-full px-3 py-2 text-sm font-semibold transition-colors ${
+                  isActive ? "site-nav-link-current" : "site-nav-link-idle"
                 }`}
               >
                 {item.label}
