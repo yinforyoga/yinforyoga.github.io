@@ -67,10 +67,11 @@ export type Offering = {
 export type Testimonial = {
   quote: string;
   name: string;
-  initials: string;
-  detail: string;
+  location: string | null;
+  course: string;
   platform: "WhatsApp";
   date?: string;
+  time?: string;
 };
 
 export const navItems = [
@@ -193,36 +194,52 @@ export const certificates = [
 export const testimonials: Testimonial[] = [
   {
     quote:
-      "I would like to share my experience with you so far firstly the class timings are very feasible even before this i was your student i equally enjoyed both yoga and strength training for some one like me who doesnt feel like going to gym this was the best for me i also got learn the right form which earlier i would end up doing wrong and had terrible cramps for next 2 days and also my quality of sleep improved even since i started working out with you i feel rarely bloated over all it was all worth it ❤️🫶🏻and if u cld plan 5 classes a week or 4 for upcoming batch it would be great 🤗",
-    name: "Arpita Mohite",
-    initials: "AM",
-    detail: "Yoga & strength student",
+      "I would like to share my experience with you so far firstly the class timings are very feasible even before this i was your student i equally enjoyed both yoga and strength training for some one like me who doesnt feel like going to gym this was the best for me i also got learn the right form which earlier i would end up doing wrong and had terrible cramps for next 2 days and also my quality of sleep improved ever since i started working out with you i feel rarely bloated over all it was all worth it ❤️🫶🏻and if u cld plan 5 classes a week or 4 for upcoming batch it would be great 🤗",
+    name: "Arpita M.",
+    location: "India",
+    course: "Yin for Strength",
     platform: "WhatsApp",
+    time: "3:44 PM",
+    date: "1 July 2026",
+  },
+  {
+    quote:
+      "I have been taking online yoga classes with Shreya for the past two months, and it has been a truly transformative experience. My flexibility has improved significantly, and I feel much more at ease in my body. The pranayama sessions have also helped me manage stress better, bringing a sense of calm and clarity to my daily routine. Shreya is incredibly knowledgeable, patient, and encouraging. She guides each session with great attention to detail, ensuring that every posture is done correctly and safely. Her instructions are clear, making it easy to follow along, even in an online setting. What I love most is her holistic approach—each class is a perfect blend of asanas, breathing exercises, and relaxation techniques. I have also noticed an improvement in my posture, energy levels, and overall well-being. I highly recommend Shreya’s classes to anyone looking to improve their physical health, reduce stress, and cultivate mindfulness.",
+    name: "Pramod M.",
+    location: "USA",
+    course: "Personal Yoga Class",
+    platform: "WhatsApp",
+    date: "20 Feb 2025",
+    time: "9:49 AM"
   },
   {
     quote:
       "This was my first ever yoga journey. As someone who’s always been not so consistent and always wanted to show up. This yoga class made me more consistent and brought that discipline back. From not able to hold plank for 5secs to 15-20sec as of now I’m able to see progress in myself when it comes to strength and flexibility and all thanks to you🤗 after classes the mood lift which I feel is something I needed 💪🏻 also the self realisation that happens along is the journey felt so good. Overall it was such beautiful experience I had and wish to continue with Yin for Yoga and Strength ❤️",
-    name: "Name withheld",
-    initials: "YF",
-    detail: "Yoga & strength student",
+    name: "Nikhita K.",
+    location: "India",
+    course: "Yin for Strength",
     platform: "WhatsApp",
+    time: "3:55 PM",
+    date: "1 July 2026"
   },
   {
     quote:
       "I’ve had an amazing experience learning yoga with Shreya! She is incredibly patient and takes the time to explain each pose in detail, ensuring we understand not just how to do it but also why it matters. What I truly appreciate is how she carefully observes and corrects our postures, helping us improve with small but impactful adjustments. Her attention to tiny details—like breathing techniques and subtle muscle engagements—makes a huge difference in refining the asanas. Every session feels both calming and rewarding, and I can see real progress in my practice. Highly recommend her to anyone looking for a dedicated and knowledgeable yoga teacher!",
-    name: "Ankita Narayan",
-    initials: "AN",
-    detail: "Yoga student",
+    name: "Ankita N.",
+    location: "USA",
+    course: "Personal Yoga Class",
     platform: "WhatsApp",
     date: "25 Feb 2025",
+    time: "5:15 AM",
   },
   {
     quote:
       "Hi Shreya, thank you very much for the yoga classes. You have been very patient and teach us the yoga techniques. I have started yoga 3months ago but now i feel i have better balance and flexible. I feel really good after yoga classes. You teach Asanas, pranayama and meditation with details background of each and very small thing . As i take online classes, the clarity of video and your voice is really good. Thank you very correcting all my mistakes and i want to continue the classes. Once again, thank you for the beautiful classes❤️☺️🧘",
-    name: "Jyothi",
-    initials: "J",
-    detail: "Online yoga student",
+    name: "Jyothi B.",
+    location: "Germany",
+    course: "Group Yoga Class",
     platform: "WhatsApp",
     date: "17 Feb 2025",
+    time: "3:00 AM",
   },
 ];

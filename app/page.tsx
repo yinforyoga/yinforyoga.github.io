@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import {
   ArrowRight,
   BadgeCheck,
+  BookOpen,
   CalendarDays,
   CheckCircle2,
   ExternalLink,
   Instagram,
   Mail,
+  MapPin,
   MoveRight,
 } from "lucide-react";
 import {
@@ -515,23 +517,39 @@ function Testimonials() {
     >
       <div className="section-shell">
         <SectionHeading eyebrow="Testimonials" />
-        <div className="testimonial-chat">
+        <div className="testimonial-wrap">
           {testimonials.map((testimonial, index) => (
             <FadeUp
               key={`${testimonial.name}-${index}`}
               delay={index * 0.06}
-              className="testimonial-message"
+              className="testimonial-frame-wrap"
             >
-              <article className="whatsapp-bubble text-bark dark:text-linen">
+              <article className="testimonial-frame text-bark dark:text-linen">
+                <div className="testimonial-details">
+                  <span>
+                    <BookOpen aria-hidden="true" size={14} />
+                    {testimonial.course}
+                  </span>
+                  <span>
+                    <MapPin aria-hidden="true" size={14} />
+                    {testimonial.location ?? "Location not provided"}
+                  </span>
+                  <span>
+                    <CalendarDays aria-hidden="true" size={14} />
+                    {testimonial.date ?? "Date not provided"}
+                  </span>
+                </div>
+                <div className="whatsapp-bubble">
                   <p className="whatsapp-sender">~ {testimonial.name}</p>
                   <p className="whitespace-pre-line text-[0.98rem] leading-7">
                     {testimonial.quote}
                   </p>
-                  {testimonial.date ? (
-                    <div className="mt-2 flex items-center justify-end text-[0.68rem] text-bark/48 dark:text-stone/55">
-                      <span>{testimonial.date}</span>
-                    </div>
+                  {testimonial.time ? (
+                    <p className="mt-2 text-right text-[0.68rem] text-bark/48 dark:text-stone/55">
+                      {testimonial.time}
+                    </p>
                   ) : null}
+                </div>
               </article>
             </FadeUp>
           ))}
