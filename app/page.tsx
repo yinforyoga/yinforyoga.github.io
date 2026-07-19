@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   ArrowRight,
-  BadgeCheck,
+  Banknote,
   BookOpen,
   CalendarDays,
   CheckCircle2,
@@ -12,11 +12,14 @@ import {
   Mail,
   MapPin,
   MoveRight,
+  PackageOpen,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import {
   certificates,
   type Offering,
   type OfferingLocalTime,
+  type OfferingPrice,
   type OfferingSchedule,
   type OfferingScheduleItem,
   type OfferingWeekday,
@@ -229,12 +232,146 @@ function OfferingCard({
           <ScheduleInfo schedule={offering.schedule} />
         </div>
 
+        <PricingInfo price={offering.price} />
+
+        {offering.equipment?.length ? (
+          <EquipmentInfo items={offering.equipment} />
+        ) : null}
+
         <div className="mt-5 grid gap-6 md:grid-cols-2">
           <OfferingListInfo title="Details" items={offering.details} />
           <OfferingListInfo title="Best for" items={offering.bestFor} />
         </div>
       </article>
     </FadeUp>
+  );
+}
+
+function PricingInfo({ price }: { price: OfferingPrice }) {
+  const [region, setRegion] = useState("IN");
+
+  useEffect(() => {
+    const locale = new Intl.Locale(navigator.language);
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    setRegion(getRegionFromTimeZone(timeZone) ?? locale.region ?? "IN");
+  }, []);
+
+  const currency = getRegionalCurrency(region);
+  const formatAmount = (amount: number) =>
+    new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: currency.code,
+      maximumFractionDigits: 0,
+    }).format(amount * currency.inrRate);
+  const amount =
+    price.type === "fixed"
+      ? formatAmount(price.amountInr)
+      : `${formatAmount(price.minInr)} – ${formatAmount(price.maxInr)}`;
+
+  return (
+    <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-forest/10 bg-forest/[0.04] p-4 dark:border-linen/10 dark:bg-linen/[0.04] sm:p-5">
+      <div className="flex items-center gap-3">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-forest/10 text-forest dark:bg-linen/10 dark:text-linen">
+          <Banknote aria-hidden="true" size={17} />
+        </span>
+        <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.2em] text-walnut/68 dark:text-stone">
+          Pricing
+        </p>
+      </div>
+      <p className="text-right font-sans text-xl font-semibold text-bark dark:text-linen">
+        {amount}
+        {price.suffix ? (
+          <span className="ml-1.5 inline-block whitespace-nowrap font-sans text-xs font-medium text-[color:var(--muted)]">
+            {price.suffix}
+          </span>
+        ) : null}
+      </p>
+    </div>
+  );
+}
+
+const regionalCurrencies: Record<
+  string,
+  { code: string; inrRate: number }
+> = {
+  US: { code: "USD", inrRate: 0.012 },
+  CA: { code: "CAD", inrRate: 0.016 },
+  GB: { code: "GBP", inrRate: 0.0093 },
+  AU: { code: "AUD", inrRate: 0.018 },
+  NZ: { code: "NZD", inrRate: 0.02 },
+  AE: { code: "AED", inrRate: 0.044 },
+  SG: { code: "SGD", inrRate: 0.016 },
+  JP: { code: "JPY", inrRate: 1.8 },
+  DE: { code: "EUR", inrRate: 0.011 },
+  FR: { code: "EUR", inrRate: 0.011 },
+  IT: { code: "EUR", inrRate: 0.011 },
+  ES: { code: "EUR", inrRate: 0.011 },
+  NL: { code: "EUR", inrRate: 0.011 },
+  IE: { code: "EUR", inrRate: 0.011 },
+};
+
+function getRegionalCurrency(region: string) {
+  return regionalCurrencies[region] ?? { code: "INR", inrRate: 1 };
+}
+
+function getRegionFromTimeZone(timeZone: string) {
+  const timeZoneRegions: Record<string, string> = {
+    "Asia/Kolkata": "IN",
+    "Asia/Calcutta": "IN",
+    "Asia/Dubai": "AE",
+    "Asia/Singapore": "SG",
+    "Asia/Tokyo": "JP",
+    "Europe/London": "GB",
+    "Australia/Sydney": "AU",
+    "Australia/Melbourne": "AU",
+    "Australia/Brisbane": "AU",
+    "Pacific/Auckland": "NZ",
+  };
+
+  return timeZoneRegions[timeZone];
+}
+
+function EquipmentInfo({
+  items,
+}: {
+  items: { label: string; icon: LucideIcon }[];
+}) {
+  return (
+    <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl bg-stone/25 p-4 dark:bg-white/[0.05] sm:gap-5 sm:p-5">
+      <div className="flex shrink-0 items-center gap-3">
+        <span className="grid h-9 w-9 place-items-center rounded-full bg-forest/10 text-forest dark:bg-linen/10 dark:text-linen">
+          <PackageOpen aria-hidden="true" size={17} />
+        </span>
+        <div>
+          <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.2em] text-walnut/68 dark:text-stone">
+            Equipment
+          </p>
+          <p className="mt-0.5 text-xs text-[color:var(--muted)]">
+            Recommended items to support the practice
+          </p>
+        </div>
+      </div>
+      <ul className="ml-auto flex flex-wrap justify-end gap-3">
+        {items.map(({ label, icon: Icon }) => (
+          <li key={label} className="group relative">
+            <span
+              tabIndex={0}
+              aria-label={label}
+              className="grid h-11 w-11 cursor-help place-items-center rounded-full border border-forest/10 bg-[color:var(--panel-strong)] text-forest shadow-sm outline-none transition duration-200 hover:-translate-y-0.5 hover:border-ember/30 hover:text-ember hover:shadow-soft focus-visible:-translate-y-0.5 focus-visible:border-ember/40 focus-visible:text-ember focus-visible:ring-4 focus-visible:ring-forest/10 dark:border-white/10 dark:text-linen dark:hover:border-ember/40 dark:hover:text-ember dark:focus-visible:text-ember"
+            >
+              <Icon aria-hidden="true" size={19} strokeWidth={2} />
+            </span>
+            <span
+              role="tooltip"
+              className="pointer-events-none absolute bottom-[calc(100%+0.65rem)] left-1/2 z-20 w-max max-w-48 -translate-x-1/2 translate-y-1 rounded-xl bg-forest px-3 py-2 text-center text-xs font-bold leading-5 text-linen opacity-0 shadow-earthy transition duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100 dark:bg-linen dark:text-forest"
+            >
+              {label}
+              <span className="absolute left-1/2 top-full h-2 w-2 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-forest dark:bg-linen" />
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

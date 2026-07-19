@@ -4,7 +4,9 @@ import {
   Dumbbell,
   Flower2,
   HeartPulse,
+  RectangleHorizontal,
   ShieldCheck,
+  StretchHorizontal,
   BicepsFlexed,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -50,11 +52,25 @@ export type OfferingSchedule = {
   split: OfferingScheduleItem[];
 };
 
+export type OfferingPrice =
+  | {
+      type: "fixed";
+      amountInr: number;
+      suffix?: string;
+    }
+  | {
+      type: "range";
+      minInr: number;
+      maxInr: number;
+      suffix?: string;
+    };
+
 export type Offering = {
   title: string;
   eyebrow: string;
   theme: string;
   schedule: OfferingSchedule;
+  price: OfferingPrice;
   mode: OfferingMode;
   status: OfferingStatus;
   formUrl: string;
@@ -62,6 +78,10 @@ export type Offering = {
   description: string;
   details: string[];
   bestFor: string[];
+  equipment?: {
+    label: string;
+    icon: LucideIcon;
+  }[];
 };
 
 export type Testimonial = {
@@ -108,6 +128,11 @@ export const offerings: Offering[] = [
         },
       ],
     },
+    price: {
+      type: "fixed",
+      amountInr: 2500,
+      suffix: "/ month",
+    },
     mode: "Online",
     status: "Registrations Open",
     formUrl: registrationFormUrl,
@@ -125,6 +150,11 @@ export const offerings: Offering[] = [
       "People who want guided workouts without planning every session",
       "Frequent travelers",
       "Anyone who finds gym spaces intimidating",
+    ],
+    equipment: [
+      { label: "Dumbbells", icon: Dumbbell },
+      { label: "Resistance Band", icon: StretchHorizontal },
+      { label: "(Yoga) Mat", icon: RectangleHorizontal },
     ],
   },
 ];
