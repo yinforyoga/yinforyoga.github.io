@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   ArrowRight,
   BadgeCheck,
+  CalendarDays,
   CheckCircle2,
   ExternalLink,
   Instagram,
@@ -144,7 +145,7 @@ function RegisterButton({
       href={href}
       target="_blank"
       rel="noreferrer"
-      className={`inline-flex h-11 items-center justify-center gap-2 rounded-full bg-forest px-5 text-sm font-bold text-linen shadow-soft transition hover:-translate-y-0.5 hover:bg-ember ${className}`}
+      className={`inline-flex h-11 items-center justify-center gap-2 rounded-[28px] bg-forest px-5 text-sm font-bold text-linen shadow-soft transition hover:-translate-y-0.5 hover:bg-ember ${className}`}
     >
       {label}
       <ArrowRight size={16} />
@@ -156,22 +157,13 @@ function Offerings() {
   return (
     <section
       id="offerings"
-      className="relative px-4 pb-16 pt-28 md:pb-20 md:pt-32"
+      className="relative pb-16 pt-28 md:pb-20 md:pt-32"
     >
       <div className="absolute inset-x-0 top-0 -z-10 h-[520px] bg-[linear-gradient(180deg,rgba(204,197,185,0.42),rgba(255,252,242,0))] dark:bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(25,17,11,0))]" />
       <div className="section-shell">
-        <FadeUp className="max-w-3xl">
-          <h1 className="text-balance font-serif text-4xl font-medium leading-tight text-bark dark:text-linen md:text-5xl">
-            Online yoga offerings you can view, choose, and register for.
-          </h1>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-[color:var(--muted)]">
-            Current workshops and classes are listed first so visitors can
-            quickly see what is available. New offerings can be added to the
-            same section as they are announced.
-          </p>
-        </FadeUp>
+        <SectionHeading eyebrow="Offerings" />
 
-        <div className="mt-10 grid gap-5 lg:grid-cols-2">
+        <div className="flex flex-wrap gap-5">
           {offerings.map((offering, index) => (
             <OfferingCard
               key={offering.title}
@@ -195,26 +187,33 @@ function OfferingCard({
   const Icon = offering.icon;
 
   return (
-    <FadeUp delay={delay}>
-      <article className="flex min-h-full flex-col rounded-[28px] border border-walnut/10 bg-[color:var(--panel-strong)] p-6 shadow-earthy backdrop-blur dark:border-white/10">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-center gap-3">
+    <FadeUp
+      delay={delay}
+      className="min-w-0 flex-[1_1_32rem] max-w-2xl"
+    >
+      <article className="flex min-h-full w-full flex-col rounded-[28px] border border-walnut/10 bg-[color:var(--panel-strong)] p-5 shadow-earthy backdrop-blur dark:border-white/10 sm:p-6">
+        <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          <div className="flex min-w-0 flex-1 flex-col items-center gap-3 sm:flex-row sm:items-center">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-stone/48 text-forest dark:bg-white/10 dark:text-linen">
               <Icon size={20} />
             </span>
-            <div>
+            <div className="min-w-0 text-center sm:text-left">
               <p className="text-xs font-extrabold uppercase tracking-[0.24em] text-ember">
                 {offering.eyebrow}
               </p>
-              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-2">
-                <h2 className="font-serif text-3xl font-medium leading-tight text-bark dark:text-linen">
+              <div className="mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 sm:justify-start">
+                <h2 className="font-serif text-[2rem] font-medium leading-[1.05] text-bark dark:text-linen sm:text-3xl sm:leading-tight">
                   {offering.title}
                 </h2>
                 <OfferingModeBadge mode={offering.mode} />
               </div>
             </div>
           </div>
-          <RegisterButton href={offering.formUrl} label="Register" />
+          <RegisterButton
+            href={offering.formUrl}
+            label="Register"
+            className="w-full shrink-0 sm:w-auto"
+          />
         </div>
 
         <p className="mt-5 text-base font-bold text-bark dark:text-linen">
@@ -255,7 +254,7 @@ function OfferingListInfo({
             key={item}
             className="flex gap-3 text-sm leading-6 text-[color:var(--muted)]"
           >
-            <CheckCircle2 className="mt-0.5 shrink-0 text-ember" size={16} />
+            <CheckCircle2 className="mt-1 shrink-0 text-ember" size={16} />
             <span>{item}</span>
           </li>
         ))}
@@ -286,23 +285,25 @@ function ScheduleInfo({ schedule }: { schedule: OfferingSchedule }) {
       : null;
 
   return (
-    <div>
-      <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.2em] text-walnut/68 dark:text-stone">
-        Schedule
-      </p>
-      <p className="mt-2 text-sm text-bark dark:text-linen">
-        <FormattedScheduleTime
-          schedule={schedule}
-          timeZone={displayTimeZone}
-        />
-      </p>
-      <ul className="mt-3 grid gap-3">
+    <div className="rounded-2xl border border-ember/20 p-4 sm:p-5 dark:border-ember/30">
+      <div>
+        <div className="flex items-center justify-center gap-2 text-ember">
+          <CalendarDays aria-hidden="true" size={17} strokeWidth={2.25} />
+          <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.2em]">
+            Schedule
+          </p>
+        </div>
+        <p className="mt-2 whitespace-nowrap text-center font-serif text-lg font-medium text-bark dark:text-linen sm:text-xl">
+          <FormattedScheduleTime schedule={schedule} timeZone={displayTimeZone} />
+        </p>
+      </div>
+      <ul className="mx-auto mt-5 grid max-w-md gap-3">
         {schedule.split.map((item) => (
           <li
             key={`${item.days.join("-")}-${item.classType}`}
-            className="flex flex-wrap items-center gap-x-3 gap-y-2"
+            className="grid content-start justify-items-center gap-3 rounded-xl bg-stone/25 p-3.5 text-center dark:bg-white/[0.05]"
           >
-            <p className="text-xs font-bold leading-5 text-bark dark:text-linen">
+            <p className="text-sm font-extrabold leading-5 text-bark dark:text-linen">
               {item.classType}
               {item.optional ? (
                 <span className="font-medium text-[color:var(--muted)]">
@@ -311,12 +312,12 @@ function ScheduleInfo({ schedule }: { schedule: OfferingSchedule }) {
                 </span>
               ) : null}
             </p>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap justify-center gap-1.5">
               {getScheduleItemDays(item, schedule, displayTimeZone).map(
                 (day) => (
                   <span
                     key={day}
-                    className="rounded-full bg-stone/50 px-2 py-1 text-[0.68rem] font-bold leading-none text-forest dark:bg-white/10 dark:text-linen"
+                    className="min-w-10 rounded-full border border-forest/10 bg-[color:var(--panel-strong)] px-2.5 py-1.5 text-center text-[0.68rem] font-extrabold leading-none text-forest shadow-sm dark:border-white/10 dark:text-linen"
                   >
                     {day}
                   </span>
@@ -352,8 +353,8 @@ function FormattedScheduleTime({
 
   return (
     <>
-      <FormattedClock clock={start.clock} meridiem={start.meridiem} />{" "}
-      - <FormattedClock clock={end.clock} meridiem={end.meridiem} />
+      <FormattedClock clock={start.clock} meridiem={start.meridiem} /> -{" "}
+      <FormattedClock clock={end.clock} meridiem={end.meridiem} />
     </>
   );
 }
@@ -508,30 +509,29 @@ function uniqueValues<T>(values: T[]) {
 
 function Testimonials() {
   return (
-    <section id="testimonials" className="bg-bark py-20 text-linen md:py-24">
+    <section
+      id="testimonials"
+      className="bg-stone/36 py-20 dark:bg-bark md:py-24"
+    >
       <div className="section-shell">
-        <SectionHeading
-          eyebrow="Testimonials"
-          title="What students say about the practice."
-          copy="A small proof section for warm notes from students and clients. These can be replaced with real messages whenever you are ready."
-          inverse
-        />
-        <div className="grid items-start gap-5 md:grid-cols-3">
+        <SectionHeading eyebrow="Testimonials" />
+        <div className="testimonial-chat">
           {testimonials.map((testimonial, index) => (
-            <FadeUp key={testimonial.name} delay={index * 0.06}>
-              <article className="min-h-full rounded-[24px] border border-white/10 bg-linen p-5 text-bark shadow-earthy">
-                <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-walnut">
-                  {testimonial.type}
-                </p>
-                <p className="mt-5 font-serif text-2xl leading-snug">
-                  "{testimonial.quote}"
-                </p>
-                <div className="mt-5 border-t border-bark/10 pt-4">
-                  <p className="font-bold">{testimonial.name}</p>
-                  <p className="mt-1 text-sm text-bark/62">
-                    {testimonial.detail}
+            <FadeUp
+              key={`${testimonial.name}-${index}`}
+              delay={index * 0.06}
+              className="testimonial-message"
+            >
+              <article className="whatsapp-bubble text-bark dark:text-linen">
+                  <p className="whatsapp-sender">~ {testimonial.name}</p>
+                  <p className="whitespace-pre-line text-[0.98rem] leading-7">
+                    {testimonial.quote}
                   </p>
-                </div>
+                  {testimonial.date ? (
+                    <div className="mt-2 flex items-center justify-end text-[0.68rem] text-bark/48 dark:text-stone/55">
+                      <span>{testimonial.date}</span>
+                    </div>
+                  ) : null}
               </article>
             </FadeUp>
           ))}
@@ -557,11 +557,7 @@ function Certificates() {
       className="bg-stone/24 py-20 dark:bg-white/[0.03] md:py-24"
     >
       <div className="section-shell">
-        <SectionHeading
-          eyebrow="Certifications"
-          title="Training that supports each session."
-          copy="A clear view of the education behind the practice across yoga, strength, recovery, nutrition, and body-aware movement."
-        />
+        <SectionHeading eyebrow="My Certifications" />
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {certificates.map((certificate, index) => (
             <CertificateCard
@@ -616,9 +612,9 @@ function CertificateCard({
   };
 
   return (
-    <FadeUp delay={delay}>
+    <FadeUp delay={delay} className="h-full">
       <div
-        className="group relative min-h-full"
+        className="group relative h-full"
         onMouseEnter={(event) =>
           onPreview(certificate, event.clientX, event.clientY)
         }
@@ -634,7 +630,7 @@ function CertificateCard({
           target="_blank"
           rel="noreferrer"
           aria-label={`Open ${certificate.title} certificate in a new tab`}
-          className={`block min-h-full rounded-[24px] border bg-linen/78 p-5 shadow-innerGlow outline-none transition hover:-translate-y-1 hover:border-ember/40 hover:shadow-earthy focus-visible:-translate-y-1 focus-visible:border-ember focus-visible:ring-4 focus-visible:ring-ember/18 dark:bg-white/5 ${
+          className={`flex h-full flex-col rounded-[24px] border bg-linen/78 p-5 shadow-innerGlow outline-none transition hover:-translate-y-1 hover:border-ember/40 hover:shadow-earthy focus-visible:-translate-y-1 focus-visible:border-ember focus-visible:ring-4 focus-visible:ring-ember/18 dark:bg-white/5 ${
             isPreviewed
               ? "border-ember/48 dark:border-ember/55"
               : "border-walnut/10 dark:border-white/10"
@@ -654,7 +650,7 @@ function CertificateCard({
           <p className="mt-2 text-sm font-bold text-walnut/70 dark:text-stone">
             {certificate.issuer}
           </p>
-          <span className="mt-5 inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.18em] text-forest transition group-hover:text-ember dark:text-sage">
+          <span className="mt-auto inline-flex items-center gap-2 pt-5 text-xs font-extrabold uppercase tracking-[0.18em] text-forest transition group-hover:text-ember dark:text-sage">
             View certificate <ExternalLink size={14} />
           </span>
         </a>
@@ -697,13 +693,16 @@ function CertificatePreviewPopover({
 function Contact() {
   return (
     <section id="contact" className="relative py-20 md:py-24">
-      <div className="section-shell grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
-        <div>
-          <SectionHeading eyebrow="Contact" title="Get in touch." copy="" />
-          <FadeUp className="flex flex-col gap-3 sm:flex-row">
+      <div className="section-shell">
+        <SectionHeading eyebrow="Contact" />
+        <FadeUp className="-mt-3">
+          <p className="max-w-xl text-base leading-8 text-[color:var(--muted)]">
+            Questions about classes or training? Get in touch.
+          </p>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <a
               href="https://instagram.com/yinforyoga"
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-walnut/18 bg-linen/54 px-5 text-sm font-bold text-bark backdrop-blur transition hover:-translate-y-0.5 hover:bg-stone/45 dark:border-white/10 dark:bg-white/5 dark:text-linen"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-forest px-5 text-sm font-bold text-linen shadow-soft transition hover:-translate-y-0.5 hover:bg-ember"
             >
               <Instagram size={17} /> Instagram
             </a>
@@ -713,8 +712,8 @@ function Contact() {
             >
               <Mail size={17} /> Email
             </a>
-          </FadeUp>
-        </div>
+          </div>
+        </FadeUp>
       </div>
     </section>
   );
@@ -722,7 +721,7 @@ function Contact() {
 
 function Footer() {
   return (
-    <footer className="bg-bark px-4 py-10 text-linen">
+    <footer className="bg-bark py-10 text-linen">
       <div className="section-shell flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="font-serif text-3xl">Yin for Yoga</p>

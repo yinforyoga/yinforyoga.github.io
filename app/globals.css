@@ -159,8 +159,14 @@ body::before {
 }
 
 .section-shell {
-  width: min(1180px, calc(100% - 32px));
+  width: min(1180px, calc(100% - 64px));
   margin-inline: auto;
+}
+
+@media (max-width: 639px) {
+  .section-shell {
+    width: calc(100% - 32px);
+  }
 }
 
 .text-balance {
@@ -266,6 +272,94 @@ body::before {
 
 .dark .site-nav-icon-button:hover {
   background: rgba(185, 208, 196, 0.2);
+}
+
+.testimonial-chat {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.testimonial-message {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.whatsapp-bubble {
+  position: relative;
+  width: fit-content;
+  max-width: min(58%, 32rem);
+  border-radius: 6px 18px 18px 18px;
+  padding: 1rem 1rem 0.65rem;
+  background: #dff4dc;
+  box-shadow: 0 2px 5px rgba(37, 36, 34, 0.1);
+}
+
+.testimonial-message:nth-child(2n) .whatsapp-bubble {
+  max-width: min(64%, 35rem);
+}
+
+.testimonial-message:nth-child(3n) .whatsapp-bubble {
+  max-width: min(54%, 30rem);
+}
+
+.testimonial-message:nth-child(4n) .whatsapp-bubble {
+  max-width: min(61%, 33rem);
+}
+
+.whatsapp-bubble::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -8px;
+  width: 14px;
+  height: 14px;
+  background: #dff4dc;
+  clip-path: polygon(100% 0, 100% 100%, 0 0);
+}
+
+.whatsapp-sender {
+  margin-bottom: 0.35rem;
+  color: #c44f2e;
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.testimonial-message:nth-child(2n) .whatsapp-sender {
+  color: #4267a8;
+}
+
+.testimonial-message:nth-child(3n) .whatsapp-sender {
+  color: #8a5a12;
+}
+
+.dark .whatsapp-bubble,
+.dark .whatsapp-bubble::before {
+  background: #173f35;
+}
+
+@media (max-width: 767px) {
+  .whatsapp-bubble {
+    max-width: 62%;
+    padding: 0.8rem 0.85rem 0.55rem;
+  }
+
+  .testimonial-message:nth-child(2n) .whatsapp-bubble {
+    max-width: 68%;
+  }
+
+  .testimonial-message:nth-child(3n) .whatsapp-bubble {
+    max-width: 58%;
+  }
+
+  .testimonial-message:nth-child(4n) .whatsapp-bubble {
+    max-width: 65%;
+  }
+
+  .whatsapp-bubble p:not(.whatsapp-sender) {
+    font-size: 0.92rem;
+    line-height: 1.55rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
