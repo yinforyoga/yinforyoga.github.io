@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, Moon, SunMedium, X } from "lucide-react";
+import { Moon, SunMedium } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { navItems } from "@/lib/data";
 import { useTheme } from "./ThemeProvider";
@@ -180,15 +180,33 @@ export function Navbar() {
             type="button"
             onClick={() => setOpen((current) => !current)}
             className="site-nav-icon-button grid h-10 w-10 place-items-center rounded-full border transition lg:hidden"
-            aria-label="Toggle navigation"
+            aria-label={open ? "Close navigation" : "Open navigation"}
+            aria-expanded={open}
+            aria-controls="mobile-navigation"
           >
-            {open ? <X size={20} /> : <Menu size={20} />}
+            <span className="relative block h-5 w-5" aria-hidden="true">
+              <span
+                className={`absolute left-0 top-[3px] block h-0.5 w-5 rounded-full bg-current transition-transform duration-300 ease-out motion-reduce:transition-none ${
+                  open ? "translate-y-[7px] rotate-45" : ""
+                }`}
+              />
+              <span
+                className={`absolute left-0 top-[10px] block h-0.5 w-5 rounded-full bg-current transition-[opacity,transform] duration-200 ease-out motion-reduce:transition-none ${
+                  open ? "scale-x-0 opacity-0" : ""
+                }`}
+              />
+              <span
+                className={`absolute left-0 top-[17px] block h-0.5 w-5 rounded-full bg-current transition-transform duration-300 ease-out motion-reduce:transition-none ${
+                  open ? "-translate-y-[7px] -rotate-45" : ""
+                }`}
+              />
+            </span>
           </button>
         </div>
       </div>
 
       {open ? (
-        <nav className="site-nav-mobile mx-auto mt-3 grid max-w-7xl gap-2 rounded-[28px] border p-4 backdrop-blur-2xl lg:hidden">
+        <nav id="mobile-navigation" className="site-nav-mobile mx-auto mt-3 grid max-w-7xl gap-2 rounded-[28px] border p-4 backdrop-blur-2xl lg:hidden">
           {navItems.map((item) => {
             const isActive = activeSection === item.href;
 
