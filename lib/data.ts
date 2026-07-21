@@ -58,13 +58,15 @@ export type OfferingSchedule = {
 export type OfferingPrice =
   | {
       type: "fixed";
-      amountInr: number;
+      regions: Record<string, { amount: number; currency: string }>;
       suffix?: string;
     }
   | {
       type: "range";
-      minInr: number;
-      maxInr: number;
+      regions: Record<
+        string,
+        { min: number; max: number; currency: string }
+      >;
       suffix?: string;
     };
 
@@ -104,8 +106,6 @@ export const navItems = [
   { label: "Contact", href: "#contact" },
 ];
 
-export const registrationFormUrl = "https://forms.gle/...";
-
 export const offerings: Offering[] = [
   {
     title: "Yin for Strength",
@@ -133,12 +133,28 @@ export const offerings: Offering[] = [
     },
     price: {
       type: "fixed",
-      amountInr: 1600,
+      regions: {
+        IN: { amount: 1600, currency: "INR" },
+        US: { amount: 19, currency: "USD" },
+        CA: { amount: 26, currency: "CAD" },
+        GB: { amount: 15, currency: "GBP" },
+        AU: { amount: 29, currency: "AUD" },
+        NZ: { amount: 32, currency: "NZD" },
+        AE: { amount: 70, currency: "AED" },
+        SG: { amount: 26, currency: "SGD" },
+        JP: { amount: 2880, currency: "JPY" },
+        DE: { amount: 18, currency: "EUR" },
+        FR: { amount: 18, currency: "EUR" },
+        IT: { amount: 18, currency: "EUR" },
+        ES: { amount: 18, currency: "EUR" },
+        NL: { amount: 18, currency: "EUR" },
+        IE: { amount: 18, currency: "EUR" },
+      },
       suffix: "/ month",
     },
     mode: "Online",
     status: "Registrations Open",
-    formUrl: registrationFormUrl,
+    formUrl: "https://forms.gle/{}",
     icon: BicepsFlexed,
     description:
       "Train from the comfort of your home with a one-hour guided session each day. No workout planning required. Just show up and move.",
@@ -181,12 +197,28 @@ export const offerings: Offering[] = [
       },
       price: {
         type: "fixed",
-        amountInr: 2400,
+        regions: {
+          IN: { amount: 2400, currency: "INR" },
+          US: { amount: 29, currency: "USD" },
+          CA: { amount: 38, currency: "CAD" },
+          GB: { amount: 22, currency: "GBP" },
+          AU: { amount: 43, currency: "AUD" },
+          NZ: { amount: 48, currency: "NZD" },
+          AE: { amount: 106, currency: "AED" },
+          SG: { amount: 38, currency: "SGD" },
+          JP: { amount: 4320, currency: "JPY" },
+          DE: { amount: 26, currency: "EUR" },
+          FR: { amount: 26, currency: "EUR" },
+          IT: { amount: 26, currency: "EUR" },
+          ES: { amount: 26, currency: "EUR" },
+          NL: { amount: 26, currency: "EUR" },
+          IE: { amount: 26, currency: "EUR" },
+        },
         suffix: "/ month",
       },
       mode: "Online",
       status: "Registrations Open",
-      formUrl: registrationFormUrl,
+      formUrl: "https://forms.gle/{}",
       icon: Sprout,
       description:
         "Asana • Pranayama • Meditation",

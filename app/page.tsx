@@ -1,5 +1,7 @@
 "use client";
 
+// TODO: WhatsApp (Number)
+
 import { useEffect, useState } from "react";
 import {
   ArrowRight,
@@ -24,7 +26,6 @@ import {
   type OfferingScheduleItem,
   type OfferingWeekday,
   offerings,
-  registrationFormUrl,
   testimonials,
 } from "@/lib/data";
 import { FadeUp, MotionSection } from "@/components/MotionPrimitives";
@@ -256,17 +257,21 @@ function PricingInfo({ price }: { price: OfferingPrice }) {
     setRegion(getRegionFromTimeZone(timeZone) ?? locale.region ?? "IN");
   }, []);
 
-  const currency = getRegionalCurrency(region);
-  const formatAmount = (amount: number) =>
+  const formatAmount = (amount: number, currency: string) =>
     new Intl.NumberFormat(undefined, {
       style: "currency",
-      currency: currency.code,
+      currency,
       maximumFractionDigits: 0,
-    }).format(amount * currency.inrRate);
-  const amount =
-    price.type === "fixed"
-      ? formatAmount(price.amountInr)
-      : `${formatAmount(price.minInr)} – ${formatAmount(price.maxInr)}`;
+    }).format(amount);
+  const amount = (() => {
+    if (price.type === "fixed") {
+      const regionalPrice = price.regions[region] ?? price.regions.IN;
+      return formatAmount(regionalPrice.amount, regionalPrice.currency);
+    }
+
+    const regionalPrice = price.regions[region] ?? price.regions.IN;
+    return `${formatAmount(regionalPrice.min, regionalPrice.currency)} – ${formatAmount(regionalPrice.max, regionalPrice.currency)}`;
+  })();
 
   return (
     <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-forest/10 bg-forest/[0.04] p-4 dark:border-linen/10 dark:bg-linen/[0.04] sm:p-5">
@@ -288,30 +293,6 @@ function PricingInfo({ price }: { price: OfferingPrice }) {
       </p>
     </div>
   );
-}
-
-const regionalCurrencies: Record<
-  string,
-  { code: string; inrRate: number }
-> = {
-  US: { code: "USD", inrRate: 0.012 },
-  CA: { code: "CAD", inrRate: 0.016 },
-  GB: { code: "GBP", inrRate: 0.0093 },
-  AU: { code: "AUD", inrRate: 0.018 },
-  NZ: { code: "NZD", inrRate: 0.02 },
-  AE: { code: "AED", inrRate: 0.044 },
-  SG: { code: "SGD", inrRate: 0.016 },
-  JP: { code: "JPY", inrRate: 1.8 },
-  DE: { code: "EUR", inrRate: 0.011 },
-  FR: { code: "EUR", inrRate: 0.011 },
-  IT: { code: "EUR", inrRate: 0.011 },
-  ES: { code: "EUR", inrRate: 0.011 },
-  NL: { code: "EUR", inrRate: 0.011 },
-  IE: { code: "EUR", inrRate: 0.011 },
-};
-
-function getRegionalCurrency(region: string) {
-  return regionalCurrencies[region] ?? { code: "INR", inrRate: 1 };
 }
 
 function getRegionFromTimeZone(timeZone: string) {
@@ -878,29 +859,5 @@ function Contact() {
         </FadeUp>
       </div>
     </section>
-  );
-}
-
-function Footer() {
-  return (
-    <footer className="bg-bark py-10 text-linen">
-      <div className="section-shell flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="font-serif text-3xl">Yin for Yoga</p>
-          <p className="mt-3 max-w-xl text-sm leading-7 text-linen/62">
-            Online yoga workshops and theme-based classes with simple Google
-            Form registration.
-          </p>
-        </div>
-        <a
-          href={registrationFormUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-2 text-sm font-extrabold text-linen/80 transition hover:text-ember"
-        >
-          Register <MoveRight size={16} />
-        </a>
-      </div>
-    </footer>
   );
 }
