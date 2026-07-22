@@ -235,7 +235,7 @@ export const offerings: Offering[] = [
         { label: "Yoga Mat", icon: RectangleHorizontal },
         { label: "Yoga Blocks", icon: Blocks },
         { label: "Yoga Strap", icon: StretchHorizontal},
-        { label: "Yoga (or any) Chair", icon: RockingChair},
+        { label: "(Yoga) Chair", icon: RockingChair},
       ],
     }
 ];
