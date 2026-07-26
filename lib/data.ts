@@ -154,7 +154,7 @@ export const offerings: Offering[] = [
     },
     mode: "Online",
     status: "Registrations Open",
-    formUrl: "https://forms.gle/{}",
+    formUrl: "https://docs.google.com/forms/d/e/1FAIpQLSeLPbLT6HMXT_r6DEidr1uPZmEQ6Z_k_FJs43pFsw1H9wJ7Eg/viewform?usp=dialog",
     icon: BicepsFlexed,
     description:
       "Train from the comfort of your home with a one-hour guided session each day. No workout planning required. Just show up and move.",
@@ -218,7 +218,7 @@ export const offerings: Offering[] = [
       },
       mode: "Online",
       status: "Registrations Open",
-      formUrl: "https://forms.gle/{}",
+      formUrl: "https://docs.google.com/forms/d/e/1FAIpQLSfQIQ2l_FsHU6S0LR4obRv1HR57vj4HJe2vqR-6pgzpAN4IvQ/viewform?usp=header",
       icon: Sprout,
       description:
         "Asana • Pranayama • Meditation",
