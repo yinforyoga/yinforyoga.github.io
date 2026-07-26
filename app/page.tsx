@@ -793,9 +793,6 @@ function CertificateCard({
           <p className="mt-2 text-sm font-bold text-walnut/70 dark:text-stone">
             {certificate.issuer}
           </p>
-          <span className="mt-auto inline-flex items-center gap-2 pt-5 text-xs font-extrabold uppercase tracking-[0.18em] text-forest transition group-hover:text-ember dark:text-sage">
-            View certificate <ExternalLink size={14} />
-          </span>
         </a>
       </div>
     </FadeUp>
