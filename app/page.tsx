@@ -200,7 +200,7 @@ function OfferingCard({
       <article className="flex min-h-full w-full flex-col rounded-[28px] border border-walnut/10 bg-[color:var(--panel-strong)] p-5 shadow-earthy backdrop-blur dark:border-white/10 sm:p-6">
         <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <div className="flex min-w-0 flex-1 flex-col items-center gap-3 sm:flex-row sm:items-center">
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-stone/48 text-forest dark:bg-white/10 dark:text-linen">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-stone/50 text-forest dark:bg-white/10 dark:text-linen">
               <Icon size={20} />
             </span>
             <div className="min-w-0 text-center sm:text-left">
@@ -848,7 +848,7 @@ function Contact() {
             </a>
             <a
               href="mailto:yinforyoga@gmail.com"
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-walnut/18 bg-linen/54 px-5 text-sm font-bold text-bark backdrop-blur transition hover:-translate-y-0.5 hover:bg-stone/45 dark:border-white/10 dark:bg-white/5 dark:text-linen hover:border-ember hover:text-ember"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-walnut/18 bg-linen/54 px-5 text-sm font-bold text-bark backdrop-blur transition hover:-translate-y-0.5 hover:border-ember hover:text-ember dark:border-white/10 dark:bg-white/5 dark:text-linen dark"
             >
               <Mail size={17} /> Email
             </a>
