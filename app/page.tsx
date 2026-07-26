@@ -424,11 +424,11 @@ function ScheduleInfo({ schedule }: { schedule: OfferingSchedule }) {
           <FormattedScheduleTime schedule={schedule} timeZone={displayTimeZone} />
         </p>
       </div>
-      <ul className="mx-auto mt-5 grid max-w-md gap-3">
+      <ul className="mx-auto mt-5 flex justify-center max-w-md gap-3">
         {schedule.split.map((item) => (
           <li
             key={`${item.days.join("-")}-${item.classType}`}
-            className="grid content-start justify-items-center gap-3 rounded-xl bg-stone/25 p-3.5 text-center dark:bg-white/[0.05]"
+            className="grid content-start justify-items-center grow gap-3 rounded-xl bg-stone/25 p-3.5 text-center dark:bg-white/[0.05]"
           >
             <p className="text-sm font-extrabold leading-5 text-bark dark:text-linen">
               {item.classType}

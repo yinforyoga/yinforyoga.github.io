@@ -110,7 +110,7 @@ export const offerings: Offering[] = [
   {
     title: "Yin for Strength",
     eyebrow: "Ongoing",
-    theme: "Regular strength training (and yoga) group classes",
+    theme: "Group Strength Training (+ Yoga) Classes",
     schedule: {
       startTime: { hour: 5, meridiem: "pm" },
       endTime: { hour: 6, meridiem: "pm" },
@@ -157,7 +157,7 @@ export const offerings: Offering[] = [
     formUrl: "https://docs.google.com/forms/d/e/1FAIpQLSeLPbLT6HMXT_r6DEidr1uPZmEQ6Z_k_FJs43pFsw1H9wJ7Eg/viewform?usp=dialog",
     icon: BicepsFlexed,
     description:
-      "Train from the comfort of your home with a one-hour guided session each day. No workout planning required. Just show up and move.",
+      "Home Workout • Strength Training • Guided",
     details: [
       "Fat loss",
       "Lean muscle gain",
