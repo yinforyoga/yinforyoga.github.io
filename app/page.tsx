@@ -346,16 +346,16 @@ function PricingInfo({
         <DurationTabs duration={duration} onChange={setDuration} />
         <div className="flex flex-col items-end gap-1">
           <div className="flex flex-wrap items-baseline justify-end gap-x-2 gap-y-1">
+            {duration !== 1 ? (
+              <span className="font-sans text-sm font-medium text-[color:var(--muted)] line-through decoration-ember/70">
+                {extrapolated}
+              </span>
+            ) : null}
             <p className="text-right font-sans text-xl font-semibold text-bark dark:text-linen">
               {actual}
             </p>
           </div>
           <p className="flex flex-wrap items-baseline justify-end gap-x-1.5 gap-y-1 text-xs font-medium text-[color:var(--muted)]">
-            {duration !== 1 ? (
-              <span className="line-through decoration-ember/70">
-                {perClassBaseline}
-              </span>
-            ) : null}
             <span>{perClassActual}</span>
             <span>/ class</span>
           </p>
@@ -417,8 +417,8 @@ function DurationTabs({
           type="button"
           onClick={() => onChange(option)}
           className={`relative z-10 rounded-full px-2.5 py-1 text-xs font-bold transition-colors ${duration === option
-              ? "text-linen dark:text-bark"
-              : "text-walnut/68 hover:text-bark dark:text-stone dark:hover:text-linen"
+            ? "text-linen dark:text-bark"
+            : "text-walnut/68 hover:text-bark dark:text-stone dark:hover:text-linen"
             }`}
         >
           {option} mo
@@ -467,8 +467,8 @@ function EquipmentInfo({
           <li
             key={label}
             className={`group relative ${items.length % 2 === 1 && index === items.length - 1
-                ? "col-span-2 justify-self-center sm:col-span-1"
-                : ""
+              ? "col-span-2 justify-self-center sm:col-span-1"
+              : ""
               }`}
           >
             <span
@@ -908,8 +908,8 @@ function CertificateCard({
           rel="noreferrer"
           aria-label={`Open ${certificate.title} certificate in a new tab`}
           className={`flex h-full flex-col rounded-[24px] border bg-linen/78 p-5 shadow-innerGlow outline-none transition hover:-translate-y-1 hover:border-ember/40 hover:shadow-earthy focus-visible:-translate-y-1 focus-visible:border-ember focus-visible:ring-4 focus-visible:ring-ember/18 dark:bg-white/5 ${isPreviewed
-              ? "border-ember/48 dark:border-ember/55"
-              : "border-walnut/10 dark:border-white/10"
+            ? "border-ember/48 dark:border-ember/55"
+            : "border-walnut/10 dark:border-white/10"
             }`}
         >
           <div className="mb-5 flex items-center justify-between gap-4">
