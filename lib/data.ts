@@ -134,7 +134,7 @@ export const offerings: Offering[] = [
     price: {
       type: "fixed",
       regions: {
-        IN: { amount: 1600, currency: "INR" },
+        IN: { amount: 2400, currency: "INR" },
         US: { amount: 19, currency: "USD" },
         CA: { amount: 26, currency: "CAD" },
         GB: { amount: 15, currency: "GBP" },
@@ -181,8 +181,8 @@ export const offerings: Offering[] = [
       eyebrow: "Ongoing",
       theme: "Group Yoga Classes",
       schedule: {
-        startTime: { hour: 5, meridiem: "pm" },
-        endTime: { hour: 6, meridiem: "pm" },
+        startTime: { hour: 6, meridiem: "pm" },
+        endTime: { hour: 7, meridiem: "pm" },
         timezone: {
           id: "Asia/Kolkata",
           label: "IST",
@@ -190,7 +190,7 @@ export const offerings: Offering[] = [
         },
         split: [
           {
-            days: ["Tue", "Thu"],
+            days: ["Tue", "Wed", "Thu"],
             classType: "Yoga",
           },
         ],
