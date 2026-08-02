@@ -5,6 +5,7 @@ out/
 dev-server.log
 dev-server.err.log
 npm-debug.log*
+*.tsbuildinfo
 
 # macOS
 .DS_Store
