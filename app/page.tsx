@@ -327,9 +327,6 @@ function EquipmentInfo({
           <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.2em] text-walnut/68 dark:text-stone">
             Equipment
           </p>
-          <p className="mt-0.5 text-[0.68rem] leading-4 text-[color:var(--muted)]">
-            Recommended items to support the practice
-          </p>
         </div>
       </div>
       <ul className="mx-auto grid shrink-0 grid-cols-2 justify-center gap-3 sm:ml-auto sm:mr-0 sm:flex sm:justify-end">
