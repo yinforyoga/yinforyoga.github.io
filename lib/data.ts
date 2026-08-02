@@ -57,16 +57,16 @@ export type OfferingSchedule = {
 
 export type OfferingPrice =
   | {
-      type: "fixed";
-      regions: Record<string, { amount: number; currency: string }>;
-    }
+    type: "fixed";
+    regions: Record<string, { amount: number; currency: string }>;
+  }
   | {
-      type: "range";
-      regions: Record<
-        string,
-        { min: number; max: number; currency: string }
-      >;
-    };
+    type: "range";
+    regions: Record<
+      string,
+      { min: number; max: number; currency: string }
+    >;
+  };
 
 // Multi-month packages are priced at a lower effective monthly rate than the
 // 1-month price. These discounts (12.5% for 2 months, 25% for 3 months) come
@@ -79,12 +79,33 @@ export const durationDiscounts: Record<1 | 2 | 3, number> = {
   3: 0.25,
 };
 
+// Add-on classes (e.g. the optional Thursday Yoga session tacked onto Yin for
+// Strength) are priced separately from the offering's mandatory classes, and
+// discount faster with commitment length (25% for 2 months, 50% for 3) since
+// the per-class rate drops ₹100 → ₹75 → ₹50.
+export const addOnDurationDiscounts: Record<1 | 2 | 3, number> = {
+  1: 0,
+  2: 0.25,
+  3: 0.4,
+};
+
+export type OfferingAddOn = {
+  label: string;
+  classType: OfferingClassType;
+  price: {
+    type: "fixed";
+    regions: Record<string, { amount: number; currency: string }>;
+  };
+  durationDiscounts: Record<1 | 2 | 3, number>;
+};
+
 export type Offering = {
   title: string;
   eyebrow: string;
   theme: string;
   schedule: OfferingSchedule;
   price: OfferingPrice;
+  addOn?: OfferingAddOn;
   mode: OfferingMode;
   status: OfferingStatus;
   formUrl: string;
@@ -162,6 +183,35 @@ export const offerings: Offering[] = [
         IE: { amount: 18, currency: "EUR" },
       },
     },
+    // TODO: only the IN amount (₹100/class × 4 classes/month) is a confirmed
+    // price. The rest are provisional, scaled from this offering's own
+    // regional/INR ratio above (e.g. US = 400 × (19 / 2400) ≈ 3) — review
+    // and replace with actual figures before launch.
+    addOn: {
+      label: "Yoga",
+      classType: "Yoga",
+      price: {
+        type: "fixed",
+        regions: {
+          IN: { amount: 400, currency: "INR" },
+          US: { amount: 3, currency: "USD" },
+          CA: { amount: 4, currency: "CAD" },
+          GB: { amount: 3, currency: "GBP" },
+          AU: { amount: 5, currency: "AUD" },
+          NZ: { amount: 5, currency: "NZD" },
+          AE: { amount: 12, currency: "AED" },
+          SG: { amount: 4, currency: "SGD" },
+          JP: { amount: 480, currency: "JPY" },
+          DE: { amount: 3, currency: "EUR" },
+          FR: { amount: 3, currency: "EUR" },
+          IT: { amount: 3, currency: "EUR" },
+          ES: { amount: 3, currency: "EUR" },
+          NL: { amount: 3, currency: "EUR" },
+          IE: { amount: 3, currency: "EUR" },
+        },
+      },
+      durationDiscounts: addOnDurationDiscounts,
+    },
     mode: "Online",
     status: "Registrations Open",
     formUrl: "https://docs.google.com/forms/d/e/1FAIpQLSeLPbLT6HMXT_r6DEidr1uPZmEQ6Z_k_FJs43pFsw1H9wJ7Eg/viewform?usp=dialog",
@@ -187,66 +237,66 @@ export const offerings: Offering[] = [
     ],
   },
   {
-      title: "Yin for Yoga",
-      eyebrow: "Ongoing",
-      theme: "Group Yoga Classes",
-      schedule: {
-        timezone: {
-          id: "Asia/Kolkata",
-          label: "IST",
-          utcOffsetMinutes: 330,
-        },
-        split: [
-          {
-            days: ["Tue", "Wed", "Thu"],
-            classType: "Yoga",
-            startTime: { hour: 6, meridiem: "pm" },
-            endTime: { hour: 7, meridiem: "pm" },
-          },
-        ],
+    title: "Yin for Yoga",
+    eyebrow: "Ongoing",
+    theme: "Group Yoga Classes",
+    schedule: {
+      timezone: {
+        id: "Asia/Kolkata",
+        label: "IST",
+        utcOffsetMinutes: 330,
       },
-      price: {
-        type: "fixed",
-        regions: {
-          IN: { amount: 2400, currency: "INR" },
-          US: { amount: 29, currency: "USD" },
-          CA: { amount: 38, currency: "CAD" },
-          GB: { amount: 22, currency: "GBP" },
-          AU: { amount: 43, currency: "AUD" },
-          NZ: { amount: 48, currency: "NZD" },
-          AE: { amount: 106, currency: "AED" },
-          SG: { amount: 38, currency: "SGD" },
-          JP: { amount: 4320, currency: "JPY" },
-          DE: { amount: 26, currency: "EUR" },
-          FR: { amount: 26, currency: "EUR" },
-          IT: { amount: 26, currency: "EUR" },
-          ES: { amount: 26, currency: "EUR" },
-          NL: { amount: 26, currency: "EUR" },
-          IE: { amount: 26, currency: "EUR" },
+      split: [
+        {
+          days: ["Tue", "Wed", "Thu"],
+          classType: "Yoga",
+          startTime: { hour: 6, meridiem: "pm" },
+          endTime: { hour: 7, meridiem: "pm" },
         },
+      ],
+    },
+    price: {
+      type: "fixed",
+      regions: {
+        IN: { amount: 2400, currency: "INR" },
+        US: { amount: 29, currency: "USD" },
+        CA: { amount: 38, currency: "CAD" },
+        GB: { amount: 22, currency: "GBP" },
+        AU: { amount: 43, currency: "AUD" },
+        NZ: { amount: 48, currency: "NZD" },
+        AE: { amount: 106, currency: "AED" },
+        SG: { amount: 38, currency: "SGD" },
+        JP: { amount: 4320, currency: "JPY" },
+        DE: { amount: 26, currency: "EUR" },
+        FR: { amount: 26, currency: "EUR" },
+        IT: { amount: 26, currency: "EUR" },
+        ES: { amount: 26, currency: "EUR" },
+        NL: { amount: 26, currency: "EUR" },
+        IE: { amount: 26, currency: "EUR" },
       },
-      mode: "Online",
-      status: "Registrations Open",
-      formUrl: "https://docs.google.com/forms/d/e/1FAIpQLSfQIQ2l_FsHU6S0LR4obRv1HR57vj4HJe2vqR-6pgzpAN4IvQ/viewform?usp=header",
-      icon: Sprout,
-      description:
-        "Asana • Pranayama • Meditation",
-      details: [
-        "Mobility",
-        "Mindfulness",
-        "Flexibility",
-      ],
-      bestFor: [
-        "Anyone who wants to practise Yoga regularly",
-        "Beginner and intermediate Yoga practitioners",
-      ],
-      equipment: [
-        { label: "Yoga Mat", icon: RectangleHorizontal },
-        { label: "Yoga Blocks", icon: Blocks },
-        { label: "Yoga Strap", icon: StretchHorizontal},
-        { label: "(Yoga) Chair", icon: RockingChair},
-      ],
-    }
+    },
+    mode: "Online",
+    status: "Registrations Open",
+    formUrl: "https://docs.google.com/forms/d/e/1FAIpQLSfQIQ2l_FsHU6S0LR4obRv1HR57vj4HJe2vqR-6pgzpAN4IvQ/viewform?usp=header",
+    icon: Sprout,
+    description:
+      "Asana • Pranayama • Meditation",
+    details: [
+      "Mobility",
+      "Mindfulness",
+      "Flexibility",
+    ],
+    bestFor: [
+      "Anyone who wants to practise Yoga regularly",
+      "Beginner and intermediate Yoga practitioners",
+    ],
+    equipment: [
+      { label: "Yoga Mat", icon: RectangleHorizontal },
+      { label: "Yoga Blocks", icon: Blocks },
+      { label: "Yoga Strap", icon: StretchHorizontal },
+      { label: "(Yoga) Chair", icon: RockingChair },
+    ],
+  }
 ];
 export const certificates = [
   {

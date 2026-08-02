@@ -8,6 +8,7 @@ import {
   Banknote,
   BookOpen,
   CalendarDays,
+  Check,
   CheckCircle2,
   ExternalLink,
   Instagram,
@@ -21,6 +22,7 @@ import {
   certificates,
   durationDiscounts,
   type Offering,
+  type OfferingAddOn,
   type OfferingLocalTime,
   type OfferingPrice,
   type OfferingSchedule,
@@ -234,7 +236,11 @@ function OfferingCard({
           <ScheduleInfo schedule={offering.schedule} />
         </div>
 
-        <PricingInfo price={offering.price} schedule={offering.schedule} />
+        <PricingInfo
+          price={offering.price}
+          schedule={offering.schedule}
+          addOn={offering.addOn}
+        />
 
         {offering.equipment?.length ? (
           <EquipmentInfo items={offering.equipment} />
@@ -249,23 +255,59 @@ function OfferingCard({
   );
 }
 
-function getWeeklyClassCount(schedule: OfferingSchedule) {
+function getWeeklyClassCount(
+  schedule: OfferingSchedule,
+  includeOptional: boolean,
+) {
   const count = schedule.split
-    .filter((item) => !item.optional)
+    .filter((item) => !item.optional || includeOptional)
     .reduce((total, item) => total + item.days.length, 0);
 
   return count || 1;
 }
 
+function formatTotal(amount: number, currency: string) {
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+function formatPerClass(amount: number, currency: string) {
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+// Total price for `duration` months at a monthly rate of `amount`, discounted
+// per a duration-discount table. Mirrors the 1-month passthrough + rounded
+// discount behavior the pricing card has always used, factored out so the
+// base price and an optional add-on's price can be computed and then summed.
+function getDiscountedTotal(
+  amount: number,
+  duration: 1 | 2 | 3,
+  discount: number,
+) {
+  if (duration === 1) return amount;
+  return Math.round(amount * duration * (1 - discount));
+}
+
 function PricingInfo({
   price,
   schedule,
+  addOn,
 }: {
   price: OfferingPrice;
   schedule: OfferingSchedule;
+  addOn?: OfferingAddOn;
 }) {
   const [region, setRegion] = useState("IN");
   const [duration, setDuration] = useState<1 | 2 | 3>(1);
+  const [includeAddOn, setIncludeAddOn] = useState(false);
 
   useEffect(() => {
     const locale = new Intl.Locale(navigator.language);
@@ -273,65 +315,116 @@ function PricingInfo({
     setRegion(getRegionFromTimeZone(timeZone) ?? locale.region ?? "IN");
   }, []);
 
-  const formatTotal = (amount: number, currency: string) =>
-    new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency,
-      maximumFractionDigits: 0,
-    }).format(amount);
-
-  const formatPerClass = (amount: number, currency: string) =>
-    new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    }).format(amount);
-
   const discount = durationDiscounts[duration];
-  const classesPerMonth = getWeeklyClassCount(schedule) * 4;
 
-  const { actual, extrapolated, perClassActual, perClassBaseline } = (() => {
-    if (price.type === "fixed") {
-      const regionalPrice = price.regions[region] ?? price.regions.IN;
-      const extrapolatedAmount = regionalPrice.amount * duration;
-      const actualAmount =
-        duration === 1
-          ? regionalPrice.amount
-          : Math.round(extrapolatedAmount * (1 - discount));
-      const perClassBaselineAmount = regionalPrice.amount / classesPerMonth;
-      const perClassActualAmount = perClassBaselineAmount * (1 - discount);
-      return {
-        actual: formatTotal(actualAmount, regionalPrice.currency),
-        extrapolated: formatTotal(extrapolatedAmount, regionalPrice.currency),
-        perClassActual: formatPerClass(perClassActualAmount, regionalPrice.currency),
-        perClassBaseline: formatPerClass(perClassBaselineAmount, regionalPrice.currency),
-      };
-    }
-
+  if (price.type !== "fixed") {
+    // Add-ons are only modeled for fixed pricing (the only kind in use
+    // today); range-priced offerings render the original layout untouched.
+    const classesPerMonth = getWeeklyClassCount(schedule, false) * 4;
     const regionalPrice = price.regions[region] ?? price.regions.IN;
     const extrapolatedMin = regionalPrice.min * duration;
     const extrapolatedMax = regionalPrice.max * duration;
-    const actualMin =
-      duration === 1
-        ? regionalPrice.min
-        : Math.round(extrapolatedMin * (1 - discount));
-    const actualMax =
-      duration === 1
-        ? regionalPrice.max
-        : Math.round(extrapolatedMax * (1 - discount));
-    const perClassBaselineMin = regionalPrice.min / classesPerMonth;
-    const perClassBaselineMax = regionalPrice.max / classesPerMonth;
-    const perClassActualMin = perClassBaselineMin * (1 - discount);
-    const perClassActualMax = perClassBaselineMax * (1 - discount);
-    return {
-      actual: `${formatTotal(actualMin, regionalPrice.currency)} – ${formatTotal(actualMax, regionalPrice.currency)}`,
-      extrapolated: `${formatTotal(extrapolatedMin, regionalPrice.currency)} – ${formatTotal(extrapolatedMax, regionalPrice.currency)}`,
-      perClassActual: `${formatPerClass(perClassActualMin, regionalPrice.currency)} – ${formatPerClass(perClassActualMax, regionalPrice.currency)}`,
-      perClassBaseline: `${formatPerClass(perClassBaselineMin, regionalPrice.currency)} – ${formatPerClass(perClassBaselineMax, regionalPrice.currency)}`,
-    };
-  })();
+    const actualMin = getDiscountedTotal(regionalPrice.min, duration, discount);
+    const actualMax = getDiscountedTotal(regionalPrice.max, duration, discount);
+    const perClassActualMin =
+      (regionalPrice.min / classesPerMonth) * (1 - discount);
+    const perClassActualMax =
+      (regionalPrice.max / classesPerMonth) * (1 - discount);
 
+    return (
+      <PricingCard
+        actual={`${formatTotal(actualMin, regionalPrice.currency)} – ${formatTotal(actualMax, regionalPrice.currency)}`}
+        extrapolated={
+          duration !== 1
+            ? `${formatTotal(extrapolatedMin, regionalPrice.currency)} – ${formatTotal(extrapolatedMax, regionalPrice.currency)}`
+            : undefined
+        }
+        perClassActual={`${formatPerClass(perClassActualMin, regionalPrice.currency)} – ${formatPerClass(perClassActualMax, regionalPrice.currency)}`}
+        duration={duration}
+        onDurationChange={setDuration}
+      />
+    );
+  }
+
+  const regionalPrice = price.regions[region] ?? price.regions.IN;
+  const baseClassesPerMonth = getWeeklyClassCount(schedule, false) * 4;
+  const baseActual = getDiscountedTotal(regionalPrice.amount, duration, discount);
+  const baseExtrapolated = regionalPrice.amount * duration;
+
+  const addOnScheduleItem = addOn
+    ? schedule.split.find(
+      (item) => item.classType === addOn.classType && item.optional,
+    )
+    : undefined;
+  const addOnRegionalPrice = addOn
+    ? addOn.price.regions[region] ?? addOn.price.regions.IN
+    : undefined;
+  const addOnClassesPerMonth = (addOnScheduleItem?.days.length ?? 0) * 4;
+  const addOnActual =
+    addOn && addOnRegionalPrice
+      ? getDiscountedTotal(
+        addOnRegionalPrice.amount,
+        duration,
+        addOn.durationDiscounts[duration],
+      )
+      : 0;
+  const addOnExtrapolated = addOnRegionalPrice
+    ? addOnRegionalPrice.amount * duration
+    : 0;
+
+  const totalClassesPerMonth =
+    baseClassesPerMonth + (includeAddOn ? addOnClassesPerMonth : 0);
+  const totalActual = baseActual + (includeAddOn ? addOnActual : 0);
+  const totalExtrapolated =
+    baseExtrapolated + (includeAddOn ? addOnExtrapolated : 0);
+  const perClassActualAmount =
+    totalActual / (totalClassesPerMonth * duration);
+
+  return (
+    <PricingCard
+      actual={formatTotal(totalActual, regionalPrice.currency)}
+      extrapolated={
+        duration !== 1
+          ? formatTotal(totalExtrapolated, regionalPrice.currency)
+          : undefined
+      }
+      perClassActual={formatPerClass(perClassActualAmount, regionalPrice.currency)}
+      duration={duration}
+      onDurationChange={setDuration}
+      addOn={
+        addOn && addOnRegionalPrice
+          ? {
+            label: addOn.label,
+            priceLabel: formatTotal(addOnActual, addOnRegionalPrice.currency),
+            checked: includeAddOn,
+            onChange: setIncludeAddOn,
+          }
+          : undefined
+      }
+    />
+  );
+}
+
+function PricingCard({
+  actual,
+  extrapolated,
+  perClassActual,
+  duration,
+  onDurationChange,
+  addOn,
+}: {
+  actual: string;
+  extrapolated?: string;
+  perClassActual: string;
+  duration: 1 | 2 | 3;
+  onDurationChange: (value: 1 | 2 | 3) => void;
+  addOn?: {
+    label: string;
+    priceLabel: string;
+    checked: boolean;
+    onChange: (checked: boolean) => void;
+  };
+}) {
   return (
     <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-forest/10 bg-forest/[0.04] p-4 dark:border-linen/10 dark:bg-linen/[0.04] sm:p-5">
       <div className="flex items-center gap-3">
@@ -343,10 +436,20 @@ function PricingInfo({
         </p>
       </div>
       <div className="flex flex-col items-end gap-2">
-        <DurationTabs duration={duration} onChange={setDuration} />
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {addOn ? (
+            <AddOnToggle
+              label={addOn.label}
+              priceLabel={addOn.priceLabel}
+              checked={addOn.checked}
+              onChange={addOn.onChange}
+            />
+          ) : null}
+          <DurationTabs duration={duration} onChange={onDurationChange} />
+        </div>
         <div className="flex flex-col items-end gap-1">
           <div className="flex flex-wrap items-baseline justify-end gap-x-2 gap-y-1">
-            {duration !== 1 ? (
+            {extrapolated ? (
               <span className="font-sans text-sm font-medium text-[color:var(--muted)] line-through decoration-ember/70">
                 {extrapolated}
               </span>
@@ -362,6 +465,47 @@ function PricingInfo({
         </div>
       </div>
     </div>
+  );
+}
+
+function AddOnToggle({
+  label,
+  priceLabel,
+  checked,
+  onChange,
+}: {
+  label: string;
+  priceLabel: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <label className="relative inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-forest/15 bg-linen/60 py-1.5 pl-2 pr-3 text-xs font-bold text-walnut/68 transition-colors hover:text-bark dark:border-linen/15 dark:bg-white/5 dark:text-stone dark:hover:text-linen">
+      <input
+        type="checkbox"
+        className="sr-only"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+      />
+      <span
+        aria-hidden="true"
+        className={`grid h-4 w-4 shrink-0 place-items-center rounded-full border transition-colors ${checked
+          ? "border-forest bg-forest text-linen dark:border-linen dark:bg-linen dark:text-bark"
+          : "border-walnut/35 text-transparent dark:border-stone/45"
+          }`}
+      >
+        <Check size={11} strokeWidth={3} />
+      </span>
+      <span className={checked ? "text-bark dark:text-linen" : ""}>
+        {label}
+      </span>
+      {/* Pinned on top of the pill, not inside it, so the pill (checkbox +
+          label) never resizes when `checked` flips — only this tag's own
+          look changes. */}
+      <span className="pointer-events-none absolute -bottom-2.5 -right-1.5 z-10 -rotate-6 rounded-[3px] border border-ember/35 bg-[color:var(--panel-strong)] px-1.5 py-0.5 font-serif text-[0.7rem] italic leading-none text-ember shadow-sm dark:border-ember/40">
+        +{priceLabel}
+      </span>
+    </label>
   );
 }
 
