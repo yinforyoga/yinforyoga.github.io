@@ -1,7 +1,5 @@
 "use client";
 
-// TODO: WhatsApp (Number)
-
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   ArrowRight,
@@ -1107,6 +1105,20 @@ function CertificatePreviewPopover({
   );
 }
 
+function WhatsAppIcon({ size = 17 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M12.04 2c-5.52 0-10 4.48-10 10 0 1.76.46 3.48 1.34 5L2 22l5.14-1.35a9.96 9.96 0 0 0 4.9 1.25h.01c5.52 0 10-4.48 10-10s-4.48-10-10.01-10Zm0 18.15h-.01a8.3 8.3 0 0 1-4.24-1.16l-.3-.18-3.05.8.82-2.97-.2-.31a8.26 8.26 0 0 1-1.27-4.4c0-4.58 3.73-8.31 8.31-8.31 2.22 0 4.31.87 5.88 2.44a8.26 8.26 0 0 1 2.43 5.88c0 4.58-3.73 8.21-8.37 8.21Zm4.55-6.19c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.13-.17.25-.64.81-.78.97-.14.17-.29.19-.54.06-.25-.12-1.04-.38-1.99-1.22-.73-.65-1.23-1.46-1.37-1.71-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.12-.14.16-.25.25-.41.08-.17.04-.31-.02-.44-.06-.12-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43-.14-.01-.31-.01-.48-.01-.17 0-.44.06-.67.31-.23.25-.87.85-.87 2.08 0 1.23.89 2.42 1.02 2.58.12.17 1.75 2.67 4.24 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.55.1.47-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.15-1.18-.06-.1-.23-.16-.48-.28Z" />
+    </svg>
+  );
+}
+
 function Contact() {
   return (
     <section id="contact" className="relative py-20 md:py-24">
@@ -1122,6 +1134,12 @@ function Contact() {
               className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-forest px-5 text-sm font-bold text-linen shadow-soft transition hover:-translate-y-0.5 hover:bg-ember"
             >
               <Instagram size={17} /> Instagram
+            </a>
+            <a
+              href="https://wa.me/918951766013"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 text-sm font-bold text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-[#1EBE5A]"
+            >
+              <WhatsAppIcon size={17} /> WhatsApp
             </a>
             <a
               href="mailto:yinforyoga@gmail.com"
