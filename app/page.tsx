@@ -384,8 +384,8 @@ function PricingCard({
   };
 }) {
   return (
-    <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-forest/10 bg-forest/[0.04] p-4 dark:border-linen/10 dark:bg-linen/[0.04] sm:p-5">
-      <div className="flex items-center gap-3">
+    <div className="mt-5 flex flex-col gap-4 rounded-2xl border border-forest/10 bg-forest/[0.04] p-4 dark:border-linen/10 dark:bg-linen/[0.04] sm:flex-row sm:items-center sm:justify-between sm:p-5">
+      <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-3">
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-forest/10 text-forest dark:bg-linen/10 dark:text-linen">
           <Banknote aria-hidden="true" size={17} />
         </span>
@@ -393,8 +393,8 @@ function PricingCard({
           Pricing
         </p>
       </div>
-      <div className="flex flex-col items-end gap-2">
-        <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="flex flex-col items-center gap-2 sm:items-end">
+        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-8 sm:justify-end">
           {addOn ? (
             <AddOnToggle
               label={addOn.label}
@@ -405,18 +405,18 @@ function PricingCard({
           ) : null}
           <DurationTabs duration={duration} onChange={onDurationChange} />
         </div>
-        <div className="flex flex-col items-end gap-1">
-          <div className="flex flex-wrap items-baseline justify-end gap-x-2 gap-y-1">
+        <div className="flex flex-col items-center gap-1 sm:items-end">
+          <div className="flex flex-wrap items-baseline justify-center gap-x-2 gap-y-1 sm:justify-end">
             {extrapolated ? (
               <span className="font-sans text-sm font-medium text-[color:var(--muted)] line-through decoration-ember/70">
                 {extrapolated}
               </span>
             ) : null}
-            <p className="text-right font-sans text-xl font-semibold text-bark dark:text-linen">
+            <p className="text-center font-sans text-xl font-semibold text-bark dark:text-linen sm:text-right">
               {actual}
             </p>
           </div>
-          <p className="flex flex-wrap items-baseline justify-end gap-x-1.5 gap-y-1 text-xs font-medium text-[color:var(--muted)]">
+          <p className="flex flex-wrap items-baseline justify-center gap-x-1.5 gap-y-1 text-xs font-medium text-[color:var(--muted)] sm:justify-end">
             <span>{perClassActual}</span>
             <span>/ class</span>
           </p>
@@ -554,8 +554,8 @@ function EquipmentInfo({
 }) {
   return (
     <div className="mt-5 flex flex-col gap-5 rounded-2xl bg-stone/25 p-4 dark:bg-white/[0.05] sm:flex-row sm:items-center sm:justify-between sm:p-5">
-      <div className="flex min-w-0 items-center gap-3">
-        <span className="grid h-9 w-9 place-items-center rounded-full bg-forest/10 text-forest dark:bg-linen/10 dark:text-linen">
+      <div className="flex min-w-0 flex-col items-center gap-2 sm:flex-row sm:gap-3">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-forest/10 text-forest dark:bg-linen/10 dark:text-linen">
           <PackageOpen aria-hidden="true" size={17} />
         </span>
         <div className="min-w-0">
@@ -564,15 +564,9 @@ function EquipmentInfo({
           </p>
         </div>
       </div>
-      <ul className="mx-auto grid shrink-0 grid-cols-2 justify-center gap-3 sm:ml-auto sm:mr-0 sm:flex sm:justify-end">
-        {items.map(({ label, icon: Icon }, index) => (
-          <li
-            key={label}
-            className={`group relative ${items.length % 2 === 1 && index === items.length - 1
-              ? "col-span-2 justify-self-center sm:col-span-1"
-              : ""
-              }`}
-          >
+      <ul className="mx-auto flex shrink-0 flex-wrap justify-center gap-3 sm:ml-auto sm:mr-0 sm:justify-end">
+        {items.map(({ label, icon: Icon }) => (
+          <li key={label} className="group relative">
             <span
               tabIndex={0}
               aria-label={label}
@@ -650,11 +644,11 @@ function ScheduleInfo({ schedule }: { schedule: OfferingSchedule }) {
           Schedule
         </p>
       </div>
-      <ul className="mx-auto mt-5 flex justify-center max-w-md gap-3">
+      <ul className="mx-auto mt-5 flex flex-wrap justify-center max-w-md gap-3">
         {schedule.split.map((item) => (
           <li
             key={`${item.days.join("-")}-${item.classType}`}
-            className="grid content-start justify-items-center grow gap-3 rounded-xl bg-stone/25 p-3.5 text-center dark:bg-white/[0.05]"
+            className="grid flex-1 basis-0 content-start justify-items-center gap-3 rounded-xl bg-stone/25 p-3.5 text-center dark:bg-white/[0.05]"
           >
             <p className="text-sm font-extrabold leading-5 text-bark dark:text-linen">
               {item.classType}
