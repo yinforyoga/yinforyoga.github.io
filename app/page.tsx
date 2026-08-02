@@ -2,7 +2,7 @@
 
 // TODO: WhatsApp (Number)
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   Banknote,
@@ -19,6 +19,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import {
   certificates,
+  durationDiscounts,
   type Offering,
   type OfferingLocalTime,
   type OfferingPrice,
@@ -233,7 +234,7 @@ function OfferingCard({
           <ScheduleInfo schedule={offering.schedule} />
         </div>
 
-        <PricingInfo price={offering.price} />
+        <PricingInfo price={offering.price} schedule={offering.schedule} />
 
         {offering.equipment?.length ? (
           <EquipmentInfo items={offering.equipment} />
@@ -248,8 +249,23 @@ function OfferingCard({
   );
 }
 
-function PricingInfo({ price }: { price: OfferingPrice }) {
+function getWeeklyClassCount(schedule: OfferingSchedule) {
+  const count = schedule.split
+    .filter((item) => !item.optional)
+    .reduce((total, item) => total + item.days.length, 0);
+
+  return count || 1;
+}
+
+function PricingInfo({
+  price,
+  schedule,
+}: {
+  price: OfferingPrice;
+  schedule: OfferingSchedule;
+}) {
   const [region, setRegion] = useState("IN");
+  const [duration, setDuration] = useState<1 | 2 | 3>(1);
 
   useEffect(() => {
     const locale = new Intl.Locale(navigator.language);
@@ -257,20 +273,63 @@ function PricingInfo({ price }: { price: OfferingPrice }) {
     setRegion(getRegionFromTimeZone(timeZone) ?? locale.region ?? "IN");
   }, []);
 
-  const formatAmount = (amount: number, currency: string) =>
+  const formatTotal = (amount: number, currency: string) =>
     new Intl.NumberFormat(undefined, {
       style: "currency",
       currency,
       maximumFractionDigits: 0,
     }).format(amount);
-  const amount = (() => {
+
+  const formatPerClass = (amount: number, currency: string) =>
+    new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(amount);
+
+  const discount = durationDiscounts[duration];
+  const classesPerMonth = getWeeklyClassCount(schedule) * 4;
+
+  const { actual, extrapolated, perClassActual, perClassBaseline } = (() => {
     if (price.type === "fixed") {
       const regionalPrice = price.regions[region] ?? price.regions.IN;
-      return formatAmount(regionalPrice.amount, regionalPrice.currency);
+      const extrapolatedAmount = regionalPrice.amount * duration;
+      const actualAmount =
+        duration === 1
+          ? regionalPrice.amount
+          : Math.round(extrapolatedAmount * (1 - discount));
+      const perClassBaselineAmount = regionalPrice.amount / classesPerMonth;
+      const perClassActualAmount = perClassBaselineAmount * (1 - discount);
+      return {
+        actual: formatTotal(actualAmount, regionalPrice.currency),
+        extrapolated: formatTotal(extrapolatedAmount, regionalPrice.currency),
+        perClassActual: formatPerClass(perClassActualAmount, regionalPrice.currency),
+        perClassBaseline: formatPerClass(perClassBaselineAmount, regionalPrice.currency),
+      };
     }
 
     const regionalPrice = price.regions[region] ?? price.regions.IN;
-    return `${formatAmount(regionalPrice.min, regionalPrice.currency)} – ${formatAmount(regionalPrice.max, regionalPrice.currency)}`;
+    const extrapolatedMin = regionalPrice.min * duration;
+    const extrapolatedMax = regionalPrice.max * duration;
+    const actualMin =
+      duration === 1
+        ? regionalPrice.min
+        : Math.round(extrapolatedMin * (1 - discount));
+    const actualMax =
+      duration === 1
+        ? regionalPrice.max
+        : Math.round(extrapolatedMax * (1 - discount));
+    const perClassBaselineMin = regionalPrice.min / classesPerMonth;
+    const perClassBaselineMax = regionalPrice.max / classesPerMonth;
+    const perClassActualMin = perClassBaselineMin * (1 - discount);
+    const perClassActualMax = perClassBaselineMax * (1 - discount);
+    return {
+      actual: `${formatTotal(actualMin, regionalPrice.currency)} – ${formatTotal(actualMax, regionalPrice.currency)}`,
+      extrapolated: `${formatTotal(extrapolatedMin, regionalPrice.currency)} – ${formatTotal(extrapolatedMax, regionalPrice.currency)}`,
+      perClassActual: `${formatPerClass(perClassActualMin, regionalPrice.currency)} – ${formatPerClass(perClassActualMax, regionalPrice.currency)}`,
+      perClassBaseline: `${formatPerClass(perClassBaselineMin, regionalPrice.currency)} – ${formatPerClass(perClassBaselineMax, regionalPrice.currency)}`,
+    };
   })();
 
   return (
@@ -283,14 +342,88 @@ function PricingInfo({ price }: { price: OfferingPrice }) {
           Pricing
         </p>
       </div>
-      <p className="text-right font-sans text-xl font-semibold text-bark dark:text-linen">
-        {amount}
-        {price.suffix ? (
-          <span className="ml-1.5 inline-block whitespace-nowrap font-sans text-xs font-medium text-[color:var(--muted)]">
-            {price.suffix}
-          </span>
-        ) : null}
-      </p>
+      <div className="flex flex-col items-end gap-2">
+        <DurationTabs duration={duration} onChange={setDuration} />
+        <div className="flex flex-col items-end gap-1">
+          <div className="flex flex-wrap items-baseline justify-end gap-x-2 gap-y-1">
+            <p className="text-right font-sans text-xl font-semibold text-bark dark:text-linen">
+              {actual}
+            </p>
+          </div>
+          <p className="flex flex-wrap items-baseline justify-end gap-x-1.5 gap-y-1 text-xs font-medium text-[color:var(--muted)]">
+            {duration !== 1 ? (
+              <span className="line-through decoration-ember/70">
+                {perClassBaseline}
+              </span>
+            ) : null}
+            <span>{perClassActual}</span>
+            <span>/ class</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DurationTabs({
+  duration,
+  onChange,
+}: {
+  duration: 1 | 2 | 3;
+  onChange: (value: 1 | 2 | 3) => void;
+}) {
+  const options: (1 | 2 | 3)[] = [1, 2, 3];
+  const pillRef = useRef<HTMLSpanElement>(null);
+  const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const mountedRef = useRef(false);
+
+  useLayoutEffect(() => {
+    const movePill = (animate: boolean) => {
+      const pill = pillRef.current;
+      const button = buttonRefs.current[options.indexOf(duration)];
+      if (!pill || !button) return;
+
+      if (!animate) {
+        pill.style.transition = "none";
+      }
+      pill.style.transform = `translate3d(${button.offsetLeft}px, 0, 0)`;
+      pill.style.width = `${button.offsetWidth}px`;
+      if (!animate) {
+        void pill.offsetWidth;
+        pill.style.transition = "";
+      }
+    };
+
+    movePill(mountedRef.current);
+    mountedRef.current = true;
+
+    window.addEventListener("resize", () => movePill(false));
+    return () => window.removeEventListener("resize", () => movePill(false));
+  }, [duration]);
+
+  return (
+    <div className="relative inline-flex shrink-0 rounded-full border border-forest/15 bg-linen/60 p-0.5 dark:border-linen/15 dark:bg-white/5">
+      <span
+        ref={pillRef}
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0.5 left-0 rounded-full bg-forest shadow-soft transition-[transform,width] duration-200 ease-out will-change-[transform,width] dark:bg-linen"
+      />
+      {options.map((option, index) => (
+        <button
+          key={option}
+          ref={(element) => {
+            buttonRefs.current[index] = element;
+          }}
+          type="button"
+          onClick={() => onChange(option)}
+          className={`relative z-10 rounded-full px-2.5 py-1 text-xs font-bold transition-colors ${duration === option
+              ? "text-linen dark:text-bark"
+              : "text-walnut/68 hover:text-bark dark:text-stone dark:hover:text-linen"
+            }`}
+        >
+          {option} mo
+        </button>
+      ))}
     </div>
   );
 }
@@ -333,11 +466,10 @@ function EquipmentInfo({
         {items.map(({ label, icon: Icon }, index) => (
           <li
             key={label}
-            className={`group relative ${
-              items.length % 2 === 1 && index === items.length - 1
+            className={`group relative ${items.length % 2 === 1 && index === items.length - 1
                 ? "col-span-2 justify-self-center sm:col-span-1"
                 : ""
-            }`}
+              }`}
           >
             <span
               tabIndex={0}
@@ -469,15 +601,15 @@ function FormattedItemTime({
   const anchorDay = item.days[0];
   const start = timeZone
     ? getDateTimeClockParts(
-        getScheduleDate(item.startTime, schedule, anchorDay),
-        timeZone,
-      )
+      getScheduleDate(item.startTime, schedule, anchorDay),
+      timeZone,
+    )
     : formatScheduleClockParts(item.startTime);
   const end = timeZone
     ? getDateTimeClockParts(
-        getScheduleDate(item.endTime, schedule, anchorDay),
-        timeZone,
-      )
+      getScheduleDate(item.endTime, schedule, anchorDay),
+      timeZone,
+    )
     : formatScheduleClockParts(item.endTime);
 
   return (
@@ -775,11 +907,10 @@ function CertificateCard({
           target="_blank"
           rel="noreferrer"
           aria-label={`Open ${certificate.title} certificate in a new tab`}
-          className={`flex h-full flex-col rounded-[24px] border bg-linen/78 p-5 shadow-innerGlow outline-none transition hover:-translate-y-1 hover:border-ember/40 hover:shadow-earthy focus-visible:-translate-y-1 focus-visible:border-ember focus-visible:ring-4 focus-visible:ring-ember/18 dark:bg-white/5 ${
-            isPreviewed
+          className={`flex h-full flex-col rounded-[24px] border bg-linen/78 p-5 shadow-innerGlow outline-none transition hover:-translate-y-1 hover:border-ember/40 hover:shadow-earthy focus-visible:-translate-y-1 focus-visible:border-ember focus-visible:ring-4 focus-visible:ring-ember/18 dark:bg-white/5 ${isPreviewed
               ? "border-ember/48 dark:border-ember/55"
               : "border-walnut/10 dark:border-white/10"
-          }`}
+            }`}
         >
           <div className="mb-5 flex items-center justify-between gap-4">
             <div className="grid h-11 w-11 place-items-center rounded-full bg-stone/56 text-bark dark:bg-white/10 dark:text-linen">

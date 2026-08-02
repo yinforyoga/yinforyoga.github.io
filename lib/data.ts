@@ -59,7 +59,6 @@ export type OfferingPrice =
   | {
       type: "fixed";
       regions: Record<string, { amount: number; currency: string }>;
-      suffix?: string;
     }
   | {
       type: "range";
@@ -67,8 +66,18 @@ export type OfferingPrice =
         string,
         { min: number; max: number; currency: string }
       >;
-      suffix?: string;
     };
+
+// Multi-month packages are priced at a lower effective monthly rate than the
+// 1-month price. These discounts (12.5% for 2 months, 25% for 3 months) come
+// from the per-class rate dropping from ₹200 → ₹175 → ₹150 as commitment
+// length increases, and apply uniformly across regions/currencies since the
+// discount is a percentage off the extrapolated (1-month × N) total.
+export const durationDiscounts: Record<1 | 2 | 3, number> = {
+  1: 0,
+  2: 0.125,
+  3: 0.25,
+};
 
 export type Offering = {
   title: string;
@@ -152,7 +161,6 @@ export const offerings: Offering[] = [
         NL: { amount: 18, currency: "EUR" },
         IE: { amount: 18, currency: "EUR" },
       },
-      suffix: "/ month",
     },
     mode: "Online",
     status: "Registrations Open",
@@ -216,7 +224,6 @@ export const offerings: Offering[] = [
           NL: { amount: 26, currency: "EUR" },
           IE: { amount: 26, currency: "EUR" },
         },
-        suffix: "/ month",
       },
       mode: "Online",
       status: "Registrations Open",
