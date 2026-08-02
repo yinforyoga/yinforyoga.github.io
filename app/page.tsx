@@ -410,15 +410,10 @@ function ScheduleInfo({ schedule }: { schedule: OfferingSchedule }) {
 
   return (
     <div className="rounded-2xl border border-ember/20 p-4 sm:p-5 dark:border-ember/30">
-      <div>
-        <div className="flex items-center justify-center gap-2 text-ember">
-          <CalendarDays aria-hidden="true" size={17} strokeWidth={2.25} />
-          <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.2em]">
-            Schedule
-          </p>
-        </div>
-        <p className="mt-2 whitespace-nowrap text-center font-serif text-lg font-medium text-bark dark:text-linen sm:text-xl">
-          <FormattedScheduleTime schedule={schedule} timeZone={displayTimeZone} />
+      <div className="flex items-center justify-center gap-2 text-ember">
+        <CalendarDays aria-hidden="true" size={17} strokeWidth={2.25} />
+        <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.2em]">
+          Schedule
         </p>
       </div>
       <ul className="mx-auto mt-5 flex justify-center max-w-md gap-3">
@@ -435,6 +430,13 @@ function ScheduleInfo({ schedule }: { schedule: OfferingSchedule }) {
                   (optional)
                 </span>
               ) : null}
+            </p>
+            <p className="whitespace-nowrap font-serif text-sm font-medium text-bark dark:text-linen">
+              <FormattedItemTime
+                item={item}
+                schedule={schedule}
+                timeZone={displayTimeZone}
+              />
             </p>
             <div className="flex flex-wrap justify-center gap-1.5">
               {getScheduleItemDays(item, schedule, displayTimeZone).map(
@@ -455,25 +457,28 @@ function ScheduleInfo({ schedule }: { schedule: OfferingSchedule }) {
   );
 }
 
-function FormattedScheduleTime({
+function FormattedItemTime({
+  item,
   schedule,
   timeZone,
 }: {
+  item: OfferingScheduleItem;
   schedule: OfferingSchedule;
   timeZone: string | null;
 }) {
+  const anchorDay = item.days[0];
   const start = timeZone
     ? getDateTimeClockParts(
-        getScheduleDate(schedule.startTime, schedule, "Mon"),
+        getScheduleDate(item.startTime, schedule, anchorDay),
         timeZone,
       )
-    : formatScheduleClockParts(schedule.startTime);
+    : formatScheduleClockParts(item.startTime);
   const end = timeZone
     ? getDateTimeClockParts(
-        getScheduleDate(schedule.endTime, schedule, "Mon"),
+        getScheduleDate(item.endTime, schedule, anchorDay),
         timeZone,
       )
-    : formatScheduleClockParts(schedule.endTime);
+    : formatScheduleClockParts(item.endTime);
 
   return (
     <>
@@ -504,7 +509,7 @@ function getConvertedScheduleItemDays(
 ) {
   const convertedDays = item.days.map((day) =>
     formatDateTimeWeekday(
-      getScheduleDate(schedule.startTime, schedule, day),
+      getScheduleDate(item.startTime, schedule, day),
       timeZone,
     ),
   );

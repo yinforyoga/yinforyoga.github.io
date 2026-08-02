@@ -45,12 +45,12 @@ export type OfferingLocalTime = {
 export type OfferingScheduleItem = {
   days: OfferingWeekday[];
   classType: OfferingClassType;
+  startTime: OfferingLocalTime;
+  endTime: OfferingLocalTime;
   optional?: boolean;
 };
 
 export type OfferingSchedule = {
-  startTime: OfferingLocalTime;
-  endTime: OfferingLocalTime;
   timezone: OfferingTimezone;
   split: OfferingScheduleItem[];
 };
@@ -112,8 +112,6 @@ export const offerings: Offering[] = [
     eyebrow: "Ongoing",
     theme: "Group Strength Training (+ Yoga) Classes",
     schedule: {
-      startTime: { hour: 5, meridiem: "pm" },
-      endTime: { hour: 6, meridiem: "pm" },
       timezone: {
         id: "Asia/Kolkata",
         label: "IST",
@@ -123,10 +121,14 @@ export const offerings: Offering[] = [
         {
           days: ["Mon", "Wed", "Fri"],
           classType: "Strength",
+          startTime: { hour: 5, meridiem: "pm" },
+          endTime: { hour: 6, meridiem: "pm" },
         },
         {
-          days: ["Tue"],
+          days: ["Thu"],
           classType: "Yoga",
+          startTime: { hour: 6, meridiem: "pm" },
+          endTime: { hour: 7, meridiem: "pm" },
           optional: true,
         },
       ],
@@ -181,8 +183,6 @@ export const offerings: Offering[] = [
       eyebrow: "Ongoing",
       theme: "Group Yoga Classes",
       schedule: {
-        startTime: { hour: 6, meridiem: "pm" },
-        endTime: { hour: 7, meridiem: "pm" },
         timezone: {
           id: "Asia/Kolkata",
           label: "IST",
@@ -192,6 +192,8 @@ export const offerings: Offering[] = [
           {
             days: ["Tue", "Wed", "Thu"],
             classType: "Yoga",
+            startTime: { hour: 6, meridiem: "pm" },
+            endTime: { hour: 7, meridiem: "pm" },
           },
         ],
       },
