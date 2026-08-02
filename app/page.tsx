@@ -8,10 +8,8 @@ import {
   CalendarDays,
   Check,
   CheckCircle2,
-  ExternalLink,
   Mail,
   MapPin,
-  MoveRight,
   PackageOpen,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -87,10 +85,6 @@ function getPreviewPlacement(certificate: Certificate, x: number, y: number) {
 }
 
 export default function Home() {
-  if (shouldShowConstructionPage) {
-    return <ConstructionPage />;
-  }
-
   return (
     <ThemeProvider>
       <Navbar />
@@ -101,46 +95,6 @@ export default function Home() {
         <Contact />
       </main>
     </ThemeProvider>
-  );
-}
-
-function ConstructionPage() {
-  return (
-    <main className="grid min-h-screen place-items-center px-5 py-12">
-      <section className="w-full max-w-3xl text-center">
-        <p className="text-xs font-extrabold uppercase tracking-[0.28em] text-ember">
-          Yin for Yoga
-        </p>
-        <h1 className="mt-5 text-balance font-serif text-5xl font-medium leading-none text-bark dark:text-linen md:text-7xl">
-          Website is taking shape.
-        </h1>
-        <p className="mx-auto mt-6 max-w-xl text-base leading-8 text-[color:var(--muted)] md:text-lg">
-          The full site is being prepared with current classes, workshops, and
-          registration details. Until then, you can reach out directly for
-          updates.
-        </p>
-        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <a
-            href="mailto:yinforyoga@gmail.com"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-forest px-5 text-sm font-bold text-linen shadow-soft transition hover:-translate-y-0.5 hover:bg-ember"
-          >
-            <Mail size={17} /> Email
-          </a>
-          <a
-            href="https://wa.me/918951766013"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 text-sm font-bold text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-[#1EBE5A]"
-          >
-            <SiWhatsapp size={17} /> WhatsApp
-          </a>
-          <a
-            href="https://instagram.com/yinforyoga"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-walnut/18 bg-linen/54 px-5 text-sm font-bold text-bark backdrop-blur transition hover:-translate-y-0.5 hover:bg-stone/45 dark:border-white/10 dark:bg-white/5 dark:text-linen"
-          >
-            <SiInstagram size={17} /> Instagram
-          </a>
-        </div>
-      </section>
-    </main>
   );
 }
 
