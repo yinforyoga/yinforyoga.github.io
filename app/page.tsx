@@ -207,7 +207,7 @@ function OfferingCard({
               <p className="text-xs font-extrabold uppercase tracking-[0.24em] text-ember">
                 {offering.eyebrow}
               </p>
-              <div className="mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 sm:justify-start">
+              <div className="mt-1 flex flex-col items-center gap-2 sm:items-start">
                 <h2 className="font-serif text-[2rem] font-medium leading-[1.05] text-bark dark:text-linen sm:text-3xl sm:leading-tight">
                   {offering.title}
                 </h2>
