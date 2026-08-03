@@ -412,7 +412,7 @@ function PricingCard({
         <div className="flex flex-col items-center gap-1 sm:items-end">
           <div className="flex flex-wrap items-baseline justify-center gap-x-2 gap-y-1 sm:justify-end">
             {extrapolated ? (
-              <span className="font-sans text-sm font-medium text-[color:var(--muted)] line-through decoration-ember/70">
+              <span className="price-strike font-sans text-sm font-medium text-[color:var(--muted)]">
                 {extrapolated}
               </span>
             ) : null}
