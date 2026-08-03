@@ -298,6 +298,7 @@ function PricingInfo({
             : undefined
         }
         perClassActual={`${formatPerClass(perClassActualMin, regionalPrice.currency)} – ${formatPerClass(perClassActualMax, regionalPrice.currency)}`}
+        classCount={classesPerMonth * duration}
         duration={duration}
         onDurationChange={setDuration}
       />
@@ -347,6 +348,7 @@ function PricingInfo({
           : undefined
       }
       perClassActual={formatPerClass(perClassActualAmount, regionalPrice.currency)}
+      classCount={totalClassesPerMonth * duration}
       duration={duration}
       onDurationChange={setDuration}
       addOn={
@@ -367,6 +369,7 @@ function PricingCard({
   actual,
   extrapolated,
   perClassActual,
+  classCount,
   duration,
   onDurationChange,
   addOn,
@@ -374,6 +377,7 @@ function PricingCard({
   actual: string;
   extrapolated?: string;
   perClassActual: string;
+  classCount: number;
   duration: 1 | 2 | 3;
   onDurationChange: (value: 1 | 2 | 3) => void;
   addOn?: {
@@ -418,7 +422,7 @@ function PricingCard({
           </div>
           <p className="flex flex-wrap items-baseline justify-center gap-x-1.5 gap-y-1 text-xs font-medium text-[color:var(--muted)] sm:justify-end">
             <span>{perClassActual}</span>
-            <span>/ class</span>
+            <span>× {classCount} classes</span>
           </p>
         </div>
       </div>
