@@ -3,14 +3,11 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   ArrowRight,
-  Banknote,
   BookOpen,
   CalendarDays,
-  Check,
   CheckCircle2,
   Mail,
   MapPin,
-  PackageOpen,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { SiInstagram, SiWhatsapp } from "@icons-pack/react-simple-icons";
@@ -130,7 +127,9 @@ function Offerings() {
       <div className="section-shell">
         <SectionHeading eyebrow="Offerings" />
 
-        <div className="flex flex-wrap gap-5">
+        {/* `items-start` so an open drawer grows only its own card — with the
+            default stretch, opening one card would resize its row neighbour. */}
+        <div className="flex flex-wrap items-start gap-5">
           {offerings.map((offering, index) => (
             <OfferingCard
               key={offering.title}
@@ -144,6 +143,15 @@ function Offerings() {
   );
 }
 
+type OfferingDrawerTab = "pricing" | "schedule" | "details" | "bestFor";
+
+const offeringDrawerTabs: { id: OfferingDrawerTab; label: string }[] = [
+  { id: "pricing", label: "Pricing" },
+  { id: "schedule", label: "Schedule" },
+  { id: "details", label: "Details" },
+  { id: "bestFor", label: "Best for" },
+];
+
 function OfferingCard({
   offering,
   delay,
@@ -152,65 +160,221 @@ function OfferingCard({
   delay: number;
 }) {
   const Icon = offering.icon;
+  const panelId = `${slugify(offering.title)}-drawer`;
+  const [openTab, setOpenTab] = useState<OfferingDrawerTab | null>(null);
+  // `renderedTab` lags `openTab` on the way closed: the drawer collapses to an
+  // explicit height of 0, which only animates while there is still content to
+  // collapse away from. Unmounting on the click drops the height instantly.
+  const [renderedTab, setRenderedTab] = useState<OfferingDrawerTab | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [contentHeight, setContentHeight] = useState(0);
+
+  // The drawer animates a measured pixel height rather than `grid-template-rows`
+  // 0fr → 1fr, because 1fr resolves to whatever the content happens to be: the
+  // resolved value never changes when one tab's content replaces another's, so
+  // switching tabs would resize the card in a single frame.
+  // Re-measure before paint whenever the panel's content changes, so opening a
+  // tab transitions straight to the new content's height. A ResizeObserver
+  // alone reports one frame late, which would animate towards the previous
+  // tab's height first.
+  useLayoutEffect(() => {
+    if (contentRef.current) setContentHeight(contentRef.current.offsetHeight);
+  }, [renderedTab]);
+
+  // Content can also resize while a tab is open — the pricing panel grows when
+  // the add-on is toggled, and any panel reflows when the viewport changes.
+  useLayoutEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+
+    const observer = new ResizeObserver(() =>
+      setContentHeight(content.offsetHeight),
+    );
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, []);
+
+  const toggleTab = (id: OfferingDrawerTab) => {
+    setOpenTab(openTab === id ? null : id);
+    if (openTab !== id) setRenderedTab(id);
+  };
 
   return (
     <FadeUp
       delay={delay}
       className="min-w-0 flex-[1_1_32rem] max-w-2xl"
     >
-      <article className="flex min-h-full w-full flex-col rounded-[28px] border border-walnut/10 bg-[color:var(--panel-strong)] p-5 shadow-earthy backdrop-blur dark:border-white/10 sm:p-6">
-        <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-          <div className="flex min-w-0 flex-1 flex-col items-center gap-3 sm:flex-row sm:items-center">
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-stone/50 text-forest dark:bg-white/10 dark:text-linen">
-              <Icon size={20} />
-            </span>
-            <div className="min-w-0 text-center sm:text-left">
-              <p className="text-xs font-extrabold uppercase tracking-[0.24em] text-ember">
-                {offering.eyebrow}
-              </p>
-              <div className="mt-1 flex flex-col items-center gap-2 sm:items-start">
-                <h2 className="font-serif text-[2rem] font-medium leading-[1.05] text-bark dark:text-linen sm:text-3xl sm:leading-tight">
-                  {offering.title}
-                </h2>
-                <OfferingModeBadge mode={offering.mode} />
+      {/* The card is two stacked layers: a solid front face carrying only the
+          offering's identity, and a drawer behind it whose bottom edge peeks
+          out as a tab strip. Everything a customer has to read rather than
+          recognise lives in the drawer, one tab at a time. */}
+      {/* Dark mode drops the two-tone split: the warm drawer tint reads as
+          grime rather than depth against the dark palette, so the whole card is
+          one surface. The front face goes fully transparent rather than
+          matching the colour — `--panel-strong` is translucent, so painting it
+          twice would composite the face darker than the drawer and leave the
+          seam this is meant to remove. Its border and shadow go too; the tab
+          strip's ember underline carries the state on its own. */}
+      <article className="w-full rounded-[28px] border border-walnut/10 bg-sand/70 shadow-earthy dark:border-white/10 dark:bg-[color:var(--panel-strong)]">
+        <div className="relative z-10 flex flex-col rounded-[28px] border border-walnut/10 bg-[color:var(--panel-strong)] p-5 shadow-soft backdrop-blur dark:border-transparent dark:bg-transparent dark:shadow-none dark:backdrop-blur-none sm:p-6">
+          <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+            <div className="flex min-w-0 flex-1 flex-col items-center gap-3 sm:flex-row sm:items-center">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-stone/50 text-forest dark:bg-white/10 dark:text-linen">
+                <Icon size={20} />
+              </span>
+              <div className="min-w-0 text-center sm:text-left">
+                <p className="text-xs font-extrabold uppercase tracking-[0.24em] text-ember">
+                  {offering.eyebrow}
+                </p>
+                <div className="mt-1 flex flex-col items-center gap-2 sm:items-start">
+                  <h2 className="font-serif text-[2rem] font-medium leading-[1.05] text-bark dark:text-linen sm:text-3xl sm:leading-tight">
+                    {offering.title}
+                  </h2>
+                  <OfferingModeBadge mode={offering.mode} />
+                </div>
               </div>
             </div>
+            <RegisterButton
+              href={offering.formUrl}
+              label="Register"
+              className="w-full shrink-0 sm:w-auto"
+            />
           </div>
-          <RegisterButton
-            href={offering.formUrl}
-            label="Register"
-            className="w-full shrink-0 sm:w-auto"
-          />
+
+          <p className="mt-5 text-base font-bold text-bark dark:text-linen">
+            {offering.theme}
+          </p>
+          <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">
+            {offering.description}
+          </p>
+
+          {offering.equipment?.length ? (
+            <EquipmentInfo items={offering.equipment} />
+          ) : null}
         </div>
 
-        <p className="mt-5 text-base font-bold text-bark dark:text-linen">
-          {offering.theme}
-        </p>
-        <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">
-          {offering.description}
-        </p>
-
-        <div className="mt-6 text-sm">
-          <ScheduleInfo schedule={offering.schedule} />
-        </div>
-
-        <PricingInfo
-          price={offering.price}
-          durationDiscounts={offering.durationDiscounts}
-          addOn={offering.addOn}
+        <OfferingDrawerTabs
+          label={`${offering.title} details`}
+          openTab={openTab}
+          panelId={panelId}
+          onToggle={toggleTab}
         />
 
-        {offering.equipment?.length ? (
-          <EquipmentInfo items={offering.equipment} />
-        ) : null}
-
-        <div className="mt-5 grid gap-6 md:grid-cols-2">
-          <OfferingListInfo title="Details" items={offering.details} />
-          <OfferingListInfo title="Best for" items={offering.bestFor} />
+        <div
+          id={panelId}
+          inert={openTab === null}
+          className="overflow-hidden transition-[height] duration-300 ease-out"
+          style={{ height: openTab ? contentHeight : 0 }}
+          onTransitionEnd={(event) => {
+            if (
+              event.target === event.currentTarget &&
+              event.propertyName === "height" &&
+              openTab === null
+            ) {
+              setRenderedTab(null);
+            }
+          }}
+        >
+          <div ref={contentRef} className="px-5 pb-5 pt-1 sm:px-6 sm:pb-6">
+            {renderedTab === "pricing" ? (
+              <PricingInfo
+                price={offering.price}
+                durationDiscounts={offering.durationDiscounts}
+                addOn={offering.addOn}
+              />
+            ) : null}
+            {renderedTab === "schedule" ? (
+              <ScheduleInfo schedule={offering.schedule} />
+            ) : null}
+            {renderedTab === "details" ? (
+              <OfferingListInfo items={offering.details} />
+            ) : null}
+            {renderedTab === "bestFor" ? (
+              <OfferingListInfo items={offering.bestFor} />
+            ) : null}
+          </div>
         </div>
       </article>
     </FadeUp>
   );
+}
+
+function OfferingDrawerTabs({
+  label,
+  openTab,
+  panelId,
+  onToggle,
+}: {
+  label: string;
+  openTab: OfferingDrawerTab | null;
+  panelId: string;
+  onToggle: (id: OfferingDrawerTab) => void;
+}) {
+  const underlineRef = useRef<HTMLSpanElement>(null);
+  const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  // Whether the underline was already visible last render. Sliding only reads
+  // as motion between two open tabs; arriving from the closed state has no
+  // meaningful origin to travel from, so it is placed without animating.
+  const wasOpenRef = useRef(false);
+
+  useLayoutEffect(() => {
+    const moveUnderline = (animate: boolean) => {
+      const underline = underlineRef.current;
+      const index = offeringDrawerTabs.findIndex((tab) => tab.id === openTab);
+      const button = buttonRefs.current[index];
+      // No open tab: leave the underline parked where it is and let it fade,
+      // so closing a drawer doesn't send it sliding off somewhere arbitrary.
+      if (!underline || !button) return;
+
+      if (!animate) underline.style.transition = "none";
+      underline.style.transform = `translate3d(${button.offsetLeft + button.offsetWidth / 2 - underline.offsetWidth / 2
+        }px, 0, 0)`;
+      if (!animate) {
+        void underline.offsetWidth;
+        underline.style.transition = "";
+      }
+    };
+
+    moveUnderline(wasOpenRef.current);
+    wasOpenRef.current = openTab !== null;
+
+    const handleResize = () => moveUnderline(false);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [openTab]);
+
+  return (
+    <div className="relative flex" role="group" aria-label={label}>
+      <span
+        ref={underlineRef}
+        aria-hidden="true"
+        className={`pointer-events-none absolute bottom-3 left-0 h-0.5 w-5 rounded-full bg-ember transition-[transform,opacity] duration-200 ease-out will-change-transform ${openTab ? "opacity-100" : "opacity-0"
+          }`}
+      />
+      {offeringDrawerTabs.map(({ id, label: tabLabel }, index) => (
+        <button
+          key={id}
+          ref={(element) => {
+            buttonRefs.current[index] = element;
+          }}
+          type="button"
+          onClick={() => onToggle(id)}
+          aria-expanded={openTab === id}
+          aria-controls={panelId}
+          className={`flex-1 rounded-b-2xl px-1 pb-5 pt-3.5 text-[0.62rem] font-extrabold uppercase tracking-[0.12em] outline-none transition-colors focus-visible:ring-4 focus-visible:ring-forest/10 sm:text-[0.68rem] sm:tracking-[0.16em] ${openTab === id
+            ? "text-ember"
+            : "text-walnut/68 hover:text-bark dark:text-stone dark:hover:text-linen"
+            }`}
+        >
+          {tabLabel}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function slugify(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
 function formatTotal(amount: number, currency: string) {
@@ -234,6 +398,41 @@ function getDiscountedTotal(
   return Math.round(amount * duration * (1 - discount));
 }
 
+// A price as a min/max pair, so fixed and range pricing share one code path
+// instead of the panel branching on `price.type` at every step.
+type PriceRange = { min: number; max: number; currency: string };
+
+function getRegionalRange(price: OfferingPrice, region: string): PriceRange {
+  if (price.type === "fixed") {
+    const regional = price.regions[region] ?? price.regions.IN;
+    return {
+      min: regional.amount,
+      max: regional.amount,
+      currency: regional.currency,
+    };
+  }
+
+  const regional = price.regions[region] ?? price.regions.IN;
+  return { min: regional.min, max: regional.max, currency: regional.currency };
+}
+
+function formatRange({ min, max, currency }: PriceRange) {
+  return min === max
+    ? formatTotal(min, currency)
+    : `${formatTotal(min, currency)} – ${formatTotal(max, currency)}`;
+}
+
+const planDurations: (1 | 2 | 3)[] = [1, 2, 3];
+
+type PricingPlan = {
+  duration: 1 | 2 | 3;
+  total: string;
+  extrapolated?: string;
+  // Absent at 1 month, where the per-month rate is just the total restated.
+  perMonth?: string;
+  savedPercent: number;
+};
+
 function PricingInfo({
   price,
   durationDiscounts,
@@ -244,7 +443,6 @@ function PricingInfo({
   addOn?: OfferingAddOn;
 }) {
   const [region, setRegion] = useState("IN");
-  const [duration, setDuration] = useState<1 | 2 | 3>(1);
   const [includeAddOn, setIncludeAddOn] = useState(false);
 
   useEffect(() => {
@@ -253,155 +451,120 @@ function PricingInfo({
     setRegion(getRegionFromTimeZone(timeZone) ?? locale.region ?? "IN");
   }, []);
 
-  const discount = durationDiscounts[duration];
+  const base = getRegionalRange(price, region);
+  const addOnPrice = addOn ? getRegionalRange(addOn.price, region) : undefined;
+  const withAddOn = Boolean(addOn && addOnPrice && includeAddOn);
 
-  if (price.type !== "fixed") {
-    // Add-ons are only modeled for fixed pricing (the only kind in use
-    // today); range-priced offerings render the original layout untouched.
-    const regionalPrice = price.regions[region] ?? price.regions.IN;
-    const extrapolatedMin = regionalPrice.min * duration;
-    const extrapolatedMax = regionalPrice.max * duration;
-    const actualMin = getDiscountedTotal(regionalPrice.min, duration, discount);
-    const actualMax = getDiscountedTotal(regionalPrice.max, duration, discount);
+  const plans: PricingPlan[] = planDurations.map((duration) => {
+    const discount = durationDiscounts[duration];
+    const addOnDiscount = addOn?.durationDiscounts[duration] ?? 0;
+    const sum = (pick: "min" | "max") =>
+      getDiscountedTotal(base[pick], duration, discount) +
+      (withAddOn && addOnPrice
+        ? getDiscountedTotal(addOnPrice[pick], duration, addOnDiscount)
+        : 0);
+    const undiscounted = (pick: "min" | "max") =>
+      base[pick] * duration +
+      (withAddOn && addOnPrice ? addOnPrice[pick] * duration : 0);
 
-    return (
-      <PricingCard
-        actual={`${formatTotal(actualMin, regionalPrice.currency)} – ${formatTotal(actualMax, regionalPrice.currency)}`}
-        extrapolated={
-          duration !== 1
-            ? `${formatTotal(extrapolatedMin, regionalPrice.currency)} – ${formatTotal(extrapolatedMax, regionalPrice.currency)}`
-            : undefined
-        }
-        amountPerMonth={
-          duration !== 1
-            ? `${formatTotal(actualMin / duration, regionalPrice.currency)} – ${formatTotal(actualMax / duration, regionalPrice.currency)}`
-            : undefined
-        }
-        duration={duration}
-        onDurationChange={setDuration}
-      />
-    );
-  }
+    const actual = { min: sum("min"), max: sum("max"), currency: base.currency };
+    const full = {
+      min: undiscounted("min"),
+      max: undiscounted("max"),
+      currency: base.currency,
+    };
+    const isDiscounted = actual.min < full.min;
 
-  const regionalPrice = price.regions[region] ?? price.regions.IN;
-  const baseActual = getDiscountedTotal(regionalPrice.amount, duration, discount);
-  const baseExtrapolated = regionalPrice.amount * duration;
+    return {
+      duration,
+      total: formatRange(actual),
+      extrapolated: isDiscounted ? formatRange(full) : undefined,
+      perMonth:
+        duration === 1
+          ? undefined
+          : formatRange({
+            min: actual.min / duration,
+            max: actual.max / duration,
+            currency: base.currency,
+          }),
+      savedPercent: isDiscounted
+        ? Math.round((1 - actual.min / full.min) * 100)
+        : 0,
+    };
+  });
 
-  const addOnRegionalPrice = addOn
-    ? addOn.price.regions[region] ?? addOn.price.regions.IN
-    : undefined;
-  const addOnActual =
-    addOn && addOnRegionalPrice
-      ? getDiscountedTotal(
-        addOnRegionalPrice.amount,
-        duration,
-        addOn.durationDiscounts[duration],
-      )
-      : 0;
-  const addOnExtrapolated = addOnRegionalPrice
-    ? addOnRegionalPrice.amount * duration
-    : 0;
-
-  const totalActual = baseActual + (includeAddOn ? addOnActual : 0);
-  const totalExtrapolated =
-    baseExtrapolated + (includeAddOn ? addOnExtrapolated : 0);
+  // Whichever commitment actually saves the most, rather than assuming it is
+  // always the longest — the discount table is per-offering editable data.
+  const bestPercent = Math.max(...plans.map((plan) => plan.savedPercent));
 
   return (
-    <PricingCard
-      actual={formatTotal(totalActual, regionalPrice.currency)}
-      extrapolated={
-        duration !== 1
-          ? formatTotal(totalExtrapolated, regionalPrice.currency)
-          : undefined
-      }
-      amountPerMonth={
-        duration !== 1
-          ? formatTotal(totalActual / duration, regionalPrice.currency)
-          : undefined
-      }
-      duration={duration}
-      onDurationChange={setDuration}
-      addOn={
-        addOn && addOnRegionalPrice
-          ? {
-            label: addOn.label,
-            priceLabel: formatTotal(addOnActual, addOnRegionalPrice.currency),
-            checked: includeAddOn,
-            onChange: setIncludeAddOn,
-          }
-          : undefined
-      }
-    />
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        {plans.map((plan) => (
+          <PricingPlanCard
+            key={plan.duration}
+            plan={plan}
+            isBest={plan.savedPercent > 0 && plan.savedPercent === bestPercent}
+          />
+        ))}
+      </div>
+      {addOn && addOnPrice ? (
+        <AddOnToggle
+          label={addOn.label}
+          priceLabel={formatRange(addOnPrice)}
+          checked={includeAddOn}
+          onChange={setIncludeAddOn}
+        />
+      ) : null}
+    </div>
   );
 }
 
-function PricingCard({
-  actual,
-  extrapolated,
-  amountPerMonth,
-  duration,
-  onDurationChange,
-  addOn,
+function PricingPlanCard({
+  plan,
+  isBest,
 }: {
-  actual: string;
-  extrapolated?: string;
-  amountPerMonth?: string;
-  duration: 1 | 2 | 3;
-  onDurationChange: (value: 1 | 2 | 3) => void;
-  addOn?: {
-    label: string;
-    priceLabel: string;
-    checked: boolean;
-    onChange: (checked: boolean) => void;
-  };
+  plan: PricingPlan;
+  isBest: boolean;
 }) {
-  // The mobile `pb-5` (rather than the `p-4` used on the other sides) matches
-  // the desktop `p-5`, so the pinned per-month tag below keeps the same
-  // clearance from the card edge at both breakpoints.
   return (
-    <div className="mt-5 flex flex-col gap-4 rounded-2xl border border-forest/10 bg-forest/[0.04] p-4 pb-5 dark:border-linen/10 dark:bg-linen/[0.04] sm:flex-row sm:items-center sm:justify-between sm:p-5">
-      <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-3">
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-forest/10 text-forest dark:bg-linen/10 dark:text-linen">
-          <Banknote aria-hidden="true" size={17} />
-        </span>
-        <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.2em] text-walnut/68 dark:text-stone">
-          Pricing
+    <div
+      className={`relative flex flex-col items-center gap-1 rounded-2xl border px-2 py-3.5 text-center transition-colors sm:px-3 ${isBest
+        ? "border-ember/35 bg-ember/[0.06] dark:border-ember/40"
+        : "border-forest/12 bg-[color:var(--panel)] dark:border-white/10 dark:bg-white/[0.04]"
+        }`}
+    >
+      <p className="text-[0.62rem] font-extrabold uppercase tracking-[0.14em] text-walnut/68 dark:text-stone">
+        {plan.duration} {plan.duration === 1 ? "month" : "months"}
+      </p>
+      {/* The line box is reserved whether or not this plan is discounted, so
+          all three cards keep their baselines aligned and the row never jumps
+          as the add-on is toggled. `price-strike` itself only goes on real
+          text — its strike is an absolutely positioned pseudo-element, which
+          on an empty span would draw a stray dash. */}
+      <span className="block h-4 font-sans text-[0.7rem] font-medium leading-4 text-[color:var(--muted)]">
+        {plan.extrapolated ? (
+          <span className="price-strike">{plan.extrapolated}</span>
+        ) : null}
+      </span>
+      <p className="font-sans text-base font-semibold leading-tight text-bark dark:text-linen sm:text-lg">
+        {plan.total}
+      </p>
+      {plan.perMonth ? (
+        <p className="font-serif text-[0.72rem] italic leading-tight text-[color:var(--muted)]">
+          {plan.perMonth}/mo
         </p>
-      </div>
-      <div className="flex flex-col items-center gap-2 sm:items-end">
-        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-8 sm:justify-end">
-          {addOn ? (
-            <AddOnToggle
-              label={addOn.label}
-              priceLabel={addOn.priceLabel}
-              checked={addOn.checked}
-              onChange={addOn.onChange}
-            />
-          ) : null}
-          <DurationTabs duration={duration} onChange={onDurationChange} />
-        </div>
-        <div className="relative flex flex-col items-center sm:items-end">
-          <div className="flex flex-wrap items-baseline justify-center gap-x-2 gap-y-1 sm:justify-end">
-            {extrapolated ? (
-              <span className="price-strike font-sans text-sm font-medium text-[color:var(--muted)]">
-                {extrapolated}
-              </span>
-            ) : null}
-            <p className="text-center font-sans text-xl font-semibold text-bark dark:text-linen sm:text-right">
-              {actual}
-            </p>
-          </div>
-          {/* Pinned below the total rather than stacked under it, so the card
-              never changes height as `duration` flips this line on and off —
-              the offering cards stretch to a shared height, so an in-flow line
-              here would resize the neighbouring card too. */}
-          {amountPerMonth ? (
-            <span className="pointer-events-none absolute -bottom-3.5 right-0 rotate-2 whitespace-nowrap rounded-[3px] bg-forest/10 px-1.5 py-0.5 font-serif text-[0.7rem] italic leading-none text-[color:var(--muted)] dark:bg-linen/10">
-              {amountPerMonth} / month
-            </span>
-          ) : null}
-        </div>
-      </div>
+      ) : null}
+      {plan.savedPercent > 0 ? (
+        <span
+          className={`mt-0.5 rounded-full px-2 py-0.5 text-[0.6rem] font-extrabold uppercase tracking-[0.1em] ${isBest
+            ? "bg-ember text-linen"
+            : "bg-forest/10 text-forest dark:bg-linen/10 dark:text-linen"
+            }`}
+        >
+          Save {plan.savedPercent}%
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -418,95 +581,40 @@ function AddOnToggle({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="relative inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-forest/15 bg-linen/60 py-1.5 pl-2 pr-3 text-xs font-bold text-walnut/68 transition-colors hover:text-bark dark:border-linen/15 dark:bg-white/5 dark:text-stone dark:hover:text-linen">
+    <label
+      className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 transition-colors ${checked
+        ? "border-forest/30 bg-forest/[0.07] dark:border-linen/25 dark:bg-linen/[0.08]"
+        : "border-forest/12 bg-[color:var(--panel)] hover:border-forest/25 dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-white/20"
+        }`}
+    >
       <input
         type="checkbox"
-        className="sr-only"
+        className="peer sr-only"
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
       />
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-bold text-bark dark:text-linen">
+          Add {label}
+        </span>
+        <span className="block text-xs text-[color:var(--muted)]">
+          {priceLabel}/mo, billed with the plan
+        </span>
+      </span>
+      {/* A switch rather than the old floating price tag: the add-on changes
+          all three totals at once, so it reads as a setting for the whole
+          panel instead of an annotation on one number. */}
       <span
         aria-hidden="true"
-        className={`grid h-4 w-4 shrink-0 place-items-center rounded-full border transition-colors ${checked
-          ? "border-forest bg-forest text-linen dark:border-linen dark:bg-linen dark:text-bark"
-          : "border-walnut/35 text-transparent dark:border-stone/45"
+        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors peer-focus-visible:ring-4 peer-focus-visible:ring-forest/20 ${checked ? "bg-forest dark:bg-linen" : "bg-walnut/25 dark:bg-white/20"
           }`}
       >
-        <Check size={11} strokeWidth={3} />
-      </span>
-      <span className={checked ? "text-bark dark:text-linen" : ""}>
-        {label}
-      </span>
-      {/* Pinned on top of the pill, not inside it, so the pill (checkbox +
-          label) never resizes when `checked` flips — only this tag's own
-          look changes. */}
-      <span className="pointer-events-none absolute -bottom-2.5 -right-1.5 z-10 -rotate-6 rounded-[3px] border border-ember/35 bg-[color:var(--panel-strong)] px-1.5 py-0.5 font-serif text-[0.7rem] italic leading-none text-ember shadow-sm dark:border-ember/40">
-        +{priceLabel}
+        <span
+          className={`absolute top-0.5 h-5 w-5 rounded-full bg-linen shadow-sm transition-transform duration-200 ease-out dark:bg-bark ${checked ? "translate-x-[1.375rem]" : "translate-x-0.5"
+            }`}
+        />
       </span>
     </label>
-  );
-}
-
-function DurationTabs({
-  duration,
-  onChange,
-}: {
-  duration: 1 | 2 | 3;
-  onChange: (value: 1 | 2 | 3) => void;
-}) {
-  const options: (1 | 2 | 3)[] = [1, 2, 3];
-  const pillRef = useRef<HTMLSpanElement>(null);
-  const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const mountedRef = useRef(false);
-
-  useLayoutEffect(() => {
-    const movePill = (animate: boolean) => {
-      const pill = pillRef.current;
-      const button = buttonRefs.current[options.indexOf(duration)];
-      if (!pill || !button) return;
-
-      if (!animate) {
-        pill.style.transition = "none";
-      }
-      pill.style.transform = `translate3d(${button.offsetLeft}px, 0, 0)`;
-      pill.style.width = `${button.offsetWidth}px`;
-      if (!animate) {
-        void pill.offsetWidth;
-        pill.style.transition = "";
-      }
-    };
-
-    movePill(mountedRef.current);
-    mountedRef.current = true;
-
-    window.addEventListener("resize", () => movePill(false));
-    return () => window.removeEventListener("resize", () => movePill(false));
-  }, [duration]);
-
-  return (
-    <div className="relative inline-flex shrink-0 rounded-full border border-forest/15 bg-linen/60 p-0.5 dark:border-linen/15 dark:bg-white/5">
-      <span
-        ref={pillRef}
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0.5 left-0 rounded-full bg-forest shadow-soft transition-[transform,width] duration-200 ease-out will-change-[transform,width] dark:bg-linen"
-      />
-      {options.map((option, index) => (
-        <button
-          key={option}
-          ref={(element) => {
-            buttonRefs.current[index] = element;
-          }}
-          type="button"
-          onClick={() => onChange(option)}
-          className={`relative z-10 rounded-full px-2.5 py-1 text-xs font-bold transition-colors ${duration === option
-            ? "text-linen dark:text-bark"
-            : "text-walnut/68 hover:text-bark dark:text-stone dark:hover:text-linen"
-            }`}
-        >
-          {option} mo
-        </button>
-      ))}
-    </div>
   );
 }
 
@@ -532,66 +640,50 @@ function EquipmentInfo({
 }: {
   items: { label: string; icon: LucideIcon }[];
 }) {
+  // Unlabelled on purpose: the icons read as "kit you'll need" at a glance,
+  // and each one names itself on hover/focus rather than spending a row of the
+  // front face on a heading.
   return (
-    <div className="mt-5 flex flex-col gap-5 rounded-2xl bg-stone/25 p-4 dark:bg-white/[0.05] sm:flex-row sm:items-center sm:justify-between sm:p-5">
-      <div className="flex min-w-0 flex-col items-center gap-2 sm:flex-row sm:gap-3">
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-forest/10 text-forest dark:bg-linen/10 dark:text-linen">
-          <PackageOpen aria-hidden="true" size={17} />
-        </span>
-        <div className="min-w-0">
-          <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.2em] text-walnut/68 dark:text-stone">
-            Equipment
-          </p>
-        </div>
-      </div>
-      <ul className="mx-auto flex shrink-0 flex-wrap justify-center gap-3 sm:ml-auto sm:mr-0 sm:justify-end">
-        {items.map(({ label, icon: Icon }) => (
-          <li key={label} className="group relative">
-            <span
-              tabIndex={0}
-              aria-label={label}
-              className="grid h-11 w-11 cursor-help place-items-center rounded-full border border-forest/10 bg-[color:var(--panel-strong)] text-forest shadow-sm outline-none transition duration-200 hover:-translate-y-0.5 hover:border-ember/30 hover:text-ember hover:shadow-soft focus-visible:-translate-y-0.5 focus-visible:border-ember/40 focus-visible:text-ember focus-visible:ring-4 focus-visible:ring-forest/10 dark:border-white/10 dark:text-linen dark:hover:border-ember/40 dark:hover:text-ember dark:focus-visible:text-ember"
-            >
-              <Icon aria-hidden="true" size={19} strokeWidth={2} />
-            </span>
-            <span
-              role="tooltip"
-              className="pointer-events-none absolute bottom-[calc(100%+0.65rem)] left-1/2 z-20 w-max max-w-48 -translate-x-1/2 translate-y-1 rounded-xl bg-forest px-3 py-2 text-center text-xs font-bold leading-5 text-linen opacity-0 shadow-earthy transition duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100 dark:bg-linen dark:text-forest"
-            >
-              {label}
-              <span className="absolute left-1/2 top-full h-2 w-2 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-forest dark:bg-linen" />
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <ul
+      aria-label="Equipment"
+      className="mt-6 flex flex-wrap justify-center gap-3 sm:ml-auto sm:mr-0 sm:justify-end"
+    >
+      {items.map(({ label, icon: Icon }) => (
+        <li key={label} className="group relative">
+          <span
+            tabIndex={0}
+            aria-label={label}
+            className="grid h-11 w-11 cursor-help place-items-center rounded-full border border-forest/10 bg-stone/40 text-forest outline-none transition duration-200 hover:-translate-y-0.5 hover:border-ember/30 hover:bg-[color:var(--panel-strong)] hover:text-ember hover:shadow-soft focus-visible:-translate-y-0.5 focus-visible:border-ember/40 focus-visible:text-ember focus-visible:ring-4 focus-visible:ring-forest/10 dark:border-white/10 dark:bg-white/[0.07] dark:text-linen dark:hover:border-ember/40 dark:hover:text-ember dark:focus-visible:text-ember"
+          >
+            <Icon aria-hidden="true" size={19} strokeWidth={2} />
+          </span>
+          <span
+            role="tooltip"
+            className="pointer-events-none absolute bottom-[calc(100%+0.65rem)] left-1/2 z-20 w-max max-w-48 -translate-x-1/2 translate-y-1 rounded-xl bg-forest px-3 py-2 text-center text-xs font-bold leading-5 text-linen opacity-0 shadow-earthy transition duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100 dark:bg-linen dark:text-forest"
+          >
+            {label}
+            <span className="absolute left-1/2 top-full h-2 w-2 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-forest dark:bg-linen" />
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
-function OfferingListInfo({
-  title,
-  items,
-}: {
-  title: string;
-  items: string[];
-}) {
+// The drawer tab supplies the heading, so the list carries no title of its own.
+function OfferingListInfo({ items }: { items: string[] }) {
   return (
-    <div>
-      <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.2em] text-walnut/68 dark:text-stone">
-        {title}
-      </p>
-      <ul className="mt-3 grid gap-2">
-        {items.map((item) => (
-          <li
-            key={item}
-            className="flex gap-3 text-sm leading-6 text-[color:var(--muted)]"
-          >
-            <CheckCircle2 className="mt-1 shrink-0 text-ember" size={16} />
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <ul className="grid gap-2 sm:grid-cols-2 sm:gap-x-6">
+      {items.map((item) => (
+        <li
+          key={item}
+          className="flex gap-3 text-sm leading-6 text-[color:var(--muted)]"
+        >
+          <CheckCircle2 className="mt-1 shrink-0 text-ember" size={16} />
+          <span>{item}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -617,18 +709,11 @@ function ScheduleInfo({ schedule }: { schedule: OfferingSchedule }) {
       : null;
 
   return (
-    <div className="rounded-2xl border border-ember/20 p-4 sm:p-5 dark:border-ember/30">
-      <div className="flex items-center justify-center gap-2 text-ember">
-        <CalendarDays aria-hidden="true" size={17} strokeWidth={2.25} />
-        <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.2em]">
-          Schedule
-        </p>
-      </div>
-      <ul className="mx-auto mt-5 flex flex-wrap justify-center max-w-md gap-3">
+    <ul className="mx-auto flex max-w-md flex-wrap justify-center gap-3 text-sm">
         {schedule.split.map((item) => (
           <li
             key={`${item.days.join("-")}-${item.classType}`}
-            className="grid flex-1 basis-0 content-start justify-items-center gap-3 rounded-xl bg-stone/25 p-3.5 text-center dark:bg-white/[0.05]"
+            className="grid flex-1 basis-0 content-start justify-items-center gap-3 rounded-xl bg-[color:var(--panel-strong)] p-3.5 text-center dark:bg-white/[0.06]"
           >
             <p className="text-sm font-extrabold leading-5 text-bark dark:text-linen">
               {item.classType}
@@ -651,7 +736,7 @@ function ScheduleInfo({ schedule }: { schedule: OfferingSchedule }) {
                 (day) => (
                   <span
                     key={day}
-                    className="min-w-10 rounded-full border border-forest/10 bg-[color:var(--panel-strong)] px-2.5 py-1.5 text-center text-[0.68rem] font-extrabold leading-none text-forest shadow-sm dark:border-white/10 dark:text-linen"
+                    className="min-w-10 rounded-full border border-forest/10 bg-stone/50 px-2.5 py-1.5 text-center text-[0.68rem] font-extrabold leading-none text-forest dark:border-white/10 dark:bg-white/10 dark:text-linen"
                   >
                     {day}
                   </span>
@@ -660,8 +745,7 @@ function ScheduleInfo({ schedule }: { schedule: OfferingSchedule }) {
             </div>
           </li>
         ))}
-      </ul>
-    </div>
+    </ul>
   );
 }
 
@@ -845,10 +929,14 @@ function uniqueValues<T>(values: T[]) {
 }
 
 function Testimonials() {
+  // Light mode banks sections with a stone tint. Dark mode deliberately has no
+  // section background at all: any flat tint, however subtle, meets its
+  // neighbour at a hard horizontal edge. The body's own gradient is left to run
+  // the full height of the page uninterrupted instead.
   return (
     <section
       id="testimonials"
-      className="bg-stone/36 py-20 dark:bg-bark md:py-24"
+      className="bg-stone/36 py-20 md:py-24"
     >
       <div className="section-shell">
         <SectionHeading eyebrow="Testimonials" />
@@ -907,7 +995,7 @@ function Certificates() {
   return (
     <section
       id="certificates"
-      className="bg-stone/24 py-20 dark:bg-white/[0.03] md:py-24"
+      className="bg-stone/24 py-20 md:py-24"
     >
       <div className="section-shell">
         <SectionHeading eyebrow="My Certifications" />
