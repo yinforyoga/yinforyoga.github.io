@@ -69,24 +69,16 @@ export type OfferingPrice =
   };
 
 // Multi-month packages are priced at a lower effective monthly rate than the
-// 1-month price. These discounts (12.5% for 2 months, 25% for 3 months) come
-// from the per-class rate dropping from ₹200 → ₹175 → ₹150 as commitment
-// length increases, and apply uniformly across regions/currencies since the
-// discount is a percentage off the extrapolated (1-month × N) total.
-export const durationDiscounts: Record<1 | 2 | 3, number> = {
-  1: 0,
-  2: 0.125,
-  3: 0.25,
-};
+// 1-month price, expressed as a percentage off the extrapolated
+// (1-month × N) total so it applies uniformly across regions/currencies.
+// Each offering sets its own table, since the rate at which a longer
+// commitment earns a discount is a per-offering pricing decision.
+export type DurationDiscounts = Record<1 | 2 | 3, number>;
 
-// Add-on classes (e.g. the optional Thursday Yoga session tacked onto Yin for
-// Strength) are priced separately from the offering's mandatory classes, and
-// discount faster with commitment length (25% for 2 months, 50% for 3) since
-// the per-class rate drops ₹100 → ₹75 → ₹50.
-export const addOnDurationDiscounts: Record<1 | 2 | 3, number> = {
+export const noDurationDiscounts: DurationDiscounts = {
   1: 0,
-  2: 0.25,
-  3: 0.4,
+  2: 0,
+  3: 0,
 };
 
 export type OfferingAddOn = {
@@ -96,7 +88,7 @@ export type OfferingAddOn = {
     type: "fixed";
     regions: Record<string, { amount: number; currency: string }>;
   };
-  durationDiscounts: Record<1 | 2 | 3, number>;
+  durationDiscounts: DurationDiscounts;
 };
 
 export type Offering = {
@@ -105,6 +97,7 @@ export type Offering = {
   theme: string;
   schedule: OfferingSchedule;
   price: OfferingPrice;
+  durationDiscounts: DurationDiscounts;
   addOn?: OfferingAddOn;
   mode: OfferingMode;
   status: OfferingStatus;
@@ -151,8 +144,8 @@ export const offerings: Offering[] = [
         {
           days: ["Mon", "Wed", "Fri"],
           classType: "Strength",
-          startTime: { hour: 5, meridiem: "pm" },
-          endTime: { hour: 6, meridiem: "pm" },
+          startTime: { hour: 6, meridiem: "pm" },
+          endTime: { hour: 7, meridiem: "pm" },
         },
         {
           days: ["Thu"],
@@ -167,7 +160,7 @@ export const offerings: Offering[] = [
       type: "fixed",
       regions: {
         IN: { amount: 2400, currency: "INR" },
-        US: { amount: 19, currency: "USD" },
+        US: { amount: 50, currency: "USD" },
         CA: { amount: 26, currency: "CAD" },
         GB: { amount: 15, currency: "GBP" },
         AU: { amount: 29, currency: "AUD" },
@@ -175,13 +168,19 @@ export const offerings: Offering[] = [
         AE: { amount: 70, currency: "AED" },
         SG: { amount: 26, currency: "SGD" },
         JP: { amount: 2880, currency: "JPY" },
-        DE: { amount: 18, currency: "EUR" },
-        FR: { amount: 18, currency: "EUR" },
-        IT: { amount: 18, currency: "EUR" },
-        ES: { amount: 18, currency: "EUR" },
-        NL: { amount: 18, currency: "EUR" },
-        IE: { amount: 18, currency: "EUR" },
+        DE: { amount: 49, currency: "EUR" },
+        FR: { amount: 49, currency: "EUR" },
+        IT: { amount: 49, currency: "EUR" },
+        ES: { amount: 49, currency: "EUR" },
+        NL: { amount: 49, currency: "EUR" },
+        IE: { amount: 49, currency: "EUR" },
       },
+    },
+    // ₹2400 → ₹2200 → ₹2000 per month as commitment length increases.
+    durationDiscounts: {
+      1: 0,
+      2: 0.0833333,
+      3: 0.1666666666,
     },
     // TODO: only the IN amount (₹100/class × 4 classes/month) is a confirmed
     // price. The rest are provisional, scaled from this offering's own
@@ -194,7 +193,7 @@ export const offerings: Offering[] = [
         type: "fixed",
         regions: {
           IN: { amount: 400, currency: "INR" },
-          US: { amount: 3, currency: "USD" },
+          US: { amount: 8, currency: "USD" },
           CA: { amount: 4, currency: "CAD" },
           GB: { amount: 3, currency: "GBP" },
           AU: { amount: 5, currency: "AUD" },
@@ -202,15 +201,18 @@ export const offerings: Offering[] = [
           AE: { amount: 12, currency: "AED" },
           SG: { amount: 4, currency: "SGD" },
           JP: { amount: 480, currency: "JPY" },
-          DE: { amount: 3, currency: "EUR" },
-          FR: { amount: 3, currency: "EUR" },
-          IT: { amount: 3, currency: "EUR" },
-          ES: { amount: 3, currency: "EUR" },
-          NL: { amount: 3, currency: "EUR" },
-          IE: { amount: 3, currency: "EUR" },
+          DE: { amount: 8, currency: "EUR" },
+          FR: { amount: 8, currency: "EUR" },
+          IT: { amount: 8, currency: "EUR" },
+          ES: { amount: 8, currency: "EUR" },
+          NL: { amount: 8, currency: "EUR" },
+          IE: { amount: 8, currency: "EUR" },
         },
       },
-      durationDiscounts: addOnDurationDiscounts,
+      // Add-on classes are priced separately from the offering's mandatory
+      // classes, and carry no multi-month discount — the add-on's monthly
+      // rate is flat regardless of commitment length.
+      durationDiscounts: noDurationDiscounts,
     },
     mode: "Online",
     status: "Registrations Open",
@@ -248,7 +250,7 @@ export const offerings: Offering[] = [
       },
       split: [
         {
-          days: ["Tue", "Wed", "Thu"],
+          days: ["Tue", "Thu"],
           classType: "Yoga",
           startTime: { hour: 6, meridiem: "pm" },
           endTime: { hour: 7, meridiem: "pm" },
@@ -258,7 +260,7 @@ export const offerings: Offering[] = [
     price: {
       type: "fixed",
       regions: {
-        IN: { amount: 2400, currency: "INR" },
+        IN: { amount: 1600, currency: "INR" },
         US: { amount: 29, currency: "USD" },
         CA: { amount: 38, currency: "CAD" },
         GB: { amount: 22, currency: "GBP" },
@@ -274,6 +276,12 @@ export const offerings: Offering[] = [
         NL: { amount: 26, currency: "EUR" },
         IE: { amount: 26, currency: "EUR" },
       },
+    },
+    // ₹1600 → ₹467 → ₹1333 per month as commitment length increases.
+    durationDiscounts: {
+      1: 0,
+      2: 0.125,
+      3: 0.25,
     },
     mode: "Online",
     status: "Registrations Open",

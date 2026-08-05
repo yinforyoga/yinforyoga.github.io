@@ -16,7 +16,7 @@ import type { LucideIcon } from "lucide-react";
 import { SiInstagram, SiWhatsapp } from "@icons-pack/react-simple-icons";
 import {
   certificates,
-  durationDiscounts,
+  type DurationDiscounts,
   type Offering,
   type OfferingAddOn,
   type OfferingLocalTime,
@@ -196,7 +196,7 @@ function OfferingCard({
 
         <PricingInfo
           price={offering.price}
-          schedule={offering.schedule}
+          durationDiscounts={offering.durationDiscounts}
           addOn={offering.addOn}
         />
 
@@ -213,31 +213,11 @@ function OfferingCard({
   );
 }
 
-function getWeeklyClassCount(
-  schedule: OfferingSchedule,
-  includeOptional: boolean,
-) {
-  const count = schedule.split
-    .filter((item) => !item.optional || includeOptional)
-    .reduce((total, item) => total + item.days.length, 0);
-
-  return count || 1;
-}
-
 function formatTotal(amount: number, currency: string) {
   return new Intl.NumberFormat(undefined, {
     style: "currency",
     currency,
     maximumFractionDigits: 0,
-  }).format(amount);
-}
-
-function formatPerClass(amount: number, currency: string) {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
   }).format(amount);
 }
 
@@ -256,11 +236,11 @@ function getDiscountedTotal(
 
 function PricingInfo({
   price,
-  schedule,
+  durationDiscounts,
   addOn,
 }: {
   price: OfferingPrice;
-  schedule: OfferingSchedule;
+  durationDiscounts: DurationDiscounts;
   addOn?: OfferingAddOn;
 }) {
   const [region, setRegion] = useState("IN");
@@ -278,16 +258,11 @@ function PricingInfo({
   if (price.type !== "fixed") {
     // Add-ons are only modeled for fixed pricing (the only kind in use
     // today); range-priced offerings render the original layout untouched.
-    const classesPerMonth = getWeeklyClassCount(schedule, false) * 4;
     const regionalPrice = price.regions[region] ?? price.regions.IN;
     const extrapolatedMin = regionalPrice.min * duration;
     const extrapolatedMax = regionalPrice.max * duration;
     const actualMin = getDiscountedTotal(regionalPrice.min, duration, discount);
     const actualMax = getDiscountedTotal(regionalPrice.max, duration, discount);
-    const perClassActualMin =
-      (regionalPrice.min / classesPerMonth) * (1 - discount);
-    const perClassActualMax =
-      (regionalPrice.max / classesPerMonth) * (1 - discount);
 
     return (
       <PricingCard
@@ -297,8 +272,11 @@ function PricingInfo({
             ? `${formatTotal(extrapolatedMin, regionalPrice.currency)} – ${formatTotal(extrapolatedMax, regionalPrice.currency)}`
             : undefined
         }
-        perClassActual={`${formatPerClass(perClassActualMin, regionalPrice.currency)} – ${formatPerClass(perClassActualMax, regionalPrice.currency)}`}
-        classCount={classesPerMonth * duration}
+        amountPerMonth={
+          duration !== 1
+            ? `${formatTotal(actualMin / duration, regionalPrice.currency)} – ${formatTotal(actualMax / duration, regionalPrice.currency)}`
+            : undefined
+        }
         duration={duration}
         onDurationChange={setDuration}
       />
@@ -306,19 +284,12 @@ function PricingInfo({
   }
 
   const regionalPrice = price.regions[region] ?? price.regions.IN;
-  const baseClassesPerMonth = getWeeklyClassCount(schedule, false) * 4;
   const baseActual = getDiscountedTotal(regionalPrice.amount, duration, discount);
   const baseExtrapolated = regionalPrice.amount * duration;
 
-  const addOnScheduleItem = addOn
-    ? schedule.split.find(
-      (item) => item.classType === addOn.classType && item.optional,
-    )
-    : undefined;
   const addOnRegionalPrice = addOn
     ? addOn.price.regions[region] ?? addOn.price.regions.IN
     : undefined;
-  const addOnClassesPerMonth = (addOnScheduleItem?.days.length ?? 0) * 4;
   const addOnActual =
     addOn && addOnRegionalPrice
       ? getDiscountedTotal(
@@ -331,13 +302,9 @@ function PricingInfo({
     ? addOnRegionalPrice.amount * duration
     : 0;
 
-  const totalClassesPerMonth =
-    baseClassesPerMonth + (includeAddOn ? addOnClassesPerMonth : 0);
   const totalActual = baseActual + (includeAddOn ? addOnActual : 0);
   const totalExtrapolated =
     baseExtrapolated + (includeAddOn ? addOnExtrapolated : 0);
-  const perClassActualAmount =
-    totalActual / (totalClassesPerMonth * duration);
 
   return (
     <PricingCard
@@ -347,8 +314,11 @@ function PricingInfo({
           ? formatTotal(totalExtrapolated, regionalPrice.currency)
           : undefined
       }
-      perClassActual={formatPerClass(perClassActualAmount, regionalPrice.currency)}
-      classCount={totalClassesPerMonth * duration}
+      amountPerMonth={
+        duration !== 1
+          ? formatTotal(totalActual / duration, regionalPrice.currency)
+          : undefined
+      }
       duration={duration}
       onDurationChange={setDuration}
       addOn={
@@ -368,16 +338,14 @@ function PricingInfo({
 function PricingCard({
   actual,
   extrapolated,
-  perClassActual,
-  classCount,
+  amountPerMonth,
   duration,
   onDurationChange,
   addOn,
 }: {
   actual: string;
   extrapolated?: string;
-  perClassActual: string;
-  classCount: number;
+  amountPerMonth?: string;
   duration: 1 | 2 | 3;
   onDurationChange: (value: 1 | 2 | 3) => void;
   addOn?: {
@@ -387,8 +355,11 @@ function PricingCard({
     onChange: (checked: boolean) => void;
   };
 }) {
+  // The mobile `pb-5` (rather than the `p-4` used on the other sides) matches
+  // the desktop `p-5`, so the pinned per-month tag below keeps the same
+  // clearance from the card edge at both breakpoints.
   return (
-    <div className="mt-5 flex flex-col gap-4 rounded-2xl border border-forest/10 bg-forest/[0.04] p-4 dark:border-linen/10 dark:bg-linen/[0.04] sm:flex-row sm:items-center sm:justify-between sm:p-5">
+    <div className="mt-5 flex flex-col gap-4 rounded-2xl border border-forest/10 bg-forest/[0.04] p-4 pb-5 dark:border-linen/10 dark:bg-linen/[0.04] sm:flex-row sm:items-center sm:justify-between sm:p-5">
       <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-3">
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-forest/10 text-forest dark:bg-linen/10 dark:text-linen">
           <Banknote aria-hidden="true" size={17} />
@@ -409,7 +380,7 @@ function PricingCard({
           ) : null}
           <DurationTabs duration={duration} onChange={onDurationChange} />
         </div>
-        <div className="flex flex-col items-center gap-1 sm:items-end">
+        <div className="relative flex flex-col items-center sm:items-end">
           <div className="flex flex-wrap items-baseline justify-center gap-x-2 gap-y-1 sm:justify-end">
             {extrapolated ? (
               <span className="price-strike font-sans text-sm font-medium text-[color:var(--muted)]">
@@ -420,10 +391,15 @@ function PricingCard({
               {actual}
             </p>
           </div>
-          <p className="flex flex-wrap items-baseline justify-center gap-x-1.5 gap-y-1 text-xs font-medium text-[color:var(--muted)] sm:justify-end">
-            <span>{perClassActual}</span>
-            <span>× {classCount} classes</span>
-          </p>
+          {/* Pinned below the total rather than stacked under it, so the card
+              never changes height as `duration` flips this line on and off —
+              the offering cards stretch to a shared height, so an in-flow line
+              here would resize the neighbouring card too. */}
+          {amountPerMonth ? (
+            <span className="pointer-events-none absolute -bottom-3.5 right-0 rotate-2 whitespace-nowrap rounded-[3px] bg-forest/10 px-1.5 py-0.5 font-serif text-[0.7rem] italic leading-none text-[color:var(--muted)] dark:bg-linen/10">
+              {amountPerMonth} / month
+            </span>
+          ) : null}
         </div>
       </div>
     </div>
