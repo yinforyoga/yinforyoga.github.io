@@ -710,41 +710,41 @@ function ScheduleInfo({ schedule }: { schedule: OfferingSchedule }) {
 
   return (
     <ul className="mx-auto flex max-w-md flex-wrap justify-center gap-3 text-sm">
-        {schedule.split.map((item) => (
-          <li
-            key={`${item.days.join("-")}-${item.classType}`}
-            className="grid flex-1 basis-0 content-start justify-items-center gap-3 rounded-xl bg-[color:var(--panel-strong)] p-3.5 text-center dark:bg-white/[0.06]"
-          >
-            <p className="text-sm font-extrabold leading-5 text-bark dark:text-linen">
-              {item.classType}
-              {item.optional ? (
-                <span className="font-medium text-[color:var(--muted)]">
-                  {" "}
-                  (optional)
+      {schedule.split.map((item) => (
+        <li
+          key={`${item.days.join("-")}-${item.classType}`}
+          className="grid flex-1 basis-0 content-start justify-items-center gap-3 rounded-xl bg-[color:var(--panel-strong)] p-3.5 text-center dark:bg-white/[0.06]"
+        >
+          <p className="text-sm font-extrabold leading-5 text-bark dark:text-linen">
+            {item.classType}
+            {item.optional ? (
+              <span className="font-medium text-[color:var(--muted)]">
+                {" "}
+                (optional)
+              </span>
+            ) : null}
+          </p>
+          <p className="whitespace-nowrap font-serif text-sm font-medium text-bark dark:text-linen">
+            <FormattedItemTime
+              item={item}
+              schedule={schedule}
+              timeZone={displayTimeZone}
+            />
+          </p>
+          <div className="flex flex-wrap justify-center gap-1.5">
+            {getScheduleItemDays(item, schedule, displayTimeZone).map(
+              (day) => (
+                <span
+                  key={day}
+                  className="min-w-10 rounded-full border border-forest/10 bg-stone/50 px-2.5 py-1.5 text-center text-[0.68rem] font-extrabold leading-none text-forest dark:border-white/10 dark:bg-white/10 dark:text-linen"
+                >
+                  {day}
                 </span>
-              ) : null}
-            </p>
-            <p className="whitespace-nowrap font-serif text-sm font-medium text-bark dark:text-linen">
-              <FormattedItemTime
-                item={item}
-                schedule={schedule}
-                timeZone={displayTimeZone}
-              />
-            </p>
-            <div className="flex flex-wrap justify-center gap-1.5">
-              {getScheduleItemDays(item, schedule, displayTimeZone).map(
-                (day) => (
-                  <span
-                    key={day}
-                    className="min-w-10 rounded-full border border-forest/10 bg-stone/50 px-2.5 py-1.5 text-center text-[0.68rem] font-extrabold leading-none text-forest dark:border-white/10 dark:bg-white/10 dark:text-linen"
-                  >
-                    {day}
-                  </span>
-                ),
-              )}
-            </div>
-          </li>
-        ))}
+              ),
+            )}
+          </div>
+        </li>
+      ))}
     </ul>
   );
 }
