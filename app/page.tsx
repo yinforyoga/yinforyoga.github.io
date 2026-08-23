@@ -14,6 +14,8 @@ import { SiInstagram, SiWhatsapp } from "@icons-pack/react-simple-icons";
 import {
   certificates,
   type DurationDiscounts,
+  getTier,
+  type Money,
   type Offering,
   type OfferingAddOn,
   type OfferingLocalTime,
@@ -22,6 +24,7 @@ import {
   type OfferingScheduleItem,
   type OfferingWeekday,
   offerings,
+  resolvePrice,
   testimonials,
 } from "@/lib/data";
 import { FadeUp, MotionSection } from "@/components/MotionPrimitives";
@@ -377,8 +380,13 @@ function slugify(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
-function formatTotal(amount: number, currency: string) {
-  return new Intl.NumberFormat(undefined, {
+// The locale is pinned rather than inherited from the visitor. `undefined`
+// here means "whatever the browser is set to", and locales such as mr-IN
+// default to Devanagari digits — ₹8,600 rendered as ₹८,६००. Prices are
+// authored in rupees for an Indian-format audience, so en-IN gives everyone
+// the same Arabic numerals and the same 2-3 digit grouping.
+function formatMoney({ amount, currency }: Money) {
+  return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency,
     maximumFractionDigits: 0,
@@ -396,30 +404,6 @@ function getDiscountedTotal(
 ) {
   if (duration === 1) return amount;
   return Math.round(amount * duration * (1 - discount));
-}
-
-// A price as a min/max pair, so fixed and range pricing share one code path
-// instead of the panel branching on `price.type` at every step.
-type PriceRange = { min: number; max: number; currency: string };
-
-function getRegionalRange(price: OfferingPrice, region: string): PriceRange {
-  if (price.type === "fixed") {
-    const regional = price.regions[region] ?? price.regions.IN;
-    return {
-      min: regional.amount,
-      max: regional.amount,
-      currency: regional.currency,
-    };
-  }
-
-  const regional = price.regions[region] ?? price.regions.IN;
-  return { min: regional.min, max: regional.max, currency: regional.currency };
-}
-
-function formatRange({ min, max, currency }: PriceRange) {
-  return min === max
-    ? formatTotal(min, currency)
-    : `${formatTotal(min, currency)} – ${formatTotal(max, currency)}`;
 }
 
 const planDurations: (1 | 2 | 3)[] = [1, 2, 3];
@@ -451,44 +435,40 @@ function PricingInfo({
     setRegion(getRegionFromTimeZone(timeZone) ?? locale.region ?? "IN");
   }, []);
 
-  const base = getRegionalRange(price, region);
-  const addOnPrice = addOn ? getRegionalRange(addOn.price, region) : undefined;
-  const withAddOn = Boolean(addOn && addOnPrice && includeAddOn);
+  // All arithmetic — discounts, add-ons, per-month rates — happens in the
+  // authored INR, and conversion to the visitor's currency happens only at the
+  // moment a number is rendered. Rounding therefore lands once, on the figure
+  // actually shown, instead of compounding through every intermediate step.
+  const resolve = (inr: number) =>
+    resolvePrice(inr, { tier: getTier(region), region });
+
+  const withAddOn = Boolean(addOn && includeAddOn);
 
   const plans: PricingPlan[] = planDurations.map((duration) => {
-    const discount = durationDiscounts[duration];
+    const addOnInr = withAddOn && addOn ? addOn.price : 0;
     const addOnDiscount = addOn?.durationDiscounts[duration] ?? 0;
-    const sum = (pick: "min" | "max") =>
-      getDiscountedTotal(base[pick], duration, discount) +
-      (withAddOn && addOnPrice
-        ? getDiscountedTotal(addOnPrice[pick], duration, addOnDiscount)
-        : 0);
-    const undiscounted = (pick: "min" | "max") =>
-      base[pick] * duration +
-      (withAddOn && addOnPrice ? addOnPrice[pick] * duration : 0);
 
-    const actual = { min: sum("min"), max: sum("max"), currency: base.currency };
-    const full = {
-      min: undiscounted("min"),
-      max: undiscounted("max"),
-      currency: base.currency,
-    };
-    const isDiscounted = actual.min < full.min;
+    const actual = resolve(
+      getDiscountedTotal(price, duration, durationDiscounts[duration]) +
+      (addOnInr ? getDiscountedTotal(addOnInr, duration, addOnDiscount) : 0),
+    );
+    const full = resolve((price + addOnInr) * duration);
+
+    // The saving is read off the two converted figures rather than the INR
+    // behind them, so the badge can never claim a discount the two numbers on
+    // the card don't visibly show.
+    const isDiscounted = actual.amount < full.amount;
 
     return {
       duration,
-      total: formatRange(actual),
-      extrapolated: isDiscounted ? formatRange(full) : undefined,
+      total: formatMoney(actual),
+      extrapolated: isDiscounted ? formatMoney(full) : undefined,
       perMonth:
         duration === 1
           ? undefined
-          : formatRange({
-            min: actual.min / duration,
-            max: actual.max / duration,
-            currency: base.currency,
-          }),
+          : formatMoney({ ...actual, amount: actual.amount / duration }),
       savedPercent: isDiscounted
-        ? Math.round((1 - actual.min / full.min) * 100)
+        ? Math.round((1 - actual.amount / full.amount) * 100)
         : 0,
     };
   });
@@ -508,10 +488,10 @@ function PricingInfo({
           />
         ))}
       </div>
-      {addOn && addOnPrice ? (
+      {addOn ? (
         <AddOnToggle
           label={addOn.label}
-          priceLabel={formatRange(addOnPrice)}
+          priceLabel={formatMoney(resolve(addOn.price))}
           checked={includeAddOn}
           onChange={setIncludeAddOn}
         />

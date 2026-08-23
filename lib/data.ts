@@ -55,18 +55,143 @@ export type OfferingSchedule = {
   split: OfferingScheduleItem[];
 };
 
-export type OfferingPrice =
-  | {
-    type: "fixed";
-    regions: Record<string, { amount: number; currency: string }>;
-  }
-  | {
-    type: "range";
-    regions: Record<
-      string,
-      { min: number; max: number; currency: string }
-    >;
-  };
+// ─────────────────────────────────────────────────────────────────────────────
+// Pricing
+//
+// Every price on the site is authored exactly once, as a monthly amount in INR.
+// What a given visitor sees is derived from it in two independent steps:
+//
+//   1. TIER  — where the visitor is decides a multiplier (`tierMultipliers`).
+//   2. DISPLAY — a `PriceDisplayStrategy` decides which currency that amount is
+//      finally shown in.
+//
+// The two are deliberately separate. Whether a US visitor sees ₹3600 or $40 is
+// a presentation decision (`displayStrategy`); *how much* they pay is a pricing
+// decision (`tierMultipliers`). Changing either is a one-line edit that needs
+// no changes to any offering.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** A price expressed in the currency it will actually be rendered in. */
+export type Money = { amount: number; currency: string };
+
+/** A monthly price, authored in INR. The single source of truth for an amount. */
+export type OfferingPrice = number;
+
+export type PricingTier = "IN" | "INTL";
+
+/** Visitors outside India pay a multiple of the India price. */
+export const tierMultipliers: Record<PricingTier, number> = {
+  IN: 1,
+  INTL: 1.5,
+};
+
+export function getTier(region: string): PricingTier {
+  return region === "IN" ? "IN" : "INTL";
+}
+
+export type PriceDisplayContext = { tier: PricingTier; region: string };
+
+export type PriceDisplayStrategy = {
+  id: string;
+  /**
+   * `inr` has already been scaled by the visitor's tier multiplier, so a
+   * strategy only ever decides presentation — never how much is charged.
+   */
+  display(inr: number, context: PriceDisplayContext): Money;
+};
+
+/**
+ * Hand-maintained display rates: how many INR one unit of the currency is
+ * worth. These only decide the number printed on the page — nothing is charged
+ * through them — so approximate, occasionally-refreshed values are fine, and
+ * `roundForDisplay` blurs them into round numbers anyway.
+ */
+const displayRates: Record<string, { currency: string; inrPerUnit: number }> = {
+  US: { currency: "USD", inrPerUnit: 88 },
+  CA: { currency: "CAD", inrPerUnit: 64 },
+  GB: { currency: "GBP", inrPerUnit: 112 },
+  AU: { currency: "AUD", inrPerUnit: 57 },
+  NZ: { currency: "NZD", inrPerUnit: 52 },
+  AE: { currency: "AED", inrPerUnit: 24 },
+  SG: { currency: "SGD", inrPerUnit: 65 },
+  JP: { currency: "JPY", inrPerUnit: 0.58 },
+  DE: { currency: "EUR", inrPerUnit: 96 },
+  FR: { currency: "EUR", inrPerUnit: 96 },
+  IT: { currency: "EUR", inrPerUnit: 96 },
+  ES: { currency: "EUR", inrPerUnit: 96 },
+  NL: { currency: "EUR", inrPerUnit: 96 },
+  IE: { currency: "EUR", inrPerUnit: 96 },
+};
+
+/**
+ * Snap a converted amount to two significant figures — 40.9 → 41, 122.7 → 120,
+ * ¥6206 → ¥6200. Converted prices are approximations of an INR figure, so a
+ * price that reads as approximate is more honest than a false-precision ¥6206.
+ *
+ * Two figures rather than one: the pricing panel shows a discounted total
+ * beside its struck-through undiscounted total, and coarser rounding collapses
+ * nearby pairs into the same number, which reads as a bug.
+ */
+function roundForDisplay(value: number) {
+  if (value <= 0) return 0;
+  const step = 10 ** (Math.floor(Math.log10(value)) - 1);
+  return Math.round(value / step) * step;
+}
+
+/** ₹2400 in India, ₹3600 in the US — one currency, one mental model. */
+export const showInRupees: PriceDisplayStrategy = {
+  id: "rupees",
+  display: (inr) => ({ amount: inr, currency: "INR" }),
+};
+
+/** ₹2400 in India, $40 in the US, €38 in Germany. */
+export const showInLocalCurrency: PriceDisplayStrategy = {
+  id: "local-currency",
+  display(inr, { tier, region }) {
+    // Unknown regions abroad still deserve a familiar currency, so they fall
+    // back to USD rather than to rupees.
+    const rate = displayRates[region] ?? (tier === "INTL" ? displayRates.US : undefined);
+    if (!rate) return { amount: inr, currency: "INR" };
+    return {
+      amount: roundForDisplay(inr / rate.inrPerUnit),
+      currency: rate.currency,
+    };
+  },
+};
+
+/** ₹2400 in India, $40 everywhere else — one price for the whole world abroad. */
+export const showInUsdAbroad: PriceDisplayStrategy = {
+  id: "usd-abroad",
+  display(inr, { tier }) {
+    if (tier === "IN") return { amount: inr, currency: "INR" };
+    return {
+      amount: roundForDisplay(inr / displayRates.US.inrPerUnit),
+      currency: "USD",
+    };
+  },
+};
+
+/**
+ * Swap this to change how every price on the site is presented.
+ *
+ * Rupees everywhere for now: one currency and one mental model, and no
+ * hand-maintained rate can go stale in front of a visitor.
+ *
+ * TODO: let the visitor choose instead of deciding for them — a small control
+ * near the pricing panel that switches between ₹ and their own currency (or
+ * any currency in `displayRates`). The strategies below already cover the
+ * cases; what's missing is holding the choice in state and threading it into
+ * `resolvePrice` rather than reading this module-level constant.
+ */
+export const displayStrategy: PriceDisplayStrategy = showInRupees;
+
+/** The one function the UI needs: an INR price in, rendered money out. */
+export function resolvePrice(
+  inr: OfferingPrice,
+  context: PriceDisplayContext,
+): Money {
+  return displayStrategy.display(inr * tierMultipliers[context.tier], context);
+}
 
 // Multi-month packages are priced at a lower effective monthly rate than the
 // 1-month price, expressed as a percentage off the extrapolated
@@ -84,10 +209,7 @@ export const noDurationDiscounts: DurationDiscounts = {
 export type OfferingAddOn = {
   label: string;
   classType: OfferingClassType;
-  price: {
-    type: "fixed";
-    regions: Record<string, { amount: number; currency: string }>;
-  };
+  price: OfferingPrice;
   durationDiscounts: DurationDiscounts;
 };
 
@@ -156,59 +278,18 @@ export const offerings: Offering[] = [
         },
       ],
     },
-    price: {
-      type: "fixed",
-      regions: {
-        IN: { amount: 2400, currency: "INR" },
-        US: { amount: 50, currency: "USD" },
-        CA: { amount: 26, currency: "CAD" },
-        GB: { amount: 15, currency: "GBP" },
-        AU: { amount: 29, currency: "AUD" },
-        NZ: { amount: 32, currency: "NZD" },
-        AE: { amount: 70, currency: "AED" },
-        SG: { amount: 26, currency: "SGD" },
-        JP: { amount: 2880, currency: "JPY" },
-        DE: { amount: 49, currency: "EUR" },
-        FR: { amount: 49, currency: "EUR" },
-        IT: { amount: 49, currency: "EUR" },
-        ES: { amount: 49, currency: "EUR" },
-        NL: { amount: 49, currency: "EUR" },
-        IE: { amount: 49, currency: "EUR" },
-      },
-    },
+    price: 2400,
     // ₹2400 → ₹2200 → ₹2000 per month as commitment length increases.
     durationDiscounts: {
       1: 0,
       2: 0.0833333,
       3: 0.1666666666,
     },
-    // TODO: only the IN amount (₹100/class × 4 classes/month) is a confirmed
-    // price. The rest are provisional, scaled from this offering's own
-    // regional/INR ratio above (e.g. US = 400 × (19 / 2400) ≈ 3) — review
-    // and replace with actual figures before launch.
     addOn: {
       label: "Yoga",
       classType: "Yoga",
-      price: {
-        type: "fixed",
-        regions: {
-          IN: { amount: 400, currency: "INR" },
-          US: { amount: 8, currency: "USD" },
-          CA: { amount: 4, currency: "CAD" },
-          GB: { amount: 3, currency: "GBP" },
-          AU: { amount: 5, currency: "AUD" },
-          NZ: { amount: 5, currency: "NZD" },
-          AE: { amount: 12, currency: "AED" },
-          SG: { amount: 4, currency: "SGD" },
-          JP: { amount: 480, currency: "JPY" },
-          DE: { amount: 8, currency: "EUR" },
-          FR: { amount: 8, currency: "EUR" },
-          IT: { amount: 8, currency: "EUR" },
-          ES: { amount: 8, currency: "EUR" },
-          NL: { amount: 8, currency: "EUR" },
-          IE: { amount: 8, currency: "EUR" },
-        },
-      },
+      // ₹100/class × 4 classes/month.
+      price: 400,
       // Add-on classes are priced separately from the offering's mandatory
       // classes, and carry no multi-month discount — the add-on's monthly
       // rate is flat regardless of commitment length.
@@ -257,27 +338,8 @@ export const offerings: Offering[] = [
         },
       ],
     },
-    price: {
-      type: "fixed",
-      regions: {
-        IN: { amount: 1600, currency: "INR" },
-        US: { amount: 29, currency: "USD" },
-        CA: { amount: 38, currency: "CAD" },
-        GB: { amount: 22, currency: "GBP" },
-        AU: { amount: 43, currency: "AUD" },
-        NZ: { amount: 48, currency: "NZD" },
-        AE: { amount: 106, currency: "AED" },
-        SG: { amount: 38, currency: "SGD" },
-        JP: { amount: 4320, currency: "JPY" },
-        DE: { amount: 26, currency: "EUR" },
-        FR: { amount: 26, currency: "EUR" },
-        IT: { amount: 26, currency: "EUR" },
-        ES: { amount: 26, currency: "EUR" },
-        NL: { amount: 26, currency: "EUR" },
-        IE: { amount: 26, currency: "EUR" },
-      },
-    },
-    // ₹1600 → ₹467 → ₹1333 per month as commitment length increases.
+    price: 1600,
+    // ₹1600 → ₹1400 → ₹1200 per month as commitment length increases.
     durationDiscounts: {
       1: 0,
       2: 0.125,
