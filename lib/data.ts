@@ -20,6 +20,28 @@ export type OfferingStatus = "Registrations Open";
 
 export type OfferingClassType = "Strength" | "Yoga";
 
+// ─────────────────────────────────────────────────────────────────────────────
+// The 2x2
+//
+// Every offering sits at one intersection of two independent axes: who you
+// practise with, and what you practise. Naming the axes in the type system
+// rather than burying them in prose is what lets the guide resolve a pair of
+// answers to a single offering, and lets an unfilled quadrant answer honestly
+// instead of silently not existing.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Who you practise with. */
+export type OfferingFormat = "Group" | "Personal";
+
+/** What you practise. A `Strength` offering may still include yoga. */
+export type OfferingFocus = "Strength" | "Yoga";
+
+export function findOffering(format: OfferingFormat, focus: OfferingFocus) {
+  return offerings.find(
+    (offering) => offering.format === format && offering.focus === focus,
+  );
+}
+
 export type OfferingWeekday =
   "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
 
@@ -214,16 +236,36 @@ export type OfferingAddOn = {
 };
 
 export type Offering = {
+  /**
+   * The offering's brand name. Also its identity: anchor ids and React keys are
+   * derived from it, and testimonials name it in `course`. Shown as a subtitle
+   * under `headline`, so renaming one does not require renaming the other.
+   */
   title: string;
+  /** Plain-language name, and the line a visitor actually reads first. */
+  headline: string;
   eyebrow: string;
-  theme: string;
-  schedule: OfferingSchedule;
-  price: OfferingPrice;
+  /** Where this offering sits on the 2x2. */
+  format: OfferingFormat;
+  focus: OfferingFocus;
+  /**
+   * A fixed weekly timetable, or `null` when sessions are booked one at a time
+   * rather than running as a batch — which is how personal training works.
+   */
+  schedule: OfferingSchedule | null;
+  /**
+   * A published monthly price, or `null` when the offering is quoted per person
+   * rather than listed. A null price is not "free" and not "unknown" — it is a
+   * deliberate "ask me", and every surface that shows money has to say so
+   * rather than print a zero.
+   */
+  price: OfferingPrice | null;
   durationDiscounts: DurationDiscounts;
   addOn?: OfferingAddOn;
   mode: OfferingMode;
   status: OfferingStatus;
-  formUrl: string;
+  /** Registration form, or `null` when the first step is a conversation. */
+  formUrl: string | null;
   icon: LucideIcon;
   description: string;
   details: string[];
@@ -251,11 +293,91 @@ export const navItems = [
   { label: "Contact", href: "#contact" },
 ];
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Personal offerings
+//
+// Listed and visible, but priced on request: `price` and `formUrl` are null
+// until the real figures exist, and the UI renders that as "On request" plus a
+// contact CTA rather than inventing a number. Publishing prices later is a data
+// edit — fill both fields in and the pricing tab and Register button appear on
+// their own.
+// ─────────────────────────────────────────────────────────────────────────────
+const personalOfferings: Offering[] = [
+  {
+    title: "Yin One-to-One",
+    headline: "Personal Strength Training",
+    eyebrow: "On request",
+    format: "Personal",
+    focus: "Strength",
+    // Sessions are arranged around the client's week rather than run as a batch.
+    schedule: null,
+    price: null,
+    durationDiscounts: noDurationDiscounts,
+    mode: "Online",
+    status: "Registrations Open",
+    formUrl: null,
+    icon: Dumbbell,
+    description: "Programmed for You • Form Corrected Live • Flexible Timing",
+    details: [
+      "A programme built to your goals and starting point",
+      "Every session watched and corrected in real time",
+      "Progression adjusted as you get stronger",
+      "Timings arranged around your week",
+    ],
+    bestFor: [
+      "Anyone returning from injury or working around a limitation",
+      "People with a specific goal and a deadline",
+      "Shift workers and frequent travellers who can't hold a fixed slot",
+      "Anyone who wants undivided attention on their form",
+    ],
+    equipment: [
+      { label: "Dumbbells", icon: Dumbbell },
+      { label: "Resistance Band", icon: StretchHorizontal },
+      { label: "(Yoga) Mat", icon: RectangleHorizontal },
+    ],
+  },
+  {
+    title: "Yin One-to-One Yoga",
+    headline: "Personal Yoga",
+    eyebrow: "On request",
+    format: "Personal",
+    focus: "Yoga",
+    schedule: null,
+    price: null,
+    durationDiscounts: noDurationDiscounts,
+    mode: "Online",
+    status: "Registrations Open",
+    formUrl: null,
+    icon: Flower2,
+    description: "Paced to You • Adjusted Live • Flexible Timing",
+    details: [
+      "Asana, pranayama and meditation at your pace",
+      "Postures adjusted for your body, not the room's average",
+      "Practice built around what you want to work on",
+      "Timings arranged around your week",
+    ],
+    bestFor: [
+      "Complete beginners who want to learn the basics properly",
+      "Anyone working around stiffness, injury or a health condition",
+      "Practitioners wanting to go deeper on specific postures",
+      "Anyone who finds group pacing too fast or too slow",
+    ],
+    equipment: [
+      { label: "Yoga Mat", icon: RectangleHorizontal },
+      { label: "Yoga Blocks", icon: Blocks },
+      { label: "Yoga Strap", icon: StretchHorizontal },
+      { label: "(Yoga) Chair", icon: RockingChair },
+    ],
+  },
+];
+
 export const offerings: Offering[] = [
   {
     title: "Yin for Strength",
+    headline: "Group Strength Training Classes",
     eyebrow: "Ongoing",
-    theme: "Group Strength Training (+ Yoga) Classes",
+    format: "Group",
+    focus: "Strength",
     schedule: {
       timezone: {
         id: "Asia/Kolkata",
@@ -321,8 +443,10 @@ export const offerings: Offering[] = [
   },
   {
     title: "Yin for Yoga",
+    headline: "Group Yoga Classes",
     eyebrow: "Ongoing",
-    theme: "Group Yoga Classes",
+    format: "Group",
+    focus: "Yoga",
     schedule: {
       timezone: {
         id: "Asia/Kolkata",
@@ -366,8 +490,10 @@ export const offerings: Offering[] = [
       { label: "Yoga Strap", icon: StretchHorizontal },
       { label: "(Yoga) Chair", icon: RockingChair },
     ],
-  }
+  },
+  ...personalOfferings,
 ];
+
 export const certificates = [
   {
     title: "RYT 200",
