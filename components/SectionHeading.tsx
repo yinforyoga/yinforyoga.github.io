@@ -11,7 +11,7 @@ export function SectionHeading({
 }) {
   return (
     <FadeUp
-      className={`mb-7 ${
+      className={`mb-5 ${
         align === "center"
           ? "mx-auto text-center"
           : "text-center sm:text-left"

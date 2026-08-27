@@ -26,6 +26,10 @@ const config: Config = {
         cream: "#fbfaf6",
         stone: "#e1e8e2",
         ember: "#d9654b",
+        // Status-only green for "live now" indicators. Deliberately more
+        // saturated than the palette's earthy greens, which at dot size read as
+        // either black (forest) or grey (sage) rather than as a signal.
+        live: "#2f9e5f",
         maroon: "#38524c",
         gold: "#d6a756",
         graphite: "#1f2933",
