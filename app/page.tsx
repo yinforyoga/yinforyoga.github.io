@@ -11,7 +11,6 @@ import {
   Mail,
   MapPin,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import { SiInstagram, SiWhatsapp } from "@icons-pack/react-simple-icons";
 import {
   certificates,
@@ -30,6 +29,7 @@ import {
   type OfferingWeekday,
   offerings,
   resolvePrice,
+  whatsappUrl,
   testimonials,
 } from "@/lib/data";
 import { Collapse, FadeUp, MotionSection } from "@/components/MotionPrimitives";
@@ -103,23 +103,23 @@ export default function Home() {
   );
 }
 
+// Every destination behind this button is off-site — a registration form or a
+// WhatsApp conversation — so it always opens in its own tab and leaves the
+// visitor's place on the page intact.
 function RegisterButton({
   href,
   label = "Register",
-  external = true,
   className = "",
 }: {
   href: string;
   label?: string;
-  /** In-page links (contact) must not open a new tab. */
-  external?: boolean;
   className?: string;
 }) {
   return (
     <a
       href={href}
-      target={external ? "_blank" : undefined}
-      rel={external ? "noreferrer" : undefined}
+      target="_blank"
+      rel="noreferrer"
       className={`inline-flex h-11 items-center justify-center gap-2 rounded-[28px] bg-forest px-5 text-sm font-bold text-linen shadow-soft transition hover:-translate-y-0.5 hover:bg-ember ${className}`}
     >
       {label}
@@ -164,9 +164,9 @@ function Offerings() {
 // Equal face heights
 //
 // Two cards side by side are only comparable if their rows line up, and a face
-// grows or shrinks with whatever its schedule and equipment happen to need — a
-// two-line schedule next to a one-line one leaves the shorter card's front face
-// visibly short.
+// grows or shrinks with whatever its schedule happens to need — a two-line
+// schedule next to a one-line one leaves the shorter card's front face visibly
+// short.
 //
 // `align-items: stretch` on the row would do it, except a card is a face *and*
 // a drawer: stretching the article would make one card's open drawer heighten
@@ -282,11 +282,18 @@ function useEqualFaceHeights(containerRef: RefObject<HTMLElement | null>) {
 // The focus question offers three answers to the axis's two, because "both" is
 // not a third quadrant — Group Strength already includes a weekly yoga class,
 // so "both" resolves to Strength. That is exactly the thing the bare
-// Strength/Yoga labels cannot tell you on their own.
+// Strength/Yoga labels cannot tell you on their own. It is spelled as its own
+// answer rather than left to multi-select: two chips that happen to both be
+// pressable never look like a third choice, so nobody found it.
 // ─────────────────────────────────────────────────────────────────────────────
-const focusOptions: { id: OfferingFocus; label: string }[] = [
+
+/** An answer to the focus question — one axis value, or the pair of them. */
+type GuideFocus = OfferingFocus | "Both";
+
+const focusOptions: { id: GuideFocus; label: string }[] = [
   { id: "Strength", label: "Strength training" },
   { id: "Yoga", label: "Yoga" },
+  { id: "Both", label: "Strength training + Yoga" },
 ];
 
 const formatAnswers: { id: OfferingFormat; label: string }[] = [
@@ -304,11 +311,10 @@ const formatAnswers: { id: OfferingFormat; label: string }[] = [
  * genuinely means both cards — which is why this returns a list rather than a
  * single offering.
  */
-function resolveMatches(format: OfferingFormat, focuses: OfferingFocus[]) {
+function resolveMatches(format: OfferingFormat, focus: GuideFocus) {
   const inFormat = offerings.filter((offering) => offering.format === format);
-  if (focuses.length === 0) return [];
-  if (focuses.length === 1) {
-    return inFormat.filter((offering) => offering.focus === focuses[0]);
+  if (focus !== "Both") {
+    return inFormat.filter((offering) => offering.focus === focus);
   }
 
   const coversBoth = inFormat.filter(
@@ -319,16 +325,9 @@ function resolveMatches(format: OfferingFormat, focuses: OfferingFocus[]) {
 
 function OfferingGuide() {
   const [format, setFormat] = useState<OfferingFormat | null>(null);
-  const [focuses, setFocuses] = useState<OfferingFocus[]>([]);
+  const [focus, setFocus] = useState<GuideFocus | null>(null);
 
-  const toggleFocus = (focus: OfferingFocus) =>
-    setFocuses((current) =>
-      current.includes(focus)
-        ? current.filter((item) => item !== focus)
-        : [...current, focus],
-    );
-
-  const matches = format ? resolveMatches(format, focuses) : [];
+  const matches = format && focus ? resolveMatches(format, focus) : [];
 
   return (
     <FadeUp className="mb-10">
@@ -349,7 +348,11 @@ function OfferingGuide() {
                 selected={format === option.id}
                 onSelect={() => setFormat(option.id)}
               >
-                <GuideFocusPicker values={focuses} onToggle={toggleFocus} />
+                <GuideFocusPicker
+                  name={option.id}
+                  value={focus}
+                  onSelect={setFocus}
+                />
               </GuideFormatOption>
             ))}
           </div>
@@ -360,10 +363,10 @@ function OfferingGuide() {
             button appears beside the first. */}
         <Collapse>
           <div
-            key={`${format ?? "none"}-${[...focuses].sort().join("+")}`}
+            key={`${format ?? "none"}-${focus ?? "none"}`}
             className="guide-swap pt-5"
           >
-            <GuideResult format={format} focuses={focuses} matches={matches} />
+            <GuideResult format={format} focus={focus} matches={matches} />
           </div>
         </Collapse>
       </div>
@@ -417,11 +420,13 @@ function GuideFormatOption({
 }
 
 function GuideFocusPicker({
-  values,
-  onToggle,
+  name,
+  value,
+  onSelect,
 }: {
-  values: OfferingFocus[];
-  onToggle: (focus: OfferingFocus) => void;
+  name: string;
+  value: GuideFocus | null;
+  onSelect: (focus: GuideFocus) => void;
 }) {
   // The legend is for screen readers only: on screen these chips sit directly
   // under the option they belong to, and a second visible heading was the thing
@@ -430,7 +435,7 @@ function GuideFocusPicker({
     <fieldset className="flex flex-wrap gap-2">
       <legend className="sr-only">What would you like to practise?</legend>
       {focusOptions.map((option) => {
-        const checked = values.includes(option.id);
+        const checked = value === option.id;
 
         return (
           <label
@@ -440,11 +445,15 @@ function GuideFocusPicker({
               : "border-forest/20 text-bark hover:border-forest/40 dark:border-white/20 dark:text-linen"
               }`}
           >
+            {/* Both format panels stay mounted, so the group is named per
+                format — one shared name would put two checked radios in the
+                same group. */}
             <input
-              type="checkbox"
+              type="radio"
+              name={`offering-focus-${name}`}
               className="sr-only"
               checked={checked}
-              onChange={() => onToggle(option.id)}
+              onChange={() => onSelect(option.id)}
             />
             {option.label}
           </label>
@@ -456,11 +465,11 @@ function GuideFocusPicker({
 
 function GuideResult({
   format,
-  focuses,
+  focus,
   matches,
 }: {
   format: OfferingFormat | null;
-  focuses: OfferingFocus[];
+  focus: GuideFocus | null;
   matches: Offering[];
 }) {
   const note = (text: string) => (
@@ -471,7 +480,7 @@ function GuideResult({
 
   if (!format) {
     return note(
-      "Everything on offer is listed below either way — this only points you at the right one.",
+      "Everything on offer is listed below. Answer the above questions to get recommendations.",
     );
   }
 
@@ -490,7 +499,7 @@ function GuideResult({
             </strong>
             {/* Read off the schedule, so the clause can never claim a weekly
                 yoga class for an offering that has no timetable at all. */}
-            {focuses.length > 1 ? describeStrengthWithYoga(matches[0]) : null}.
+            {focus === "Both" ? describeStrengthWithYoga(matches[0]) : null}.
           </>
         ) : (
           <>
@@ -544,15 +553,24 @@ function GuideResultLink({ href, label }: { href: string; label: string }) {
   );
 }
 
-type OfferingDrawerTab = "pricing" | "details" | "bestFor";
+type OfferingDrawerTab = "pricing" | "details";
 
 // No schedule tab: the card face already prints the same days and times, and a
 // tab that only restyles what is visible three inches above it costs a click to
 // learn nothing.
+//
+// "What you get" and "Who it's for" share one tab rather than holding two. They
+// are read together — what the class is only means something next to who it is
+// meant for — and splitting them made a visitor open both, one at a time, to
+// answer the single question "is this me?". Side by side under their own
+// headings they answer it in one look.
+//
+// The labels are verb phrases rather than nouns. "Pricing" and "Details" name
+// a topic, which reads as a caption on the card; "See pricing" names an action,
+// which is the only thing that tells a visitor the chip is theirs to press.
 const offeringDrawerTabs: { id: OfferingDrawerTab; label: string }[] = [
-  { id: "pricing", label: "Pricing" },
-  { id: "details", label: "Details" },
-  { id: "bestFor", label: "Best for" },
+  { id: "pricing", label: "See pricing" },
+  { id: "details", label: "What's included" },
 ];
 
 function OfferingCard({
@@ -591,13 +609,19 @@ function OfferingCard({
       delay={delay}
       className="min-w-0 flex-[1_1_32rem] max-w-2xl"
     >
-      {/* The card is two stacked layers: a solid front face carrying only the
-          offering's identity, and a drawer behind it whose bottom edge peeks
-          out as a tab strip. Everything a customer has to read rather than
-          recognise lives in the drawer, one tab at a time. */}
-      {/* Both themes raise the face above the drawer by making it the lighter
-          of the two surfaces, so the tab strip reads as the recessed layer it
-          is. Dark mode gets there with a white wash rather than its own colour:
+      {/* The card is one bordered box holding two surfaces: a front face
+          carrying only the offering's identity, and below it a recessed footer
+          and drawer. Everything a customer has to read rather than recognise
+          lives in the drawer, one tab at a time.
+
+          Exactly one element owns the border, radius and shadow — the article —
+          and clips the rest with `overflow-hidden`. The face used to be a
+          second rounded, bordered box stacked on top, which doubled the rim at
+          the top corners and left a wedge of the shell exposed where the face's
+          bottom corners curved away. */}
+      {/* Both themes raise the face above the footer by making it the lighter
+          of the two surfaces, so the footer reads as the recessed layer it is.
+          Dark mode gets there with a white wash rather than its own colour:
           `--panel-strong` is translucent, so painting it on both layers would
           composite the face *darker* than the drawer behind it and inverting
           the depth. The wash is what the warm `sand` tint can't do here — that
@@ -606,26 +630,37 @@ function OfferingCard({
           navbar off the card's own heading when it does. */}
       <article
         id={slugify(offering.title)}
-        className="w-full scroll-mt-28 rounded-[28px] border border-walnut/10 bg-sand/70 shadow-earthy dark:border-white/10 dark:bg-[color:var(--panel-strong)]"
+        className="w-full scroll-mt-28 overflow-hidden rounded-[28px] border border-walnut/10 bg-sand/70 shadow-earthy backdrop-blur dark:border-white/10 dark:bg-[color:var(--panel-strong)] dark:backdrop-blur-none"
       >
         <div
           ref={faceRef}
-          className="relative z-10 flex flex-col rounded-[28px] border border-walnut/10 bg-[color:var(--panel-strong)] p-5 shadow-soft backdrop-blur dark:border-white/[0.07] dark:bg-white/[0.045] dark:shadow-none dark:backdrop-blur-none sm:p-6"
+          className="flex flex-col bg-[color:var(--panel-strong)] p-5 dark:bg-white/[0.045] sm:p-6"
         >
-          <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-            <div className="flex min-w-0 flex-1 flex-col items-center gap-3 sm:flex-row sm:items-center">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-stone/50 text-forest dark:bg-white/10 dark:text-linen">
+          {/* The icon sits beside the title at every width rather than above it
+              on small screens: centring it cost a whole row of height on the
+              viewport that can least afford one, and bought nothing a
+              left-aligned card doesn't already read as. */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex min-w-0 flex-1 items-start gap-3">
+              {/* The icon hangs from the top of the title block rather than
+                  centring on it: headlines wrap at one width and not another,
+                  and centring slid the icon down a half-line on whichever card
+                  happened to wrap, so two cards side by side never agreed on
+                  where their icons sat. Top-aligning fixes it to the card's
+                  padding edge instead — the same height on every card, at every
+                  width, however many lines the title takes. The nudge is
+                  optical: the circle would otherwise read as sitting high
+                  against the serif's cap line, which starts below its line
+                  box. */}
+              <span className="mt-0.5 grid h-11 w-11 shrink-0 place-items-center rounded-full bg-stone/50 text-forest dark:bg-white/10 dark:text-linen">
                 <Icon size={20} />
               </span>
-              <div className="min-w-0 text-center sm:text-left">
-                <p className="text-xs font-extrabold uppercase tracking-[0.24em] text-ember">
-                  {offering.eyebrow}
-                </p>
+              <div className="min-w-0">
                 {/* Plain language leads; the brand name follows as a subtitle.
                     "Group Strength Training Classes" tells a stranger what they
                     would be buying, which "Yin for Strength" only does once you
                     already know. */}
-                <h2 className="mt-1 font-serif text-[2rem] font-medium leading-[1.05] text-bark dark:text-linen sm:text-3xl sm:leading-tight">
+                <h2 className="font-serif text-2xl font-medium leading-[1.15] text-bark dark:text-linen sm:text-3xl sm:leading-tight">
                   {offering.headline}
                 </h2>
                 <p className="mt-1.5 text-sm font-bold text-[color:var(--muted)]">
@@ -634,34 +669,39 @@ function OfferingCard({
               </div>
             </div>
             {/* An offering quoted per person has no form to submit — its first
-                step is a conversation, so the CTA says that instead of sending
-                someone to a page that would ask them to pick a plan. */}
+                step is a conversation, so the CTA opens that conversation on
+                WhatsApp with the offering already named, rather than dropping
+                someone at the contact section to work out what to ask for. */}
             <RegisterButton
-              href={offering.formUrl ?? "#contact"}
+              href={
+                offering.formUrl ??
+                whatsappUrl(
+                  `Hi! I'd like to know more about ${offering.headline}.`,
+                )
+              }
               label={offering.formUrl ? "Register" : "Get in touch"}
-              external={offering.formUrl !== null}
               className="w-full shrink-0 sm:w-auto"
             />
           </div>
 
-          <p className="mt-5 text-sm leading-7 text-[color:var(--muted)]">
+          <p className="mt-4 text-sm leading-6 text-[color:var(--muted)] sm:mt-5 sm:leading-7">
             {offering.description}
           </p>
 
-          {/* Price and schedule used to live one drawer tab apart, so no visitor
-              could see both at once, let alone compare two offerings on them.
-              They are the two facts a decision actually turns on, so they sit on
-              the face; the tabs below still hold the full breakdown. */}
-          <OfferingAtAGlance offering={offering} />
+          {/* When the classes run is the one fact a visitor has to check
+              against their own week before anything else matters, so it sits on
+              the face. Price stays one tab below, where a figure can be shown
+              with the commitment lengths it depends on instead of flattened to
+              a single number here.
 
-          {/* Whatever height equalisation added lands here, so the equipment
-              row stays pinned to the bottom edge of every face in the row
-              rather than floating at a different height on each card. The
-              spacer collapses to nothing when the face isn't stretched. */}
-          <div aria-hidden="true" className="grow" />
-
-          {offering.equipment?.length ? (
-            <EquipmentInfo items={offering.equipment} />
+              An offering with no timetable shows nothing here: personal
+              sessions are arranged with the trainer, and a row saying so is an
+              answer to a question the card never raised. */}
+          {offering.schedule ? (
+            <OfferingSchedulePanel
+              schedule={offering.schedule}
+              offeringFocus={offering.focus}
+            />
           ) : null}
         </div>
 
@@ -686,10 +726,7 @@ function OfferingCard({
               />
             ) : null}
             {shownTab === "details" ? (
-              <OfferingListInfo items={offering.details} />
-            ) : null}
-            {shownTab === "bestFor" ? (
-              <OfferingListInfo items={offering.bestFor} />
+              <OfferingDetailsInfo offering={offering} />
             ) : null}
           </div>
         </Collapse>
@@ -698,132 +735,118 @@ function OfferingCard({
   );
 }
 
-function OfferingAtAGlance({ offering }: { offering: Offering }) {
-  const region = useRegion();
-  const startingInr = getStartingMonthlyInr(offering);
-  const startingPrice =
-    startingInr === null
-      ? null
-      : formatMoney(
-        resolvePrice(startingInr, { tier: getTier(region), region }),
-      );
-
-  // An offering that publishes neither a price nor a timetable has nothing to
-  // tabulate. The labelled grid below exists to hold a multi-line schedule
-  // beside a figure; handed two "ask me"s it becomes a table of blanks, its
-  // wide column empty under one short sentence. So say the same thing as one
-  // line instead — the panel keeps the cards rhyming, the content stops
-  // pretending to be data.
-  if (!startingPrice && !offering.schedule) {
-    return (
-      <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-forest/12 bg-[color:var(--panel)] px-4 py-3.5 dark:border-white/10 dark:bg-white/[0.04]">
-        <OfferingModeBadge mode={offering.mode} />
-        <p className="min-w-0 text-sm leading-6 text-[color:var(--muted)]">
-          Price and timings arranged with you
-        </p>
-      </div>
-    );
-  }
-
-  // How much, when, where — the three questions a visitor weighs one offering
-  // against another on. "Where" is where the Online badge earns its place: as a
-  // labelled answer among the other two, rather than as decoration under the
-  // title with nothing to say what it is answering.
-  return (
-    <dl className="mt-5 grid gap-3 rounded-2xl border border-forest/12 bg-[color:var(--panel)] p-4 dark:border-white/10 dark:bg-white/[0.04] sm:grid-cols-[auto_1fr] sm:gap-x-6">
-      {/* From and Where share the narrow column because both are a single short
-          value; When takes the wide one because a schedule is the only entry
-          here that grows. Giving all three their own column squeezed the days
-          to one word per line. */}
-      <div className="grid content-start gap-3">
-        <GlanceField label={startingPrice ? "From" : "Price"}>
-          {startingPrice ? (
-            <p className="font-sans text-lg font-semibold leading-tight text-bark dark:text-linen">
-              {startingPrice}
-              <span className="font-serif text-[0.8rem] font-medium italic text-[color:var(--muted)]">
-                {" "}
-                /mo
-              </span>
-            </p>
-          ) : (
-            <p className="font-sans text-base font-semibold leading-tight text-bark dark:text-linen">
-              On request
-            </p>
-          )}
-        </GlanceField>
-        <GlanceField label="Where">
-          <OfferingModeBadge mode={offering.mode} />
-        </GlanceField>
-      </div>
-      <GlanceField label="When" divided>
-        {offering.schedule ? (
-          <ScheduleSummary schedule={offering.schedule} />
-        ) : (
-          <p className="text-sm leading-6 text-[color:var(--muted)]">
-            Booked with you, session by session
-          </p>
-        )}
-      </GlanceField>
-    </dl>
-  );
-}
-
-function GlanceField({
-  label,
-  divided = false,
-  children,
+function OfferingSchedulePanel({
+  schedule,
+  offeringFocus,
 }: {
-  label: string;
-  divided?: boolean;
-  children: React.ReactNode;
+  schedule: OfferingSchedule;
+  offeringFocus: OfferingFocus;
 }) {
   return (
-    <div
-      className={`min-w-0 ${divided
-        ? "border-t border-forest/10 pt-3 dark:border-white/10 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0"
-        : ""
-        }`}
-    >
-      <dt className="text-[0.6rem] font-extrabold uppercase tracking-[0.14em] text-walnut/68 dark:text-stone">
-        {label}
-      </dt>
-      <dd className="mt-1">{children}</dd>
+    // No box and no "When" label. A bordered panel had to be filled, and the
+    // slack the height equalisation hands a short card was filling it with
+    // nothing — a one-line timetable sat at the top of an otherwise empty
+    // frame. Unboxed the slack is just card, and `mt-auto` spends it *above*
+    // the timetable rather than below it, so the days land just over the tab
+    // strip on every card instead of leaving a short one with a trailing
+    // void — cards side by side then agree on where their timetable sits.
+    // There is no divider rule either: the gap `mt-auto` opens is a wider,
+    // quieter separator than a hairline, and the card had enough lines across
+    // it already.
+    //
+    // The label went with the frame: it sat flush to the gutter while the
+    // pills beside it carry their own padding, so it always read as hanging further left
+    // than the row it introduced, and days-plus-time needs no announcing.
+    <div className="mt-auto pt-5 sm:pt-6">
+      <ScheduleSummary
+        schedule={schedule}
+        offeringFocus={offeringFocus}
+      />
     </div>
   );
 }
 
-// One row per class type — enough to answer "does this fit my week?" without
-// opening anything.
+// One row per class, ordered by what actually disqualifies a visitor: the time
+// first, then what is practised, then the days. The hour is the hard gate — a
+// person who is not free at 7pm is out whichever days it lands on — so it
+// leads the row and carries the weight, where it used to trail the pills as
+// the quietest thing in them.
 //
-// The grid lives on the list and every row is `display: contents`, so days,
-// times and class types line up in shared columns down the card. Per-row grids
-// would each size themselves to their own content, which is what left a
-// two-line schedule looking ragged: "Mon, Wed, Fri" and "Thu" pushed their
-// times to different depths. Columns replace the separator dots too.
-function ScheduleSummary({ schedule }: { schedule: OfferingSchedule }) {
+// The days stay pills rather than becoming prose. A week is a set of days: three
+// chips are counted at a glance where "Mon, Wed, Fri" has to be read, which is
+// what makes cadence — three times a week against two — legible across two
+// cards. They are just no longer the loudest thing in the row.
+function ScheduleSummary({
+  schedule,
+  offeringFocus,
+}: {
+  schedule: OfferingSchedule;
+  offeringFocus: OfferingFocus;
+}) {
   const displayTimeZone = useDisplayTimeZone(schedule);
 
   return (
-    <ul className="grid grid-cols-[auto_auto_1fr] items-baseline gap-x-3 gap-y-1 text-sm leading-6 text-[color:var(--muted)]">
+    // Three shared columns from `sm` up, each row's children placed straight
+    // into them by `display: contents`. Times differ between rows, and two of
+    // them can only be compared if they stack — a plain flex row would park
+    // each one wherever the preceding cell happened to end.
+    //
+    // Below `sm` the columns are dropped and each row wraps on its own: a
+    // card at phone width has no room for time, class and three pills on one
+    // line, and wrapping under the time beats squeezing all three.
+    //
+    // No rules between the rows — the gap is a wider, quieter separator than a
+    // hairline, and the card has enough lines across it already.
+    <ul className="grid gap-2.5 sm:grid-cols-[auto_auto_1fr] sm:items-center sm:gap-x-4 sm:gap-y-3">
       {schedule.split.map((item) => (
-        <li key={`${item.days.join("-")}-${item.classType}`} className="contents">
-          <span className="whitespace-nowrap font-bold text-bark dark:text-linen">
-            {getScheduleItemDays(item, schedule, displayTimeZone).join(", ")}
-          </span>
-          <span className="whitespace-nowrap">
+        <li
+          key={`${item.days.join("-")}-${item.classType}`}
+          className="flex flex-wrap items-center gap-x-3 gap-y-1.5 sm:contents"
+        >
+          <p className="text-sm leading-5 text-bark dark:text-linen sm:text-base sm:leading-6">
             <FormattedItemTime
               item={item}
               schedule={schedule}
               timeZone={displayTimeZone}
             />
-          </span>
-          <span>
-            {item.classType}
-            {item.optional ? " (optional)" : ""}
-          </span>
+          </p>
+          {/* A single row practising the card's own focus says nothing the
+              headline above it hasn't: "Yoga", under "Group Yoga Classes". The
+              label is printed where it discriminates — a card holding more than
+              one class, or a row practising something other than what the card
+              is named for, like the optional yoga on a strength card. */}
+          {schedule.split.length > 1 || item.classType !== offeringFocus ? (
+            <p className="text-[0.8rem] leading-5 text-[color:var(--muted)] sm:text-sm sm:leading-6">
+              {item.classType}
+              {item.optional ? (
+                <span className="font-serif italic"> (optional)</span>
+              ) : null}
+            </p>
+          ) : null}
+          <div className="flex flex-wrap gap-1">
+            {getScheduleItemDays(item, schedule, displayTimeZone).map((day) => (
+              <DayPill key={day} day={day} muted={item.optional} />
+            ))}
+          </div>
         </li>
       ))}
     </ul>
+  );
+}
+
+// An optional class is a day the visitor may skip, so its pill is outlined
+// rather than filled — the difference is visible before the "(optional)" beside
+// it is read.
+function DayPill({ day, muted = false }: { day: string; muted?: boolean }) {
+  return (
+    <span
+      className={`inline-flex min-w-[2.6rem] justify-center rounded-full px-2 py-0.5 text-[0.64rem] font-bold uppercase tracking-[0.08em] sm:min-w-[3rem] sm:px-2.5 sm:py-1 sm:text-[0.68rem] sm:tracking-[0.1em] ${muted
+        ? "border border-dashed border-forest/30 text-forest/75 dark:border-linen/25 dark:text-linen/70"
+        : "border border-forest/12 bg-forest/[0.07] text-forest dark:border-linen/12 dark:bg-linen/[0.08] dark:text-linen"
+        }`}
+    >
+      {day}
+    </span>
   );
 }
 
@@ -840,72 +863,40 @@ function OfferingDrawerTabs({
   panelId: string;
   onToggle: (id: OfferingDrawerTab) => void;
 }) {
-  const underlineRef = useRef<HTMLSpanElement>(null);
-  const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  // Whether the underline was already visible last render. Sliding only reads
-  // as motion between two open tabs; arriving from the closed state has no
-  // meaningful origin to travel from, so it is placed without animating.
-  const wasOpenRef = useRef(false);
-
-  useLayoutEffect(() => {
-    const moveUnderline = (animate: boolean) => {
-      const underline = underlineRef.current;
-      const index = tabs.findIndex((tab) => tab.id === openTab);
-      const button = buttonRefs.current[index];
-      // No open tab: leave the underline parked where it is and let it fade,
-      // so closing a drawer doesn't send it sliding off somewhere arbitrary.
-      if (!underline || !button) return;
-
-      if (!animate) underline.style.transition = "none";
-      underline.style.transform = `translate3d(${button.offsetLeft + button.offsetWidth / 2 - underline.offsetWidth / 2
-        }px, 0, 0)`;
-      if (!animate) {
-        void underline.offsetWidth;
-        underline.style.transition = "";
-      }
-    };
-
-    moveUnderline(wasOpenRef.current);
-    wasOpenRef.current = openTab !== null;
-
-    const handleResize = () => moveUnderline(false);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [openTab, tabs]);
-
+  // A recessed band of chips rather than a strip of captions. The tabs used to
+  // be borderless text set in 10px letterspaced caps, which a visitor who
+  // doesn't already know the card is expandable reads as a footnote — the whole
+  // drawer was one guess away from never being opened. A bordered pill with a
+  // fill, a hover lift and a pointer cursor is the plainest thing on the web
+  // that says "press me", so the chips say it the ordinary way.
   return (
-    <div className="relative flex" role="group" aria-label={label}>
-      <span
-        ref={underlineRef}
-        aria-hidden="true"
-        className={`pointer-events-none absolute bottom-3 left-0 h-0.5 w-5 rounded-full bg-ember transition-[transform,opacity] duration-200 ease-out will-change-transform ${openTab ? "opacity-100" : "opacity-0"
-          }`}
-      />
-      {tabs.map(({ id, label: tabLabel }, index) => (
+    <div
+      className="flex flex-wrap items-center gap-2 border-t border-walnut/10 bg-forest/[0.03] px-5 py-3.5 dark:border-white/10 dark:bg-black/20 sm:px-6"
+      role="group"
+      aria-label={label}
+    >
+      {tabs.map(({ id, label: tabLabel }) => (
         <button
           key={id}
-          ref={(element) => {
-            buttonRefs.current[index] = element;
-          }}
           type="button"
           onClick={() => onToggle(id)}
           aria-expanded={openTab === id}
           aria-controls={panelId}
-          className={`group flex flex-1 items-center justify-center gap-1.5 rounded-b-2xl px-1 pb-5 pt-3.5 text-[0.62rem] font-extrabold uppercase tracking-[0.12em] outline-none transition-colors hover:bg-forest/[0.05] focus-visible:ring-4 focus-visible:ring-forest/10 dark:hover:bg-white/[0.05] sm:text-[0.68rem] sm:tracking-[0.16em] ${openTab === id
-            ? "text-ember"
-            : "text-walnut/68 hover:text-bark dark:text-stone dark:hover:text-linen"
+          // The focus ring is inset: the card clips its overflow, so a ring
+          // drawn outside a chip would be sliced off at the card's edge.
+          className={`inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full border px-3.5 text-[0.8rem] font-bold transition hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-forest/40 dark:focus-visible:ring-white/40 ${openTab === id
+            ? "border-ember/60 bg-ember/10 text-ember dark:border-ember/70 dark:bg-ember/15"
+            : "border-forest/25 bg-forest/[0.04] text-bark hover:border-forest/45 hover:bg-forest/10 dark:border-white/20 dark:bg-white/[0.06] dark:text-linen dark:hover:border-white/40 dark:hover:bg-white/[0.12]"
             }`}
         >
           {tabLabel}
-          {/* The strip read as a row of captions rather than controls. A
-              chevron per tab says "this opens", and rotating it says which one
-              is already open — the ember underline alone only did the latter,
-              and only after you had clicked something. */}
+          {/* The chevron says "this opens" before it is pressed, and rotating
+              it says which chip is the one already open. */}
           <ChevronDown
             aria-hidden="true"
-            size={13}
+            size={14}
             strokeWidth={3}
-            className={`shrink-0 transition-transform duration-200 ${openTab === id ? "rotate-180" : "group-hover:translate-y-0.5"
+            className={`shrink-0 transition-transform duration-200 ${openTab === id ? "rotate-180" : ""
               }`}
           />
         </button>
@@ -969,29 +960,6 @@ function useRegion() {
   }, []);
 
   return region;
-}
-
-/**
- * The lowest monthly rate an offering can be had at, across every commitment
- * length. This is the number a visitor comparing two offerings actually wants,
- * and it is deliberately the cheapest rather than the 1-month one: the card
- * says "from", and the pricing tab immediately below shows what it costs to get
- * there.
- */
-function getStartingMonthlyInr(offering: Offering) {
-  const { price } = offering;
-  if (price === null) return null;
-
-  return Math.min(
-    ...planDurations.map(
-      (duration) =>
-        getDiscountedTotal(
-          price,
-          duration,
-          offering.durationDiscounts[duration],
-        ) / duration,
-    ),
-  );
 }
 
 function PricingInfo({
@@ -1186,64 +1154,42 @@ function getRegionFromTimeZone(timeZone: string) {
   return timeZoneRegions[timeZone];
 }
 
-function EquipmentInfo({
+function OfferingDetailsInfo({ offering }: { offering: Offering }) {
+  return (
+    // Two columns where there is room, stacked where there is not. The columns
+    // are independent lists rather than one list flowing across both, so a
+    // heading always sits directly above the items it names.
+    <div className="grid gap-5 sm:grid-cols-2 sm:gap-x-6">
+      <OfferingListInfo heading="What you get" items={offering.details} />
+      <OfferingListInfo heading="Who it's for" items={offering.bestFor} />
+    </div>
+  );
+}
+
+function OfferingListInfo({
+  heading,
   items,
 }: {
-  items: { label: string; icon: LucideIcon }[];
+  heading: string;
+  items: string[];
 }) {
-  // Unlabelled on purpose: the icons read as "kit you'll need" at a glance,
-  // and each one names itself on hover/focus rather than spending a row of the
-  // front face on a heading.
   return (
-    <ul
-      aria-label="Equipment"
-      className="mt-6 flex flex-wrap justify-center gap-3 sm:ml-auto sm:mr-0 sm:justify-end"
-    >
-      {items.map(({ label, icon: Icon }) => (
-        <li key={label} className="group relative">
-          <span
-            tabIndex={0}
-            aria-label={label}
-            className="grid h-11 w-11 cursor-help place-items-center rounded-full border border-forest/10 bg-stone/40 text-forest outline-none transition duration-200 hover:-translate-y-0.5 hover:border-ember/30 hover:bg-[color:var(--panel-strong)] hover:text-ember hover:shadow-soft focus-visible:-translate-y-0.5 focus-visible:border-ember/40 focus-visible:text-ember focus-visible:ring-4 focus-visible:ring-forest/10 dark:border-white/10 dark:bg-white/[0.07] dark:text-linen dark:hover:border-ember/40 dark:hover:text-ember dark:focus-visible:text-ember"
+    <div>
+      <p className="text-[0.62rem] font-extrabold uppercase tracking-[0.14em] text-walnut/68 dark:text-stone">
+        {heading}
+      </p>
+      <ul className="mt-2.5 grid gap-2">
+        {items.map((item) => (
+          <li
+            key={item}
+            className="flex gap-3 text-sm leading-6 text-[color:var(--muted)]"
           >
-            <Icon aria-hidden="true" size={19} strokeWidth={2} />
-          </span>
-          <span
-            role="tooltip"
-            className="pointer-events-none absolute bottom-[calc(100%+0.65rem)] left-1/2 z-20 w-max max-w-48 -translate-x-1/2 translate-y-1 rounded-xl bg-forest px-3 py-2 text-center text-xs font-bold leading-5 text-linen opacity-0 shadow-earthy transition duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100 dark:bg-linen dark:text-forest"
-          >
-            {label}
-            <span className="absolute left-1/2 top-full h-2 w-2 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-forest dark:bg-linen" />
-          </span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-// The drawer tab supplies the heading, so the list carries no title of its own.
-function OfferingListInfo({ items }: { items: string[] }) {
-  return (
-    <ul className="grid gap-2 sm:grid-cols-2 sm:gap-x-6">
-      {items.map((item) => (
-        <li
-          key={item}
-          className="flex gap-3 text-sm leading-6 text-[color:var(--muted)]"
-        >
-          <CheckCircle2 className="mt-1 shrink-0 text-ember" size={16} />
-          <span>{item}</span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function OfferingModeBadge({ mode }: { mode: string }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-forest/15 bg-forest/8 px-2.5 py-1 text-[0.68rem] font-extrabold uppercase tracking-[0.14em] text-forest dark:border-linen/15 dark:bg-linen/8 dark:text-linen">
-      <span className="h-1.5 w-1.5 rounded-full bg-live" />
-      {mode}
-    </span>
+            <CheckCircle2 className="mt-1 shrink-0 text-ember" size={16} />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -1287,12 +1233,26 @@ function FormattedItemTime({
     )
     : formatScheduleClockParts(item.endTime);
 
+  // "6 - 7 pm", not "6:00 pm - 7:00 pm". A round hour has nothing to say with
+  // its minutes, and a range that starts and ends in the same half of the day
+  // only needs to say which half once — which is also what lets the whole line
+  // sit beside its day pills on a phone instead of wrapping under them.
+  const sharedMeridiem = start.meridiem === end.meridiem;
+
   return (
     <>
-      <FormattedClock clock={start.clock} meridiem={start.meridiem} /> -{" "}
-      <FormattedClock clock={end.clock} meridiem={end.meridiem} />
+      <FormattedClock
+        clock={trimWholeHour(start.clock)}
+        meridiem={sharedMeridiem ? null : start.meridiem}
+      />{" "}
+      - <FormattedClock clock={trimWholeHour(end.clock)} meridiem={end.meridiem} />
     </>
   );
+}
+
+/** "6:00" -> "6". Anything with real minutes on it is left alone. */
+function trimWholeHour(clock: string) {
+  return clock.endsWith(":00") ? clock.slice(0, -3) : clock;
 }
 
 function FormattedClock({
@@ -1300,11 +1260,12 @@ function FormattedClock({
   meridiem,
 }: {
   clock: string;
-  meridiem: string;
+  meridiem: string | null;
 }) {
   return (
     <>
-      <strong className="font-bold">{clock}</strong> {meridiem}
+      <strong className="font-bold">{clock}</strong>
+      {meridiem ? ` ${meridiem}` : ""}
     </>
   );
 }
@@ -1659,7 +1620,7 @@ function Contact() {
               <SiInstagram size={17} /> Instagram
             </a>
             <a
-              href="https://wa.me/918951766013"
+              href={whatsappUrl()}
               className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 text-sm font-bold text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-[#1EBE5A]"
             >
               <SiWhatsapp size={17} /> WhatsApp

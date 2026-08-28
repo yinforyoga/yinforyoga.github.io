@@ -268,7 +268,9 @@ export type Offering = {
   formUrl: string | null;
   icon: LucideIcon;
   description: string;
+  /** What the offering gives you. Rendered as "What you get". */
   details: string[];
+  /** Who it suits. Rendered as "Who it's for", beside `details`. */
   bestFor: string[];
   equipment?: {
     label: string;
@@ -285,6 +287,25 @@ export type Testimonial = {
   date?: string;
   time?: string;
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Contact
+//
+// One number, authored once. Both the contact section and every "Get in touch"
+// CTA on a per-person offering point here, so the day it changes it changes in
+// one place.
+// ─────────────────────────────────────────────────────────────────────────────
+const whatsappNumber = "918951766013";
+
+/**
+ * A WhatsApp link, optionally opening with a message already typed. An offering
+ * quoted per person starts with a conversation, and one that starts with the
+ * offering named saves both sides a round trip.
+ */
+export function whatsappUrl(message?: string) {
+  const base = `https://wa.me/${whatsappNumber}`;
+  return message ? `${base}?text=${encodeURIComponent(message)}` : base;
+}
 
 export const navItems = [
   { label: "Offerings", href: "#offerings" },
@@ -319,16 +340,15 @@ const personalOfferings: Offering[] = [
     icon: Dumbbell,
     description: "Programmed for You • Form Corrected Live • Flexible Timing",
     details: [
-      "A programme built to your goals and starting point",
-      "Every session watched and corrected in real time",
-      "Progression adjusted as you get stronger",
-      "Timings arranged around your week",
+      "A programme built around your goals and starting point",
+      "Undivided attention: every rep watched, form corrected as you go",
+      "Loads and progression adjusted as you get stronger",
+      "Session times arranged around your week",
     ],
     bestFor: [
-      "Anyone returning from injury or working around a limitation",
-      "People with a specific goal and a deadline",
+      "Anyone training around an injury or a limitation",
+      "People with a specific goal and a date to hit it by",
       "Shift workers and frequent travellers who can't hold a fixed slot",
-      "Anyone who wants undivided attention on their form",
     ],
     equipment: [
       { label: "Dumbbells", icon: Dumbbell },
@@ -351,16 +371,16 @@ const personalOfferings: Offering[] = [
     icon: Flower2,
     description: "Paced to You • Adjusted Live • Flexible Timing",
     details: [
-      "Asana, pranayama and meditation at your pace",
+      "Asana, pranayama and meditation, paced to you",
       "Postures adjusted for your body, not the room's average",
-      "Practice built around what you want to work on",
-      "Timings arranged around your week",
+      "A practice built around what you want to work on",
+      "Session times arranged around your week",
     ],
     bestFor: [
-      "Complete beginners who want to learn the basics properly",
-      "Anyone working around stiffness, injury or a health condition",
-      "Practitioners wanting to go deeper on specific postures",
-      "Anyone who finds group pacing too fast or too slow",
+      "Complete beginners who want the basics taught properly",
+      "Anyone practising around stiffness, injury or a health condition",
+      "Practitioners going deeper on specific postures",
+      "Anyone who finds a group's pace too fast or too slow",
     ],
     equipment: [
       { label: "Yoga Mat", icon: RectangleHorizontal },
@@ -424,16 +444,16 @@ export const offerings: Offering[] = [
     description:
       "Home Workout • Strength Training • Guided",
     details: [
-      "Fat loss",
-      "Lean muscle gain",
-      "Structured strength training",
-      "A supportive, active community",
+      "Structured strength training that progresses week to week",
+      "Fat loss and lean muscle, without a gym",
+      "Live classes with your form watched and corrected",
+      "A small group that keeps showing up",
     ],
     bestFor: [
-      "Busy professionals who struggle to make time for the gym",
-      "People who want guided workouts without planning every session",
-      "Frequent travelers",
-      "Anyone who finds gym spaces intimidating",
+      "Busy professionals who can't make time for the gym",
+      "People who want to be led through a session, not plan one",
+      "Frequent travellers who train wherever they land",
+      "Anyone who finds gym floors intimidating",
     ],
     equipment: [
       { label: "Dumbbells", icon: Dumbbell },
@@ -476,13 +496,14 @@ export const offerings: Offering[] = [
     description:
       "Asana • Pranayama • Meditation",
     details: [
-      "Mobility",
-      "Mindfulness",
-      "Flexibility",
+      "Flexibility and mobility, built gradually",
+      "Breathwork and meditation in every class",
+      "Postures broken down and corrected as you go",
     ],
     bestFor: [
-      "Anyone who wants to practise Yoga regularly",
-      "Beginner and intermediate Yoga practitioners",
+      "Beginners who want the basics taught properly",
+      "Improving practitioners after a steady weekly practice",
+      "Anyone who wants to practise with others rather than alone",
     ],
     equipment: [
       { label: "Yoga Mat", icon: RectangleHorizontal },
