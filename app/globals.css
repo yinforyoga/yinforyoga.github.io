@@ -4,8 +4,6 @@
 
 :root {
   color-scheme: light;
-  --font-cormorant: "Cormorant Garamond", "Playfair Display", Georgia, serif;
-  --font-manrope: Manrope, Inter, "Segoe UI", system-ui, sans-serif;
   --surface: #fbfaf6;
   --surface-soft: #e1e8e2;
   --ink: #1f2933;
@@ -417,6 +415,13 @@ body::before {
 }
 
 .whatsapp-bubble {
+  /* The testimonials are verbatim WhatsApp messages, so the bubble keeps
+     WhatsApp's own type instead of the site serif/Manrope: the platform's
+     system stack, which is what a real chat renders in on each OS. Only the
+     bubble is exempt; the metadata chips above it are our chrome, not theirs. */
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Helvetica,
+    "Lucida Grande", Roboto, Ubuntu, Cantarell, Arial, sans-serif;
   position: relative;
   width: 100%;
   max-width: none;
@@ -430,7 +435,9 @@ body::before {
   margin-bottom: 0.35rem;
   color: #c44f2e;
   font-size: 0.95rem;
-  font-weight: 800;
+  /* 800 was tuned for Manrope; in the WhatsApp stack a real sender line sits
+     around semibold, so anything heavier reads as a shout. */
+  font-weight: 600;
   line-height: 1.25;
 }
 
@@ -488,39 +495,5 @@ body::before {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  }
-}
-
-/* The guide's "Take me there" jumps to a card that may be one of several
-   near-identical shapes on screen. A ring while it is the URL's target tells
-   the eye where it landed; `:target` does it without any scroll listener, and
-   it clears itself the moment another card is linked to. */
-#offerings article:target {
-  box-shadow: 0 0 0 2px theme("colors.ember");
-}
-
-/* Content swapping inside a region that stays open — the guide's answer line
-   changing, its buttons appearing. The height glides on its own (see
-   `Collapse`); this is only so the incoming text doesn't hard-cut. Same easing
-   as `FadeUp`, over a shorter distance, because this is a swap rather than an
-   entrance. */
-@keyframes guide-swap {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-.guide-swap {
-  animation: guide-swap 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .guide-swap {
-    animation: none;
   }
 }

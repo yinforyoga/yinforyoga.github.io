@@ -1,11 +1,18 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
+import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
   BookOpen,
   CalendarDays,
+  Clock3,
+  DollarSign,
+  Euro,
+  IndianRupee,
+  JapaneseYen,
+  PoundSterling,
   CheckCircle2,
   ChevronDown,
   Mail,
@@ -21,13 +28,13 @@ import {
   type Offering,
   type OfferingAddOn,
   type OfferingLocalTime,
-  type OfferingFocus,
-  type OfferingFormat,
   type OfferingPrice,
   type OfferingSchedule,
   type OfferingScheduleItem,
+  type OfferingTimeSlot,
   type OfferingWeekday,
   offerings,
+  offeringFormatLabels,
   resolvePrice,
   whatsappUrl,
   testimonials,
@@ -120,7 +127,7 @@ function RegisterButton({
       href={href}
       target="_blank"
       rel="noreferrer"
-      className={`inline-flex h-11 items-center justify-center gap-2 rounded-[28px] bg-forest px-5 text-sm font-bold text-linen shadow-soft transition hover:-translate-y-0.5 hover:bg-ember ${className}`}
+      className={`inline-flex h-10 items-center justify-center gap-2 rounded-[28px] bg-forest px-4 text-sm font-bold text-linen shadow-soft transition hover:-translate-y-0.5 hover:bg-ember sm:h-11 sm:px-5 ${className}`}
     >
       {label}
       <ArrowRight size={16} />
@@ -133,19 +140,34 @@ function Offerings() {
   const registerFace = useEqualFaceHeights(rowRef);
 
   return (
-    <section
-      id="offerings"
-      className="relative pb-9 pt-20 md:pb-12 md:pt-24"
-    >
+    // The fixed navbar is 82px tall and this section is the one the nav links
+    // to, so the old 80px of top padding put the eyebrow underneath it — the
+    // label arrived pinned to the navbar with nothing above it. The padding now
+    // clears the navbar first and leaves room after.
+    <section id="offerings" className="relative pb-9 pt-28 md:pb-12 md:pt-32">
       <div className="absolute inset-x-0 top-0 -z-10 h-[520px] bg-[linear-gradient(180deg,rgba(204,197,185,0.42),rgba(255,252,242,0))] dark:bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(25,17,11,0))]" />
       <div className="section-shell">
-        <SectionHeading eyebrow="Offerings" />
-
-        <OfferingGuide />
+        {/* `SectionHeading`'s own bottom margin is tuned for sections that
+            open on a paragraph. Here the next thing is a card edge, which needs
+            more clearance than a line of text, and most of all on a phone where
+            the eyebrow and the card are the same width. Padding rather than a
+            margin: a margin here would just collapse into the heading's own. */}
+        <div className="pb-3 sm:pb-0">
+          <SectionHeading eyebrow="Offerings" />
+        </div>
 
         {/* `items-start` so an open drawer grows only its own card — with the
-            default stretch, opening one card would resize its row neighbour. */}
-        <div ref={rowRef} className="flex flex-wrap items-start gap-5">
+            default stretch, opening one card would resize its row neighbour.
+
+            `auto-fit` rather than a breakpoint: the tracks go two-up at the
+            same width the old flex row did (2 x 32rem + the gap), but a lone
+            card fills the container instead of stopping at a max width and
+            leaving a gutter beside it. `min()` keeps the 32rem floor from
+            overflowing a phone. */}
+        <div
+          ref={rowRef}
+          className="grid items-start gap-5 [grid-template-columns:repeat(auto-fit,minmax(min(32rem,100%),1fr))]"
+        >
           {offerings.map((offering, index) => (
             <OfferingCard
               key={offering.title}
@@ -270,289 +292,6 @@ function useEqualFaceHeights(containerRef: RefObject<HTMLElement | null>) {
   };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// The guide
-//
-// Two questions, which between them pin an offering to one cell of the 2x2.
-// They narrow rather than gate: every offering stays rendered below whatever
-// the answers are, so someone who scrolls past, arrives from search, or simply
-// ignores the questions still sees everything. Hiding the cards until both were
-// answered would cost two clicks before anyone saw a price.
-//
-// The focus question offers three answers to the axis's two, because "both" is
-// not a third quadrant — Group Strength already includes a weekly yoga class,
-// so "both" resolves to Strength. That is exactly the thing the bare
-// Strength/Yoga labels cannot tell you on their own. It is spelled as its own
-// answer rather than left to multi-select: two chips that happen to both be
-// pressable never look like a third choice, so nobody found it.
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** An answer to the focus question — one axis value, or the pair of them. */
-type GuideFocus = OfferingFocus | "Both";
-
-const focusOptions: { id: GuideFocus; label: string }[] = [
-  { id: "Strength", label: "Strength training" },
-  { id: "Yoga", label: "Yoga" },
-  { id: "Both", label: "Strength training + Yoga" },
-];
-
-const formatAnswers: { id: OfferingFormat; label: string }[] = [
-  { id: "Group", label: "Group classes" },
-  { id: "Personal", label: "Personal classes" },
-];
-
-/**
- * Which offerings answer a set of choices.
- *
- * Picking both disciplines is the interesting case, and it has two honest
- * answers depending on the format. Group Strength timetables a yoga class of
- * its own, so it satisfies both on its own and is the only card to show. No
- * one-to-one offering bundles the other discipline, so asking for both there
- * genuinely means both cards — which is why this returns a list rather than a
- * single offering.
- */
-function resolveMatches(format: OfferingFormat, focus: GuideFocus) {
-  const inFormat = offerings.filter((offering) => offering.format === format);
-  if (focus !== "Both") {
-    return inFormat.filter((offering) => offering.focus === focus);
-  }
-
-  const coversBoth = inFormat.filter(
-    (offering) => describeStrengthWithYoga(offering) !== null,
-  );
-  return coversBoth.length ? coversBoth : inFormat;
-}
-
-function OfferingGuide() {
-  const [format, setFormat] = useState<OfferingFormat | null>(null);
-  const [focus, setFocus] = useState<GuideFocus | null>(null);
-
-  const matches = format && focus ? resolveMatches(format, focus) : [];
-
-  return (
-    <FadeUp className="mb-10">
-      <div className="rounded-[28px] border border-forest/12 bg-[color:var(--panel)] p-5 dark:border-white/10 dark:bg-white/[0.04] sm:p-6">
-        {/* One question on the page, and it is the heading — an intro sentence
-            above it only said the same thing twice. The disciplines are not a
-            second question but part of the answer to this one, so they open
-            inside the option they belong to. */}
-        <fieldset className="min-w-0">
-          <legend className="font-serif text-xl font-medium leading-tight text-bark dark:text-linen">
-            What are you looking for?
-          </legend>
-          <div className="mt-3.5 grid gap-2.5 sm:max-w-2xl">
-            {formatAnswers.map((option) => (
-              <GuideFormatOption
-                key={option.id}
-                option={option}
-                selected={format === option.id}
-                onSelect={() => setFormat(option.id)}
-              >
-                <GuideFocusPicker
-                  name={option.id}
-                  value={focus}
-                  onSelect={setFocus}
-                />
-              </GuideFormatOption>
-            ))}
-          </div>
-        </fieldset>
-
-        {/* Held open — this region always says something. Collapse is here for
-            the height, which changes whenever the answer changes or a second
-            button appears beside the first. */}
-        <Collapse>
-          <div
-            key={`${format ?? "none"}-${focus ?? "none"}`}
-            className="guide-swap pt-5"
-          >
-            <GuideResult format={format} focus={focus} matches={matches} />
-          </div>
-        </Collapse>
-      </div>
-    </FadeUp>
-  );
-}
-
-function GuideFormatOption({
-  option,
-  selected,
-  onSelect,
-  children,
-}: {
-  option: { id: OfferingFormat; label: string };
-  selected: boolean;
-  onSelect: () => void;
-  children: React.ReactNode;
-}) {
-  // The radio row and the panel it opens are siblings, not nested: a label may
-  // not contain the checkboxes, and wrapping them would make every click on a
-  // discipline also re-pick the format.
-  return (
-    <div
-      className={`rounded-2xl border transition-colors ${selected
-        ? "border-ember/40 bg-ember/[0.07]"
-        : "border-forest/12 bg-[color:var(--panel-strong)] hover:border-forest/25 dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-white/20"
-        }`}
-    >
-      <label className="block cursor-pointer rounded-2xl px-4 py-3 text-sm font-bold text-bark has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-forest/15 dark:text-linen">
-        <input
-          type="radio"
-          name="offering-format"
-          className="sr-only"
-          checked={selected}
-          onChange={onSelect}
-        />
-        {option.label}
-      </label>
-      {/* Always mounted, opened by height. Unmounting on deselect dropped the
-          panel in a single frame, and took the closing card's own height with
-          it — which is most of what read as the layout jumping. `Collapse`
-          marks the closed copy inert, so the hidden checkboxes stay out of the
-          tab order. */}
-      <Collapse open={selected}>
-        <div className="border-t border-ember/25 px-4 pb-4 pt-3.5">
-          {children}
-        </div>
-      </Collapse>
-    </div>
-  );
-}
-
-function GuideFocusPicker({
-  name,
-  value,
-  onSelect,
-}: {
-  name: string;
-  value: GuideFocus | null;
-  onSelect: (focus: GuideFocus) => void;
-}) {
-  // The legend is for screen readers only: on screen these chips sit directly
-  // under the option they belong to, and a second visible heading was the thing
-  // making the panel feel cramped.
-  return (
-    <fieldset className="flex flex-wrap gap-2">
-      <legend className="sr-only">What would you like to practise?</legend>
-      {focusOptions.map((option) => {
-        const checked = value === option.id;
-
-        return (
-          <label
-            key={option.id}
-            className={`cursor-pointer rounded-full border px-3.5 py-2 text-xs font-bold transition-colors has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-forest/15 ${checked
-              ? "border-transparent bg-forest text-linen dark:bg-linen dark:text-forest"
-              : "border-forest/20 text-bark hover:border-forest/40 dark:border-white/20 dark:text-linen"
-              }`}
-          >
-            {/* Both format panels stay mounted, so the group is named per
-                format — one shared name would put two checked radios in the
-                same group. */}
-            <input
-              type="radio"
-              name={`offering-focus-${name}`}
-              className="sr-only"
-              checked={checked}
-              onChange={() => onSelect(option.id)}
-            />
-            {option.label}
-          </label>
-        );
-      })}
-    </fieldset>
-  );
-}
-
-function GuideResult({
-  format,
-  focus,
-  matches,
-}: {
-  format: OfferingFormat | null;
-  focus: GuideFocus | null;
-  matches: Offering[];
-}) {
-  const note = (text: string) => (
-    <p className="border-t border-forest/10 pt-4 text-sm leading-6 text-[color:var(--muted)] dark:border-white/10">
-      {text}
-    </p>
-  );
-
-  if (!format) {
-    return note(
-      "Everything on offer is listed below. Answer the above questions to get recommendations.",
-    );
-  }
-
-  if (matches.length === 0) {
-    return note("Now pick what you'd like to practise.");
-  }
-
-  return (
-    <div className="flex flex-col items-start gap-3 border-t border-forest/10 pt-4 dark:border-white/10 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-      <p className="min-w-0 flex-1 text-sm leading-6 text-[color:var(--muted)]">
-        {matches.length === 1 ? (
-          <>
-            That&rsquo;s{" "}
-            <strong className="font-bold text-bark dark:text-linen">
-              {matches[0].headline}
-            </strong>
-            {/* Read off the schedule, so the clause can never claim a weekly
-                yoga class for an offering that has no timetable at all. */}
-            {focus === "Both" ? describeStrengthWithYoga(matches[0]) : null}.
-          </>
-        ) : (
-          <>
-            Two of them fit &mdash; one-to-one sessions are booked per
-            discipline, so strength and yoga run as separate blocks.
-          </>
-        )}
-      </p>
-      <div className="flex flex-wrap gap-2">
-        {matches.map((match) => (
-          <GuideResultLink
-            key={match.title}
-            href={`#${slugify(match.title)}`}
-            label={matches.length === 1 ? "Take me there" : match.headline}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/**
- * "— strength 3 days a week, with a yoga class alongside", or `null` when the
- * offering does not in fact timetable both. Doubles as the test for whether one
- * offering can answer a request for both disciplines on its own, so the claim
- * and the routing can never disagree.
- */
-function describeStrengthWithYoga(offering: Offering) {
-  const split = offering.schedule?.split;
-  if (!split) return null;
-
-  const strengthDays = split
-    .filter((item) => item.classType === "Strength")
-    .reduce((total, item) => total + item.days.length, 0);
-  const hasYoga = split.some((item) => item.classType === "Yoga");
-  if (!strengthDays || !hasYoga) return null;
-
-  return ` — strength ${strengthDays} ${strengthDays === 1 ? "day" : "days"
-    } a week, with a yoga class alongside`;
-}
-
-function GuideResultLink({ href, label }: { href: string; label: string }) {
-  return (
-    <a
-      href={href}
-      className="inline-flex h-10 shrink-0 items-center gap-2 rounded-[24px] bg-forest px-4 text-sm font-bold text-linen shadow-soft transition hover:-translate-y-0.5 hover:bg-ember"
-    >
-      {label}
-      <ArrowRight size={15} />
-    </a>
-  );
-}
-
 type OfferingDrawerTab = "pricing" | "details";
 
 // No schedule tab: the card face already prints the same days and times, and a
@@ -607,7 +346,7 @@ function OfferingCard({
   return (
     <FadeUp
       delay={delay}
-      className="min-w-0 flex-[1_1_32rem] max-w-2xl"
+      className="min-w-0"
     >
       {/* The card is one bordered box holding two surfaces: a front face
           carrying only the offering's identity, and below it a recessed footer
@@ -626,15 +365,15 @@ function OfferingCard({
           composite the face *darker* than the drawer behind it and inverting
           the depth. The wash is what the warm `sand` tint can't do here — that
           tint reads as grime against the dark palette rather than as depth. */}
-      {/* The chooser links straight here, and `scroll-mt` keeps the sticky
-          navbar off the card's own heading when it does. */}
+      {/* `scroll-mt` keeps the fixed navbar off the card's own heading for
+          anyone arriving on a link straight to this card. */}
       <article
         id={slugify(offering.title)}
         className="w-full scroll-mt-28 overflow-hidden rounded-[28px] border border-walnut/10 bg-sand/70 shadow-earthy backdrop-blur dark:border-white/10 dark:bg-[color:var(--panel-strong)] dark:backdrop-blur-none"
       >
         <div
           ref={faceRef}
-          className="flex flex-col bg-[color:var(--panel-strong)] p-5 dark:bg-white/[0.045] sm:p-6"
+          className="flex flex-col bg-[color:var(--panel-strong)] p-4 dark:bg-white/[0.045] sm:p-6"
         >
           {/* The icon sits beside the title at every width rather than above it
               on small screens: centring it cost a whole row of height on the
@@ -652,19 +391,33 @@ function OfferingCard({
                   optical: the circle would otherwise read as sitting high
                   against the serif's cap line, which starts below its line
                   box. */}
-              <span className="mt-0.5 grid h-11 w-11 shrink-0 place-items-center rounded-full bg-stone/50 text-forest dark:bg-white/10 dark:text-linen">
-                <Icon size={20} />
+              <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-full bg-stone/50 text-forest dark:bg-white/10 dark:text-linen sm:h-11 sm:w-11">
+                <Icon size={18} />
               </span>
               <div className="min-w-0">
-                {/* Plain language leads; the brand name follows as a subtitle.
-                    "Group Strength Training Classes" tells a stranger what they
-                    would be buying, which "Yin for Strength" only does once you
-                    already know. */}
-                <h2 className="font-serif text-2xl font-medium leading-[1.15] text-bark dark:text-linen sm:text-3xl sm:leading-tight">
+                {/* Three lines, in the order a stranger needs them: whose it is,
+                    what it is, and how it is run. The headline used to carry all
+                    three at once — "Group Strength Training Classes" — which
+                    made every card's title a different length and buried the one
+                    word that distinguishes it. Now the practice stands alone in
+                    the serif, the format is the quiet line under it, and the
+                    brand name goes above in small caps, where it identifies
+                    without competing. */}
+                <p className="text-[0.64rem] font-bold uppercase tracking-[0.1em] text-[color:var(--muted)] sm:text-[0.68rem]">
+                  {offering.title}
+                </p>
+                <h2 className="mt-1 font-serif text-xl font-medium leading-[1.15] text-bark dark:text-linen sm:text-2xl sm:leading-tight">
                   {offering.headline}
                 </h2>
-                <p className="mt-1.5 text-sm font-bold text-[color:var(--muted)]">
-                  {offering.title}
+                {/* Cormorant's italic, not Newsreader's. The subtitle sits
+                    directly under a Cormorant headline, and a second serif at
+                    that distance read as a near-miss rather than a pairing —
+                    close enough in colour to look like the same face set
+                    wrongly. Newsreader keeps the card's data, where its sturdier
+                    strokes are the point; here, the headline's own italic is
+                    what belongs. */}
+                <p className="font-serif text-base italic leading-6 text-[color:var(--muted)] sm:text-lg">
+                  {offeringFormatLabels[offering.format]}
                 </p>
               </div>
             </div>
@@ -684,26 +437,33 @@ function OfferingCard({
             />
           </div>
 
-          <p className="mt-4 text-sm leading-6 text-[color:var(--muted)] sm:mt-5 sm:leading-7">
+          <p className="mt-3 text-[0.8rem] leading-5 text-[color:var(--muted)] sm:mt-4 sm:text-sm sm:leading-6">
             {offering.description}
           </p>
 
           {/* When the classes run is the one fact a visitor has to check
               against their own week before anything else matters, so it sits on
-              the face. Price stays one tab below, where a figure can be shown
-              with the commitment lengths it depends on instead of flattened to
-              a single number here.
+              the face.
 
               An offering with no timetable shows nothing here: personal
               sessions are arranged with the trainer, and a row saying so is an
               answer to a question the card never raised. */}
           {offering.schedule ? (
-            <OfferingSchedulePanel
-              schedule={offering.schedule}
-              offeringFocus={offering.focus}
-            />
+            <OfferingSchedulePanel schedule={offering.schedule} />
           ) : null}
+
         </div>
+
+        {/* Price was a tab below, on the reasoning that a figure means little
+            without the commitment lengths it depends on — but a visitor
+            deciding between four offerings is deciding partly on cost, and a
+            card that makes them click to find out is a card that gets skipped.
+            So it comes out of the drawer, though not onto the face: it belongs
+            with the strip and the drawer, in the recessed part of the card a
+            visitor acts on rather than reads. The face carries the one number
+            they are choosing on; the tab still carries the plan-by-plan
+            breakdown that number came from. */}
+        <OfferingPriceBand offering={offering} />
 
         <OfferingDrawerTabs
           label={`${offering.title} details`}
@@ -735,13 +495,165 @@ function OfferingCard({
   );
 }
 
-function OfferingSchedulePanel({
-  schedule,
-  offeringFocus,
-}: {
-  schedule: OfferingSchedule;
-  offeringFocus: OfferingFocus;
-}) {
+// The card's money line: a currency medallion, a small-caps label, and the
+// figure in the serif — the schedule block's shape, one size up, because price
+// is the other half of the same decision.
+//
+// It runs full-bleed to the card's edges on a tinted ground, so it reads as a
+// band across the foot of the face rather than as one more line of the face's
+// prose. Sitting directly above the tab strip, it also gives "See pricing" an
+// obvious subject: the strip below it opens the plans behind the number.
+function OfferingPriceBand({ offering }: { offering: Offering }) {
+  const region = useRegion();
+  const resolve = (inr: number) =>
+    resolvePrice(inr, { tier: getTier(region), region });
+  const price = getFacePrice(offering, resolve);
+
+  return (
+    // No tint of its own. The card is two surfaces, not four: a raised face,
+    // and everything under it recessed into the shell. A third value here made
+    // the band read as its own floor — and going *lighter* than the face while
+    // the strip beneath it went darker, the eye travelled up, then down, then
+    // up again inside forty pixels. Sharing the shell, the band, the tab strip
+    // and the drawer are one block, which is what they are.
+    <div className="flex items-center gap-3 px-4 pb-2.5 pt-3 sm:gap-3.5 sm:px-6 sm:pb-3 sm:pt-4">
+      {/* The currency is drawn, not typeset. Set in a text face the ₹ came out
+          of whichever fallback happened to own the glyph — a different weight,
+          a different width and a different colour from the two icons above it,
+          which is what made it look pasted on. As a lucide glyph it is the same
+          stroke as the calendar and the clock, and the three medallions finally
+          read as one set. A currency with no icon falls back to its symbol in
+          the sans, which at least matches the labels. */}
+      <span
+        aria-hidden
+        className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-forest/10 bg-forest/[0.06] text-sm font-bold text-forest/75 dark:border-linen/12 dark:bg-linen/[0.07] dark:text-linen/70 sm:h-10 sm:w-10"
+      >
+        {price.CurrencyIcon ? (
+          <price.CurrencyIcon size={15} strokeWidth={1.8} />
+        ) : (
+          price.symbol
+        )}
+      </span>
+      <div className="min-w-0">
+        <p className="text-[0.64rem] font-bold uppercase leading-5 tracking-[0.1em] text-[color:var(--muted)] sm:text-[0.68rem]">
+          {price.label}
+        </p>
+        <p className="font-editorial text-xl font-medium leading-7 text-bark dark:text-linen sm:text-2xl sm:leading-8">
+          {price.amount}
+          {price.unit ? (
+            <span className="font-sans text-sm font-normal text-[color:var(--muted)]">
+              {" "}
+              {price.unit}
+            </span>
+          ) : null}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The one figure a card face shows, and the words around it.
+ *
+ * "Starting at" means the lowest monthly rate actually obtainable, which is the
+ * longest commitment's — quoting the month-to-month price under that phrase
+ * would be a lie in the other direction. The note is what keeps it honest: it
+ * names the plan that earns the figure, and the month-to-month price beside it,
+ * so nobody arrives at the pricing tab to find the number has moved.
+ */
+function getFacePrice(
+  offering: Offering,
+  resolve: (inr: number) => Money,
+) {
+  const { currency } = resolve(offering.price ?? 0);
+  const symbol = getCurrencySymbol(currency);
+  const CurrencyIcon = currencyIcons[currency] ?? null;
+
+  // Not "free" and not "unknown": a deliberate "ask me", said in the same place
+  // every other card says a number.
+  if (offering.price === null) {
+    return {
+      symbol,
+      CurrencyIcon,
+      label: "Price",
+      amount: "On request",
+      unit: null as string | null,
+    };
+  }
+
+  const monthly = resolve(offering.price);
+  const cheapest = planDurations
+    .map((duration) => ({
+      duration,
+      perMonth: resolve(
+        getDiscountedTotal(
+          offering.price as number,
+          duration,
+          offering.durationDiscounts[duration],
+        ) / duration,
+      ),
+    }))
+    .reduce((best, plan) => (plan.perMonth.amount < best.perMonth.amount ? plan : best));
+
+  // An offering whose longer plans cost the same per month has no "starting
+  // at" to offer, and saying so would promise a discount that is not there.
+  if (cheapest.perMonth.amount >= monthly.amount) {
+    return {
+      symbol,
+      CurrencyIcon,
+      label: "Price",
+      amount: formatAmount(monthly),
+      unit: "/ month",
+    };
+  }
+
+  return {
+    symbol,
+    CurrencyIcon,
+    label: "Starting at",
+    amount: formatAmount(cheapest.perMonth),
+    unit: "/ month",
+  };
+}
+
+/**
+ * The figure without its currency mark — "2,000", not "₹2,000".
+ *
+ * The medallion beside it is already the currency, said once and drawn to match
+ * the icons above it; repeating it against the numerals put two rupee marks a
+ * centimetre apart, the second one crowding the digits it was set tight
+ * against. The note underneath keeps its symbols: that line quotes a second
+ * figure away from the medallion, where the mark still does work.
+ */
+function formatAmount({ amount }: Money) {
+  return new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(
+    amount,
+  );
+}
+
+/** The drawn form of a currency, where lucide has one. */
+const currencyIcons: Record<string, LucideIcon | undefined> = {
+  INR: IndianRupee,
+  USD: DollarSign,
+  CAD: DollarSign,
+  AUD: DollarSign,
+  NZD: DollarSign,
+  SGD: DollarSign,
+  EUR: Euro,
+  GBP: PoundSterling,
+  JPY: JapaneseYen,
+};
+
+/** "₹", "$" — the symbol the visitor's prices are actually printed with. */
+function getCurrencySymbol(currency: string) {
+  return (
+    new Intl.NumberFormat("en-IN", { style: "currency", currency })
+      .formatToParts(0)
+      .find((part) => part.type === "currency")?.value ?? currency
+  );
+}
+
+function OfferingSchedulePanel({ schedule }: { schedule: OfferingSchedule }) {
   return (
     // No box and no "When" label. A bordered panel had to be filled, and the
     // slack the height equalisation hands a short card was filling it with
@@ -750,103 +662,182 @@ function OfferingSchedulePanel({
     // the timetable rather than below it, so the days land just over the tab
     // strip on every card instead of leaving a short one with a trailing
     // void — cards side by side then agree on where their timetable sits.
-    // There is no divider rule either: the gap `mt-auto` opens is a wider,
-    // quieter separator than a hairline, and the card had enough lines across
-    // it already.
     //
     // The label went with the frame: it sat flush to the gutter while the
     // pills beside it carry their own padding, so it always read as hanging further left
     // than the row it introduced, and days-plus-time needs no announcing.
-    <div className="mt-auto pt-5 sm:pt-6">
-      <ScheduleSummary
-        schedule={schedule}
-        offeringFocus={offeringFocus}
-      />
+    <div className="mt-auto pt-4 sm:pt-5">
+      <ScheduleSummary schedule={schedule} />
     </div>
   );
 }
 
-// One row per class, ordered by what actually disqualifies a visitor: the time
-// first, then what is practised, then the days. The hour is the hard gate — a
-// person who is not free at 7pm is out whichever days it lands on — so it
-// leads the row and carries the weight, where it used to trail the pills as
-// the quietest thing in them.
+// Two fields side by side — the classes and the hours they run in — each an
+// icon, a small-caps label and its value set in the serif. It is the shape the
+// rest of the site already uses for a fact worth reading slowly, and it suits a
+// timetable: a label naming what the value is, and the value large enough to be
+// taken in at a glance rather than parsed.
 //
-// The days stay pills rather than becoming prose. A week is a set of days: three
-// chips are counted at a glance where "Mon, Wed, Fri" has to be read, which is
-// what makes cadence — three times a week against two — legible across two
-// cards. They are just no longer the loudest thing in the row.
-function ScheduleSummary({
-  schedule,
-  offeringFocus,
-}: {
-  schedule: OfferingSchedule;
-  offeringFocus: OfferingFocus;
-}) {
+// The days are prose now, not pills. Set as "Mon · Wed · Fri" in the serif they
+// sit level with the hours beside them and read as one calm line; as chips they
+// were the loudest thing on the card, and a card the visitor has not yet chosen
+// does not need its weekdays shouting. Cadence survives the change — three
+// names separated by dots are still counted before they are read.
+function ScheduleSummary({ schedule }: { schedule: OfferingSchedule }) {
   const displayTimeZone = useDisplayTimeZone(schedule);
+  // Alternative hours for the same class share a line rather than repeating the
+  // class and its days once per slot. A row splits only where the days would
+  // actually differ, which in a visitor's own zone they can: an evening slot
+  // and a morning one need not land on the same weekday once converted.
+  const rows = schedule.split.flatMap((item) =>
+    groupSlotsByDays(item, schedule, displayTimeZone),
+  );
+  // Where every class runs at the same set of hours — the usual case, and the
+  // whole of this site's timetable today — the hours are a fact about the card,
+  // not about each row: one timetable, offered in two batches. That is what
+  // earns them a field of their own. `null` puts the times back beside the days
+  // they belong to, which is where they belong the day two classes disagree.
+  const sharedBatches = getSharedBatches(schedule, displayTimeZone);
 
   return (
-    // Three shared columns from `sm` up, each row's children placed straight
-    // into them by `display: contents`. Times differ between rows, and two of
-    // them can only be compared if they stack — a plain flex row would park
-    // each one wherever the preceding cell happened to end.
-    //
-    // Below `sm` the columns are dropped and each row wraps on its own: a
-    // card at phone width has no room for time, class and three pills on one
-    // line, and wrapping under the time beats squeezing all three.
-    //
-    // No rules between the rows — the gap is a wider, quieter separator than a
-    // hairline, and the card has enough lines across it already.
-    <ul className="grid gap-2.5 sm:grid-cols-[auto_auto_1fr] sm:items-center sm:gap-x-4 sm:gap-y-3">
-      {schedule.split.map((item) => (
-        <li
-          key={`${item.days.join("-")}-${item.classType}`}
-          className="flex flex-wrap items-center gap-x-3 gap-y-1.5 sm:contents"
-        >
-          <p className="text-sm leading-5 text-bark dark:text-linen sm:text-base sm:leading-6">
-            <FormattedItemTime
-              item={item}
-              schedule={schedule}
-              timeZone={displayTimeZone}
-            />
-          </p>
-          {/* A single row practising the card's own focus says nothing the
-              headline above it hasn't: "Yoga", under "Group Yoga Classes". The
-              label is printed where it discriminates — a card holding more than
-              one class, or a row practising something other than what the card
-              is named for, like the optional yoga on a strength card. */}
-          {schedule.split.length > 1 || item.classType !== offeringFocus ? (
-            <p className="text-[0.8rem] leading-5 text-[color:var(--muted)] sm:text-sm sm:leading-6">
-              {item.classType}
-              {item.optional ? (
-                <span className="font-serif italic"> (optional)</span>
-              ) : null}
+    // The two fields stack rather than sitting side by side. Side by side is
+    // the shape the reference uses, and it wants a card the full width of the
+    // page; these cards run two to a row, and at that width the days broke
+    // across lines to make room for the hours. A field that wraps costs more
+    // than the pairing gains.
+    <div className="flex flex-col gap-3">
+      <ScheduleField icon={CalendarDays} label="Classes">
+        {/* Two columns from `sm` up, the rows' cells placed straight into them
+            by `display: contents`, so every class's days start at the same
+            offset however long the class before it was named. Below `sm` the
+            columns are dropped and each row wraps on its own. */}
+        <ul className="grid gap-1.5 sm:grid-cols-[auto_1fr] sm:items-baseline sm:gap-x-3 sm:gap-y-1">
+          {rows.map(({ item, slots, days }) => (
+            <li
+              key={`${item.classType}-${days.join("-")}`}
+              className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 sm:contents"
+            >
+              <span className="text-[0.8rem] leading-6 text-[color:var(--muted)] sm:text-sm">
+                {item.classType}
+                {item.optional ? (
+                  <span className="font-editorial italic"> (optional)</span>
+                ) : null}
+              </span>
+              <span className="font-editorial text-base leading-6 text-bark dark:text-linen sm:text-lg">
+                {days.join(" · ")}
+                {/* Only where the classes keep different hours; otherwise the
+                    hours are one field over, said once. */}
+                {sharedBatches ? null : (
+                  <>
+                    <ScheduleDivider />
+                    <BatchTimes
+                      slots={slots}
+                      days={item.days}
+                      schedule={schedule}
+                      timeZone={displayTimeZone}
+                    />
+                  </>
+                )}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </ScheduleField>
+      {sharedBatches ? (
+        <>
+          {/* The word inflects, the field does not move: a card offering one
+              hour says "Batch" where one offering two says "Batches". */}
+          <ScheduleField
+            icon={Clock3}
+            label={sharedBatches.slots.length > 1 ? "Batches" : "Batch"}
+          >
+            <p className="font-editorial text-base leading-6 text-bark dark:text-linen sm:text-lg">
+              <BatchTimes
+                slots={sharedBatches.slots}
+                days={sharedBatches.days}
+                schedule={schedule}
+                timeZone={displayTimeZone}
+              />
             </p>
-          ) : null}
-          <div className="flex flex-wrap gap-1">
-            {getScheduleItemDays(item, schedule, displayTimeZone).map((day) => (
-              <DayPill key={day} day={day} muted={item.optional} />
-            ))}
-          </div>
-        </li>
-      ))}
-    </ul>
+          </ScheduleField>
+        </>
+      ) : null}
+    </div>
   );
 }
 
-// An optional class is a day the visitor may skip, so its pill is outlined
-// rather than filled — the difference is visible before the "(optional)" beside
-// it is read.
-function DayPill({ day, muted = false }: { day: string; muted?: boolean }) {
+/** An icon, a small-caps label, and whatever the label names underneath it. */
+function ScheduleField({
+  icon: Icon,
+  label,
+  children,
+}: {
+  icon: LucideIcon;
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
-    <span
-      className={`inline-flex min-w-[2.6rem] justify-center rounded-full px-2 py-0.5 text-[0.64rem] font-bold uppercase tracking-[0.08em] sm:min-w-[3rem] sm:px-2.5 sm:py-1 sm:text-[0.68rem] sm:tracking-[0.1em] ${muted
-        ? "border border-dashed border-forest/30 text-forest/75 dark:border-linen/25 dark:text-linen/70"
-        : "border border-forest/12 bg-forest/[0.07] text-forest dark:border-linen/12 dark:bg-linen/[0.08] dark:text-linen"
-        }`}
-    >
-      {day}
+    <div className="flex min-w-0 gap-3">
+      {/* The icon sits in a medallion rather than bare. Loose on the page it
+          had no relationship to anything: a 18px outline floating to the left
+          of a 11px label, aligned to neither its cap height nor its baseline,
+          reading as a stray mark. A disc gives it an edge to sit in, a size to
+          be measured against, and the same soft-filled circle the site already
+          uses for an offering's own icon at the top of the card. */}
+      <span
+        aria-hidden
+        className="mt-px flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-forest/10 bg-forest/[0.05] text-forest/70 dark:border-linen/12 dark:bg-linen/[0.06] dark:text-linen/65"
+      >
+        <Icon size={13} strokeWidth={1.6} />
+      </span>
+      <div className="min-w-0">
+        <p className="text-[0.64rem] font-bold uppercase leading-5 tracking-[0.1em] text-[color:var(--muted)] sm:text-[0.68rem]">
+          {label}
+        </p>
+        <div className="mt-0.5">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+/** The rule between two hours, or between a class's days and its own hours. */
+function ScheduleDivider() {
+  return (
+    // A pipe, not a dot: a middot is a list separator and read as one, stringing
+    // the hours together, where a rule between them divides — two batches
+    // standing apart, one of which the visitor picks.
+    <span className="px-2 font-sans text-sm font-normal text-forest/25 dark:text-linen/20">
+      |
     </span>
+  );
+}
+
+/** A field's hours, "7–8 am | 6–7 pm" — separated, never ranked. */
+function BatchTimes({
+  slots,
+  days,
+  schedule,
+  timeZone,
+}: {
+  slots: OfferingTimeSlot[];
+  days: OfferingWeekday[];
+  schedule: OfferingSchedule;
+  timeZone: string | null;
+}) {
+  return (
+    <>
+      {slots.map((slot, index) => (
+        <Fragment key={formatSlotKey(slot)}>
+          {index > 0 ? <ScheduleDivider /> : null}
+          <FormattedSlotTime
+            slot={slot}
+            days={days}
+            schedule={schedule}
+            timeZone={timeZone}
+          />
+        </Fragment>
+      ))}
+    </>
   );
 }
 
@@ -871,7 +862,16 @@ function OfferingDrawerTabs({
   // that says "press me", so the chips say it the ordinary way.
   return (
     <div
-      className="flex flex-wrap items-center gap-2 border-t border-walnut/10 bg-forest/[0.03] px-5 py-3.5 dark:border-white/10 dark:bg-black/20 sm:px-6"
+      // Closed, this row is the last thing in the card, so its bottom padding
+      // is the chips' clearance from the card's bottom corners — and a corner
+      // is read as a pair, so that clearance has to match the horizontal inset
+      // (`px-4 sm:px-6`) or the chip visibly sits nearer one edge than the
+      // other. Open, the row is interior: the drawer below supplies the card's
+      // bottom padding, and this reverts to the tighter gap that keeps the
+      // chips reading as the header of the panel they opened.
+      className={`flex flex-wrap items-center gap-2 px-4 pt-3 transition-[padding] duration-300 ease-out sm:px-6 sm:pt-3.5 ${
+        openTab === null ? "pb-4 sm:pb-6" : "pb-3 sm:pb-3.5"
+      }`}
       role="group"
       aria-label={label}
     >
@@ -884,7 +884,7 @@ function OfferingDrawerTabs({
           aria-controls={panelId}
           // The focus ring is inset: the card clips its overflow, so a ring
           // drawn outside a chip would be sliced off at the card's edge.
-          className={`inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full border px-3.5 text-[0.8rem] font-bold transition hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-forest/40 dark:focus-visible:ring-white/40 ${openTab === id
+          className={`inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-[0.8rem] font-bold sm:h-9 sm:px-3.5 transition hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-forest/40 dark:focus-visible:ring-white/40 ${openTab === id
             ? "border-ember/60 bg-ember/10 text-ember dark:border-ember/70 dark:bg-ember/15"
             : "border-forest/25 bg-forest/[0.04] text-bark hover:border-forest/45 hover:bg-forest/10 dark:border-white/20 dark:bg-white/[0.06] dark:text-linen dark:hover:border-white/40 dark:hover:bg-white/[0.12]"
             }`}
@@ -1193,6 +1193,46 @@ function OfferingListInfo({
   );
 }
 
+
+/**
+ * The hours every class in the schedule runs at — one hour or several — or
+ * `null` when the classes do not all run at the same ones, in which case an
+ * hour is a fact about a class and has to be printed beside its days.
+ *
+ * The agreement has to hold on the visitor's clock, not on the authored one:
+ * a conversion can pull one class's morning batch onto a different weekday
+ * (`groupSlotsByDays` splits the row) or, across a DST boundary that falls
+ * between two classes' weekdays, onto a different hour. Either breaks the claim
+ * a field of its own would make, so either sends the times back to the days.
+ */
+function getSharedBatches(schedule: OfferingSchedule, timeZone: string | null) {
+  const first = schedule.split[0];
+  if (!first) return null;
+
+  const startMinutes = (item: OfferingScheduleItem, slot: OfferingTimeSlot) =>
+    getSlotStartMinutes(slot, item.days, schedule, timeZone);
+  const firstClocks = new Map(
+    first.slots.map((slot) => [formatSlotKey(slot), startMinutes(first, slot)]),
+  );
+
+  for (const item of schedule.split) {
+    if (groupSlotsByDays(item, schedule, timeZone).length !== 1) return null;
+    if (item.slots.length !== first.slots.length) return null;
+    for (const slot of item.slots) {
+      if (firstClocks.get(formatSlotKey(slot)) !== startMinutes(item, slot)) {
+        return null;
+      }
+    }
+  }
+
+  return {
+    slots: [...first.slots].sort(
+      (a, b) => startMinutes(first, a) - startMinutes(first, b),
+    ),
+    days: first.days,
+  };
+}
+
 /**
  * The zone a schedule should be printed in, or `null` to print it as authored.
  * Returns `null` on the server and on the first client render, so the markup
@@ -1210,33 +1250,36 @@ function useDisplayTimeZone(schedule: OfferingSchedule) {
     : null;
 }
 
-function FormattedItemTime({
-  item,
+function FormattedSlotTime({
+  slot,
+  days,
   schedule,
   timeZone,
 }: {
-  item: OfferingScheduleItem;
+  slot: OfferingTimeSlot;
+  days: OfferingWeekday[];
   schedule: OfferingSchedule;
   timeZone: string | null;
 }) {
-  const anchorDay = item.days[0];
+  const anchorDay = days[0];
   const start = timeZone
     ? getDateTimeClockParts(
-      getScheduleDate(item.startTime, schedule, anchorDay),
+      getScheduleDate(slot.startTime, schedule, anchorDay),
       timeZone,
     )
-    : formatScheduleClockParts(item.startTime);
+    : formatScheduleClockParts(slot.startTime);
   const end = timeZone
     ? getDateTimeClockParts(
-      getScheduleDate(item.endTime, schedule, anchorDay),
+      getScheduleDate(slot.endTime, schedule, anchorDay),
       timeZone,
     )
-    : formatScheduleClockParts(item.endTime);
+    : formatScheduleClockParts(slot.endTime);
 
-  // "6 - 7 pm", not "6:00 pm - 7:00 pm". A round hour has nothing to say with
-  // its minutes, and a range that starts and ends in the same half of the day
-  // only needs to say which half once — which is also what lets the whole line
-  // sit beside its day pills on a phone instead of wrapping under them.
+  // "6–7 pm", not "6:00 pm - 7:00 pm". A round hour has nothing to say with its
+  // minutes, and a range that starts and ends in the same half of the day only
+  // needs to say which half once — which is also what keeps the whole field on
+  // one line on a phone. The dash is an en dash set tight, the typographer's
+  // mark for a span; a spaced hyphen read as a subtraction.
   const sharedMeridiem = start.meridiem === end.meridiem;
 
   return (
@@ -1244,8 +1287,9 @@ function FormattedItemTime({
       <FormattedClock
         clock={trimWholeHour(start.clock)}
         meridiem={sharedMeridiem ? null : start.meridiem}
-      />{" "}
-      - <FormattedClock clock={trimWholeHour(end.clock)} meridiem={end.meridiem} />
+      />
+      {"\u2013"}
+      <FormattedClock clock={trimWholeHour(end.clock)} meridiem={end.meridiem} />
     </>
   );
 }
@@ -1262,27 +1306,110 @@ function FormattedClock({
   clock: string;
   meridiem: string | null;
 }) {
+  // No bold on the hour any more. It was carrying the line when the times were
+  // set in the sans at body size; in the serif, at the size the field gives
+  // them, they are already the loudest thing in the block, and bolding a
+  // Cormorant numeral only thickens it.
   return (
     <>
-      <strong className="font-bold">{clock}</strong>
+      {clock}
       {meridiem ? ` ${meridiem}` : ""}
     </>
   );
 }
 
-function getConvertedScheduleItemDays(
-  item: OfferingScheduleItem,
+function getConvertedSlotDays(
+  days: OfferingWeekday[],
+  slot: OfferingTimeSlot,
   schedule: OfferingSchedule,
   timeZone: string,
 ) {
-  const convertedDays = item.days.map((day) =>
+  const convertedDays = days.map((day) =>
     formatDateTimeWeekday(
-      getScheduleDate(item.startTime, schedule, day),
+      getScheduleDate(slot.startTime, schedule, day),
       timeZone,
     ),
   );
 
   return uniqueValues(convertedDays);
+}
+
+/**
+ * A class's slots, split into one row per distinct set of weekdays. Slots are
+ * grouped by the days they land on rather than printed one apiece, so the
+ * common case — the same class at two hours on the same days — is one line, and
+ * a zone conversion that pulls a morning slot onto a different weekday is the
+ * only thing that opens a second.
+ */
+function groupSlotsByDays(
+  item: OfferingScheduleItem,
+  schedule: OfferingSchedule,
+  timeZone: string | null,
+) {
+  const rows = new Map<
+    string,
+    { item: OfferingScheduleItem; slots: OfferingTimeSlot[]; days: string[] }
+  >();
+
+  for (const slot of item.slots) {
+    const days = getSlotDays(item.days, slot, schedule, timeZone);
+    const key = days.join("-");
+    const row = rows.get(key);
+    if (row) row.slots.push(slot);
+    else rows.set(key, { item, slots: [slot], days });
+  }
+
+  // Batches run in clock order, morning before evening, so a line is read the
+  // way a day is. Sorted rather than left to the authoring order: the order
+  // that matters is the one on the visitor's own clock, and a conversion can
+  // reverse it — 7 am and 6 pm IST land as an evening and a morning in the US.
+  for (const row of rows.values()) {
+    row.slots.sort(
+      (a, b) =>
+        getSlotStartMinutes(a, item.days, schedule, timeZone) -
+        getSlotStartMinutes(b, item.days, schedule, timeZone),
+    );
+  }
+
+  return [...rows.values()];
+}
+
+/** A slot's start as minutes past midnight, on whichever clock it is printed in. */
+function getSlotStartMinutes(
+  slot: OfferingTimeSlot,
+  days: OfferingWeekday[],
+  schedule: OfferingSchedule,
+  timeZone: string | null,
+) {
+  if (!timeZone) {
+    return toHour24(slot.startTime) * 60 + (slot.startTime.minute ?? 0);
+  }
+
+  return getDateTimeMinutes(
+    getScheduleDate(slot.startTime, schedule, days[0]),
+    timeZone,
+  );
+}
+
+function getDateTimeMinutes(date: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en", {
+    hour: "numeric",
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone,
+  }).formatToParts(date);
+  const getPart = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((part) => part.type === type)?.value ?? 0);
+
+  return getPart("hour") * 60 + getPart("minute");
+}
+
+/** Distinguishes two slots of the same class in a React key. */
+function formatSlotKey(slot: OfferingTimeSlot) {
+  const format = (time: OfferingLocalTime) =>
+    `${time.hour}:${time.minute ?? 0}${time.meridiem}`;
+
+  return `${format(slot.startTime)}-${format(slot.endTime)}`;
 }
 
 function formatScheduleClockParts(time: OfferingLocalTime) {
@@ -1297,14 +1424,15 @@ function formatScheduleClockParts(time: OfferingLocalTime) {
   };
 }
 
-function getScheduleItemDays(
-  item: OfferingScheduleItem,
+function getSlotDays(
+  days: OfferingWeekday[],
+  slot: OfferingTimeSlot,
   schedule: OfferingSchedule,
   timeZone: string | null,
 ) {
   return timeZone
-    ? getConvertedScheduleItemDays(item, schedule, timeZone)
-    : item.days;
+    ? getConvertedSlotDays(days, slot, schedule, timeZone)
+    : days;
 }
 
 const scheduleWeekdayIndex: Record<OfferingWeekday, number> = {

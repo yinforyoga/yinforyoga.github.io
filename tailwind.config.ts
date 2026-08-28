@@ -96,6 +96,9 @@ const config: Config = {
       },
       fontFamily: {
         serif: ["var(--font-cormorant)", "Georgia", "serif"],
+        // The text serif, for the sizes Cormorant is too fine to hold: a
+        // card's days, hours and prices.
+        editorial: ["var(--font-newsreader)", "Georgia", "serif"],
         sans: ["var(--font-manrope)", "Inter", "system-ui", "sans-serif"]
       },
       boxShadow: {

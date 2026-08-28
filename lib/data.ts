@@ -33,6 +33,17 @@ export type OfferingClassType = "Strength" | "Yoga";
 /** Who you practise with. */
 export type OfferingFormat = "Group" | "Personal";
 
+/**
+ * How a format is said out loud. The axis is named once here rather than being
+ * written into each offering's `headline`, so a card's title can be the plain
+ * name of what is practised — "Strength Training" — and the format can be the
+ * line beneath it, the same line on every card in the same column of the 2x2.
+ */
+export const offeringFormatLabels: Record<OfferingFormat, string> = {
+  Group: "Group classes",
+  Personal: "Personal classes",
+};
+
 /** What you practise. A `Strength` offering may still include yoga. */
 export type OfferingFocus = "Strength" | "Yoga";
 
@@ -64,11 +75,23 @@ export type OfferingLocalTime = {
   meridiem: OfferingMeridiem;
 };
 
+/** One hour in the week a class can be taken at. */
+export type OfferingTimeSlot = {
+  startTime: OfferingLocalTime;
+  endTime: OfferingLocalTime;
+};
+
+/**
+ * A class, and every time it is run. `slots` holds alternatives rather than
+ * extra sessions: the same class on the same days, offered at more than one
+ * hour so a visitor can take whichever fits their week. Each slot is printed as
+ * its own line, because a slot in the evening and one in the morning need not
+ * land on the same weekday once converted to the visitor's own zone.
+ */
 export type OfferingScheduleItem = {
   days: OfferingWeekday[];
   classType: OfferingClassType;
-  startTime: OfferingLocalTime;
-  endTime: OfferingLocalTime;
+  slots: OfferingTimeSlot[];
   optional?: boolean;
 };
 
@@ -242,7 +265,12 @@ export type Offering = {
    * under `headline`, so renaming one does not require renaming the other.
    */
   title: string;
-  /** Plain-language name, and the line a visitor actually reads first. */
+  /**
+   * Plain-language name of what is practised, and the line a visitor actually
+   * reads first. It says nothing about the format — `offeringFormatLabels`
+   * prints that beneath it — so two cards in the same row of the 2x2 carry the
+   * same headline and are told apart by the line under it.
+   */
   headline: string;
   eyebrow: string;
   /** Where this offering sits on the 2x2. */
@@ -326,7 +354,7 @@ export const navItems = [
 const personalOfferings: Offering[] = [
   {
     title: "Yin One-to-One",
-    headline: "Personal Strength Training",
+    headline: "Strength Training",
     eyebrow: "On request",
     format: "Personal",
     focus: "Strength",
@@ -358,7 +386,7 @@ const personalOfferings: Offering[] = [
   },
   {
     title: "Yin One-to-One Yoga",
-    headline: "Personal Yoga",
+    headline: "Yoga",
     eyebrow: "On request",
     format: "Personal",
     focus: "Yoga",
@@ -394,7 +422,7 @@ const personalOfferings: Offering[] = [
 export const offerings: Offering[] = [
   {
     title: "Yin for Strength",
-    headline: "Group Strength Training Classes",
+    headline: "Strength Training",
     eyebrow: "Ongoing",
     format: "Group",
     focus: "Strength",
@@ -408,14 +436,30 @@ export const offerings: Offering[] = [
         {
           days: ["Mon", "Wed", "Fri"],
           classType: "Strength",
-          startTime: { hour: 6, meridiem: "pm" },
-          endTime: { hour: 7, meridiem: "pm" },
+          slots: [
+            {
+              startTime: { hour: 6, meridiem: "pm" },
+              endTime: { hour: 7, meridiem: "pm" },
+            },
+            {
+              startTime: { hour: 7, meridiem: "am" },
+              endTime: { hour: 8, meridiem: "am" },
+            },
+          ],
         },
         {
           days: ["Thu"],
           classType: "Yoga",
-          startTime: { hour: 6, meridiem: "pm" },
-          endTime: { hour: 7, meridiem: "pm" },
+          slots: [
+            {
+              startTime: { hour: 6, meridiem: "pm" },
+              endTime: { hour: 7, meridiem: "pm" },
+            },
+            {
+              startTime: { hour: 7, meridiem: "am" },
+              endTime: { hour: 8, meridiem: "am" },
+            },
+          ],
           optional: true,
         },
       ],
@@ -445,7 +489,7 @@ export const offerings: Offering[] = [
       "Home Workout • Strength Training • Guided",
     details: [
       "Structured strength training that progresses week to week",
-      "Fat loss and lean muscle, without a gym",
+      "Fat loss and lean muscle",
       "Live classes with your form watched and corrected",
       "A small group that keeps showing up",
     ],
@@ -453,7 +497,7 @@ export const offerings: Offering[] = [
       "Busy professionals who can't make time for the gym",
       "People who want to be led through a session, not plan one",
       "Frequent travellers who train wherever they land",
-      "Anyone who finds gym floors intimidating",
+      "Anyone who finds gyms intimidating",
     ],
     equipment: [
       { label: "Dumbbells", icon: Dumbbell },
@@ -463,7 +507,7 @@ export const offerings: Offering[] = [
   },
   {
     title: "Yin for Yoga",
-    headline: "Group Yoga Classes",
+    headline: "Yoga",
     eyebrow: "Ongoing",
     format: "Group",
     focus: "Yoga",
@@ -477,8 +521,12 @@ export const offerings: Offering[] = [
         {
           days: ["Tue", "Thu"],
           classType: "Yoga",
-          startTime: { hour: 6, meridiem: "pm" },
-          endTime: { hour: 7, meridiem: "pm" },
+          slots: [
+            {
+              startTime: { hour: 6, meridiem: "pm" },
+              endTime: { hour: 7, meridiem: "pm" },
+            },
+          ],
         },
       ],
     },
@@ -496,13 +544,13 @@ export const offerings: Offering[] = [
     description:
       "Asana • Pranayama • Meditation",
     details: [
-      "Flexibility and mobility, built gradually",
-      "Breathwork and meditation in every class",
+      "Flexibility and mobility",
+      "Breathwork and meditation",
       "Postures broken down and corrected as you go",
     ],
     bestFor: [
       "Beginners who want the basics taught properly",
-      "Improving practitioners after a steady weekly practice",
+      "Improving practitioners",
       "Anyone who wants to practise with others rather than alone",
     ],
     equipment: [
