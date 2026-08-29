@@ -341,6 +341,15 @@ body::before {
 }
 
 
+/* The hand the pencilled "optional" mark is drawn in. It ships with the
+   drawing rather than as a site font, because it sets exactly one word and
+   Excalidraw's export subsets the file down to the letters that word needs. */
+@font-face {
+  font-family: Excalifont;
+  font-display: swap;
+  src: url(data:font/woff2;base64,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) format("woff2");
+}
+
 /* ─────────────────────────────────────────────────────────────────────────
    Offering card: the timetable
    ───────────────────────────────────────────────────────────────────────── */

@@ -7,12 +7,12 @@ import {
   RectangleHorizontal,
   ShieldCheck,
   StretchHorizontal,
-  BicepsFlexed,
-  Sprout,
+  User,
   Blocks,
   RockingChair,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { UsersThree } from "@/components/GroupIcon";
 
 export type OfferingMode = "Online";
 
@@ -498,7 +498,10 @@ const personalOfferings: Offering[] = [
       price: null,
       durationDiscounts: noDurationDiscounts,
     },
-    icon: Dumbbell,
+    // One person, against the group cards' two. The medallion means the same
+    // thing on every card now — how a class is run — so the four read as one
+    // set rather than as two pairs answering different questions.
+    icon: User,
     // The same ground the group card covers, said as one to one. What changes
     // is not the training but who it is built for: the plan, the pace and the
     // timings all follow one person instead of a batch.
@@ -539,7 +542,7 @@ const personalOfferings: Offering[] = [
     mode: "Online",
     status: "Registrations Open",
     formUrl: null,
-    icon: Flower2,
+    icon: User,
     details: [
       "Asana, pranayama and meditation, paced to you",
       "Postures adjusted for your body, not the room's average",
@@ -627,7 +630,10 @@ export const offerings: Offering[] = [
     mode: "Online",
     status: "Registrations Open",
     formUrl: "https://docs.google.com/forms/d/e/1FAIpQLSeLPbLT6HMXT_r6DEidr1uPZmEQ6Z_k_FJs43pFsw1H9wJ7Eg/viewform?usp=dialog",
-    icon: BicepsFlexed,
+    // Both group offerings take the same medallion. The icon says how a class is
+    // run, not what is practised — the headline beside it already names the
+    // practice, and a dumbbell or a sprout there was repeating it in pictures.
+    icon: UsersThree,
     // Ordered by what matters most to someone deciding: what the class is,
     // then what it does for them, then how it is run.
     details: [
@@ -689,7 +695,7 @@ export const offerings: Offering[] = [
     mode: "Online",
     status: "Registrations Open",
     formUrl: "https://docs.google.com/forms/d/e/1FAIpQLSfQIQ2l_FsHU6S0LR4obRv1HR57vj4HJe2vqR-6pgzpAN4IvQ/viewform?usp=header",
-    icon: Sprout,
+    icon: UsersThree,
     // Ordered by what matters most to someone deciding: what the class is,
     // then what it does for them, then how it is run.
     details: [

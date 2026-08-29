@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
+import { OptionalMark } from "@/components/OptionalMark";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
@@ -388,7 +389,7 @@ function OfferingCard({
               viewport that can least afford one, and bought nothing a
               left-aligned card doesn't already read as. */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex min-w-0 flex-1 items-start gap-3">
+            <div className="flex min-w-0 flex-1 items-start gap-2.5 sm:gap-3">
               {/* The icon hangs from the top of the title block rather than
                   centring on it: headlines wrap at one width and not another,
                   and centring slid the icon down a half-line on whichever card
@@ -399,41 +400,20 @@ function OfferingCard({
                   optical: the circle would otherwise read as sitting high
                   against the serif's cap line, which starts below its line
                   box. */}
-              <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-full bg-stone/50 text-forest dark:bg-white/10 dark:text-linen sm:h-11 sm:w-11">
+              <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-stone/50 text-forest dark:bg-white/10 dark:text-linen sm:h-11 sm:w-11">
                 <Icon size={18} />
               </span>
               <div className="min-w-0">
-                {/* Three lines, in the order a stranger needs them: whose it is,
-                    what it is, and how it is run. The headline used to carry all
-                    three at once — "Group Strength Training Classes" — which
-                    made every card's title a different length and buried the one
-                    word that distinguishes it. Now the practice stands alone in
-                    the serif, the format is the quiet line under it, and the
-                    brand name goes above in small caps, where it identifies
-                    without competing. */}
-                {/* Group only. A personal offering's name repeats both lines
-                    under it — "Yin One-to-One Yoga" over "Yoga" over "Personal
-                    classes" — so it spent the card's most prominent small-caps
-                    slot restating what the next two lines already say. The
-                    group names carry a word the rest of the card does not
-                    ("Yin for Strength"), so they stay.
+                {/* Two lines, in the order a stranger needs them: what it is,
+                    and how it is run. The brand name used to sit above them in
+                    small caps, but on every card it restated what the two lines
+                    under it already said — "Yin for Strength" over "Strength
+                    Training" over "Group classes" — so it spent the card's
+                    most prominent slot on nothing new.
 
-                    `title` itself is untouched: it is still the offering's
-                    identity, and anchor ids, React keys and testimonials all
-                    resolve through it whether or not the card prints it.
-
-                    Set in the accent rather than the muted grey the card's
-                    other small caps use, and at Manrope's heaviest. Colour and
-                    weight are the only levers at 0.64rem — the line can't grow
-                    without outranking the serif headline under it. 800 is free:
-                    Manrope is loaded as a variable face spanning 200–800, so
-                    this is a weight already downloaded rather than a fourth
-                    family added for one label. */}
-                {offering.format === "Group" ? (
-                  <p className="text-[0.64rem] font-extrabold italic uppercase tracking-[0.1em] text-forest dark:text-linen sm:text-[0.68rem]">
-                    {offering.title}
-                  </p>
-                ) : null}
+                    `title` is untouched: it remains the offering's identity, and
+                    anchor ids, React keys, the reviews anchor and testimonials
+                    all resolve through it whether or not a card prints it. */}
                 {/* An offering that teaches a second thing says so here, beside
                     the practice it is named for, rather than leaving it to the
                     timetable's "(optional)" on one card and the pricing tab's
@@ -448,20 +428,32 @@ function OfferingCard({
                     strength programme — the yoga is the choice, not the
                     billing, and only the practice the card is named for is
                     set bold. */}
-                <h2 className="mt-1 font-editorial text-xl font-bold leading-[1.15] text-bark dark:text-linen sm:text-2xl sm:leading-tight">
+                <h2 className="mt-1 font-editorial text-[1.05rem] font-bold leading-[1.2] text-bark dark:text-linen sm:text-2xl sm:leading-tight">
                   {offering.headline}
                   {offering.addOn ? (
                     <span className="font-medium text-[color:var(--muted)]">
-                      {" + "}
-                      {offering.addOn.label}{" "}
-                      {/* Smaller and italic: the qualifier is not part of the
-                          class's name, and at the headline's own size it read
-                          as though it were. Newsreader draws a true italic at
-                          this weight, so the slant is a real cut of the face —
-                          and it matches how the timetable below already marks
-                          the same class "(optional)". */}
-                      <span className="text-sm italic sm:text-base">
-                        (Optional)
+                      {" "}
+                      {/* One unwrappable unit, and the qualifier is a mark
+                          rather than a phrase. "(Optional)" set at reading size
+                          was wide enough to force a break and then sit alone,
+                          which read as a third heading instead of as an aside.
+
+                          Pencilled instead: an arrow curving back to the class
+                          it qualifies, and the word in the hand — which is what
+                          makes it read as a note written over the card rather
+                          than as another line the card carries. It rides the
+                          headline's line raised slightly, so the practice keeps
+                          the line and the annotation sits above it. Ember,
+                          because an annotation is the one thing on the card
+                          that is not the card talking. */}
+                      <span className="whitespace-nowrap">
+                        + {offering.addOn.label}{" "}
+                        {/* Drawn, not reconstructed — and its word is real
+                            text, so a screen reader reads "… + Yoga Optional"
+                            rather than stopping at the class name. The explicit
+                            space is what keeps those two words apart in that
+                            reading; JSX drops whitespace that spans lines. */}
+                        <OptionalMark />
                       </span>
                     </span>
                   ) : null}
