@@ -106,8 +106,8 @@ export function offeringCourseLabel({ format, focus }: OfferingRef): string {
   // classes a visitor would not guess from the headline alone.
   const alsoTaught = offering.schedule
     ? [...new Set(offering.schedule.split.map((item) => item.classType))].filter(
-        (classType) => classType !== focus,
-      )
+      (classType) => classType !== focus,
+    )
     : [];
 
   const practised = [offering.headline, ...alsoTaught].join(" + ");
@@ -807,6 +807,10 @@ export const testimonials: Testimonial[] = [
       "I have been taking online yoga classes with Shreya for the past two months, and it has been a truly transformative experience. My flexibility has improved significantly, and I feel much more at ease in my body. The pranayama sessions have also helped me manage stress better, bringing a sense of calm and clarity to my daily routine. Shreya is incredibly knowledgeable, patient, and encouraging. She guides each session with great attention to detail, ensuring that every posture is done correctly and safely. Her instructions are clear, making it easy to follow along, even in an online setting. What I love most is her holistic approach—each class is a perfect blend of asanas, breathing exercises, and relaxation techniques. I have also noticed an improvement in my posture, energy levels, and overall well-being. I highly recommend Shreya’s classes to anyone looking to improve their physical health, reduce stress, and cultivate mindfulness.",
     highlights: [
       "My flexibility has improved significantly",
+      "yoga classes with Shreya for the past two months",
+      "it has been a truly transformative experience",
+      "incredibly knowledgeable, patient, and encouraging",
+      "holistic approach—each class is a perfect blend of asanas, breathing exercises, and relaxation techniques",
       "helped me manage stress better",
       "an improvement in my posture, energy levels, and overall well-being",
     ],
@@ -821,6 +825,7 @@ export const testimonials: Testimonial[] = [
     quote:
       "This was my first ever yoga journey. As someone who’s always been not so consistent and always wanted to show up. This yoga class made me more consistent and brought that discipline back. From not able to hold plank for 5secs to 15-20sec as of now I’m able to see progress in myself when it comes to strength and flexibility and all thanks to you🤗 after classes the mood lift which I feel is something I needed 💪🏻 also the self realisation that happens along is the journey felt so good. Overall it was such beautiful experience I had and wish to continue with Yin for Yoga and Strength ❤️",
     highlights: [
+      "Overall it was such beautiful experience",
       "This yoga class made me more consistent and brought that discipline back",
       "From not able to hold plank for 5secs to 15-20sec",
       "progress in myself when it comes to strength and flexibility",
@@ -836,8 +841,13 @@ export const testimonials: Testimonial[] = [
     quote:
       "I’ve had an amazing experience learning yoga with Shreya! She is incredibly patient and takes the time to explain each pose in detail, ensuring we understand not just how to do it but also why it matters. What I truly appreciate is how she carefully observes and corrects our postures, helping us improve with small but impactful adjustments. Her attention to tiny details—like breathing techniques and subtle muscle engagements—makes a huge difference in refining the asanas. Every session feels both calming and rewarding, and I can see real progress in my practice. Highly recommend her to anyone looking for a dedicated and knowledgeable yoga teacher!",
     highlights: [
+      "incredibly patient",
       "she carefully observes and corrects our postures",
       "I can see real progress in my practice",
+      "explain each pose in detail",
+      "attention to tiny details—like breathing techniques and subtle muscle engagements",
+      "Every session feels both calming and rewarding",
+      "dedicated and knowledgeable"
     ],
     name: "Ankita N.",
     location: "USA",
@@ -851,6 +861,8 @@ export const testimonials: Testimonial[] = [
       "Hi Shreya, thank you very much for the yoga classes. You have been very patient and teach us the yoga techniques. I have started yoga 3months ago but now i feel i have better balance and flexible. I feel really good after yoga classes. You teach Asanas, pranayama and meditation with details background of each and very small thing . As i take online classes, the clarity of video and your voice is really good. Thank you very correcting all my mistakes and i want to continue the classes. Once again, thank you for the beautiful classes❤️☺️🧘",
     highlights: [
       "i feel i have better balance and flexible",
+      "been very patient",
+      "I feel really good after yoga classes",
       "the clarity of video and your voice is really good",
     ],
     name: "Jyothi B.",
@@ -863,9 +875,16 @@ export const testimonials: Testimonial[] = [
   {
     quote:
       "As one of her OG students training w her for a year now, I’ve experienced an entire range of yoga (& emotions) under her guidance. I hate Surya Namaskars & she is by far the ONLY yoga teacher who knew enough to introduce me to a much much larger world of yoga practice. From Yin Yoga to stretching with a dupatta, she has blown my mind & made me a new person. I recommend experiencing Shreya’s version of Yoga to everyone struggling with their body & mind.",
+    highlights: [
+      "for a year now",
+      "an entire range of yoga",
+      "she is by far the ONLY yoga teacher who knew enough to introduce me to a much much larger world of yoga practice",
+      "made me a new person",
+      "I recommend experiencing Shreya’s version of Yoga"
+    ],
     name: "Megha S.",
     location: "India",
-    course: "Yin for Yoga",
+    course: { format: "Group", focus: "Yoga" },
     platform: "WhatsApp",
     date: "29 August 2026",
     time: "5:44 PM",
@@ -873,9 +892,15 @@ export const testimonials: Testimonial[] = [
   {
     quote:
       "I’ve struggled w small town gyms all my life. Male trainers who had no awareness or strategy to train a female body struggling with hormones, Thyroid, PCOD, & their zillion symptoms restricting body’s potential. Shreya’s combination of weight training & yoga has changed my life. She is the ONLY trainer in 29 years that managed to make me consistent. Allowed me the space to hold a 2 minute plank, cry on the mat while meditating, & just show up in any version that I could possibly manage. With such novel variety of exercises every bloody day, I can’t wait for more people to discover this whole new definition of what a workout can be.",
+    highlights: [
+      "Shreya’s combination of weight training & yoga has changed my life.",
+      "Allowed me the space to hold a 2 minute plank, cry on the mat while meditating",
+      "novel variety of exercises",
+      "whole new definition of what a workout can be."
+    ],
     name: "Megha S.",
     location: "India",
-    course: "Yin One-to-One",
+    course: { format: "Personal", focus: "Strength" },
     platform: "WhatsApp",
     date: "29 August 2026",
     time: "5:56 PM",
