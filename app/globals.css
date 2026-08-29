@@ -93,17 +93,34 @@ body::before {
 }
 
 @keyframes grain-drift {
-  0% { transform: translate3d(0, 0, 0); }
-  25% { transform: translate3d(-1.5%, 1%, 0); }
-  50% { transform: translate3d(1%, -1.5%, 0); }
-  75% { transform: translate3d(-0.5%, -1%, 0); }
-  100% { transform: translate3d(0, 0, 0); }
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  25% {
+    transform: translate3d(-1.5%, 1%, 0);
+  }
+
+  50% {
+    transform: translate3d(1%, -1.5%, 0);
+  }
+
+  75% {
+    transform: translate3d(-0.5%, -1%, 0);
+  }
+
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
 }
 
 @keyframes breathe {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translate3d(0, 0, 0) scale(1);
   }
+
   50% {
     transform: translate3d(0, -18px, 0) scale(1.04);
   }
@@ -149,13 +166,11 @@ body::before {
 .price-strike::after {
   top: 61%;
   height: 0.11em;
-  background: linear-gradient(
-    90deg,
-    rgba(217, 101, 75, 0),
-    rgba(217, 101, 75, 0.95) 12%,
-    rgba(217, 101, 75, 0.95) 88%,
-    rgba(217, 101, 75, 0)
-  );
+  background: linear-gradient(90deg,
+      rgba(217, 101, 75, 0),
+      rgba(217, 101, 75, 0.95) 12%,
+      rgba(217, 101, 75, 0.95) 88%,
+      rgba(217, 101, 75, 0));
   transform: translateY(-50%) rotate(-3.5deg);
 }
 
@@ -164,13 +179,11 @@ body::before {
   top: 65%;
   height: 0.07em;
   opacity: 0.38;
-  background: linear-gradient(
-    90deg,
-    rgba(217, 101, 75, 0),
-    rgba(217, 101, 75, 0.8) 20%,
-    rgba(217, 101, 75, 0.8) 80%,
-    rgba(217, 101, 75, 0)
-  );
+  background: linear-gradient(90deg,
+      rgba(217, 101, 75, 0),
+      rgba(217, 101, 75, 0.8) 20%,
+      rgba(217, 101, 75, 0.8) 80%,
+      rgba(217, 101, 75, 0));
   transform: translateY(-50%) rotate(-5.5deg);
 }
 
@@ -191,8 +204,8 @@ body::before {
   inset: 0;
   opacity: 0.18;
   background-image:
-    radial-gradient(circle at 10% 20%, rgba(255,255,255,0.9) 0 1px, transparent 1px),
-    radial-gradient(circle at 80% 60%, rgba(0,0,0,0.45) 0 1px, transparent 1px);
+    radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.9) 0 1px, transparent 1px),
+    radial-gradient(circle at 80% 60%, rgba(0, 0, 0, 0.45) 0 1px, transparent 1px);
   background-size: 14px 14px, 21px 21px;
 }
 
@@ -392,13 +405,13 @@ body::before {
      fields are separated by the gap and a rule would cut across the card. The
      sibling selector also means a card with no shared-batches field — one
      child — draws nothing. Same hairline as the card's other borders. */
-  .schedule-fields > * + * {
+  .schedule-fields>*+* {
     border-left: 1px solid rgba(23, 63, 53, 0.12);
     padding-left: 1.25rem;
   }
 }
 
-.dark .schedule-fields > * + * {
+.dark .schedule-fields>*+* {
   border-left-color: rgba(251, 250, 246, 0.12);
 }
 
@@ -621,6 +634,7 @@ body::before {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {

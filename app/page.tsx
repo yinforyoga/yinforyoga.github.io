@@ -160,7 +160,7 @@ function Offerings() {
             the eyebrow and the card are the same width. Padding rather than a
             margin: a margin here would just collapse into the heading's own. */}
         <div className="pb-3 sm:pb-0">
-          <SectionHeading eyebrow="Offerings" />
+          <SectionHeading eyebrow="Online Offerings" />
         </div>
 
         {/* `items-start` so an open drawer grows only its own card — with the
@@ -315,8 +315,8 @@ type OfferingDrawerTab = "pricing" | "details";
 // question a visitor comparing four cards asks first, and the review link last,
 // because it is the only chip that leaves the card.
 const offeringDrawerTabs: { id: OfferingDrawerTab; label: string }[] = [
-  { id: "pricing", label: "See pricing" },
-  { id: "details", label: "Further details" },
+  { id: "pricing", label: "Pricing" },
+  { id: "details", label: "Details" },
 ];
 
 function OfferingCard({
@@ -932,9 +932,8 @@ function OfferingDrawerTabs({
       // other. Open, the row is interior: the drawer below supplies the card's
       // bottom padding, and this reverts to the tighter gap that keeps the
       // chips reading as the header of the panel they opened.
-      className={`flex flex-wrap items-center gap-2 px-4 pt-3 transition-[padding] duration-300 ease-out sm:px-6 sm:pt-3.5 ${
-        openTab === null ? "pb-4 sm:pb-6" : "pb-3 sm:pb-3.5"
-      }`}
+      className={`flex flex-wrap items-center gap-2 px-4 pt-3 transition-[padding] duration-300 ease-out sm:px-6 sm:pt-3.5 ${openTab === null ? "pb-4 sm:pb-6" : "pb-3 sm:pb-3.5"
+        }`}
       role="group"
       aria-label={label}
     >
@@ -1329,9 +1328,9 @@ function OfferingDetailsInfo({ offering }: { offering: Offering }) {
   // group offerings render this and rep-language is wrong for a yoga class.
   const details = offering.schedule
     ? [
-        `Never more than ${offering.schedule.batchCapacity} people in a class, so everyone gets attention`,
-        ...offering.details,
-      ]
+      `Small batches, upto ${offering.schedule.batchCapacity} people`,
+      ...offering.details,
+    ]
     : offering.details;
 
   return (
@@ -1743,64 +1742,64 @@ function Testimonials() {
               })),
             )
             .map(({ testimonial, anchorId }, index) => (
-            <FadeUp
-              key={`${testimonial.name}-${index}`}
-              delay={index * 0.06}
-              className="testimonial-frame-wrap"
-            >
-              <article
-                id={anchorId}
-                className="testimonial-frame scroll-mt-28 text-bark dark:text-linen"
+              <FadeUp
+                key={`${testimonial.name}-${index}`}
+                delay={index * 0.06}
+                className="testimonial-frame-wrap"
               >
-                {/* The course is named on the card as well as on the group's
+                <article
+                  id={anchorId}
+                  className="testimonial-frame scroll-mt-28 text-bark dark:text-linen"
+                >
+                  {/* The course is named on the card as well as on the group's
                     heading. Redundant while reading straight down, but a
                     testimonial is the thing on this page most likely to be met
                     out of context — linked to, screenshotted, or landed on
                     mid-scroll with the heading already off screen — and a quote
                     that does not say which class it is about is worth much less
                     than one that does. */}
-                <div className="testimonial-details">
-                  <span
-                    className="testimonial-course"
-                    style={courseAccentStyle(testimonial.course)}
-                  >
-                    <BookOpen aria-hidden="true" size={14} />
-                    {offeringCourseLabel(testimonial.course)}
-                  </span>
-                  <span>
-                    <MapPin aria-hidden="true" size={14} />
-                    {testimonial.location ?? "Location not provided"}
-                  </span>
-                  <span>
-                    <CalendarDays aria-hidden="true" size={14} />
-                    {testimonial.date ?? "Date not provided"}
-                  </span>
-                </div>
-                <div className="whatsapp-bubble">
-                  <p className="whatsapp-sender">~ {testimonial.name}</p>
-                  <p className="whitespace-pre-line text-[0.98rem] leading-7">
-                    {emphasiseQuote(
-                      testimonial.quote,
-                      testimonial.highlights,
-                    ).map((part, partIndex) =>
-                      part.strong ? (
-                        <strong key={partIndex} className="whatsapp-highlight">
-                          {part.text}
-                        </strong>
-                      ) : (
-                        <Fragment key={partIndex}>{part.text}</Fragment>
-                      ),
-                    )}
-                  </p>
-                  {testimonial.time ? (
-                    <p className="mt-2 text-right text-[0.68rem] text-bark/70 dark:text-stone/75">
-                      {testimonial.time}
+                  <div className="testimonial-details">
+                    <span
+                      className="testimonial-course"
+                      style={courseAccentStyle(testimonial.course)}
+                    >
+                      <BookOpen aria-hidden="true" size={14} />
+                      {offeringCourseLabel(testimonial.course)}
+                    </span>
+                    <span>
+                      <MapPin aria-hidden="true" size={14} />
+                      {testimonial.location ?? "Location not provided"}
+                    </span>
+                    <span>
+                      <CalendarDays aria-hidden="true" size={14} />
+                      {testimonial.date ?? "Date not provided"}
+                    </span>
+                  </div>
+                  <div className="whatsapp-bubble">
+                    <p className="whatsapp-sender">~ {testimonial.name}</p>
+                    <p className="whitespace-pre-line text-[0.98rem] leading-7">
+                      {emphasiseQuote(
+                        testimonial.quote,
+                        testimonial.highlights,
+                      ).map((part, partIndex) =>
+                        part.strong ? (
+                          <strong key={partIndex} className="whatsapp-highlight">
+                            {part.text}
+                          </strong>
+                        ) : (
+                          <Fragment key={partIndex}>{part.text}</Fragment>
+                        ),
+                      )}
                     </p>
-                  ) : null}
-                </div>
-              </article>
-            </FadeUp>
-          ))}
+                    {testimonial.time ? (
+                      <p className="mt-2 text-right text-[0.68rem] text-bark/70 dark:text-stone/75">
+                        {testimonial.time}
+                      </p>
+                    ) : null}
+                  </div>
+                </article>
+              </FadeUp>
+            ))}
         </div>
       </div>
     </section>

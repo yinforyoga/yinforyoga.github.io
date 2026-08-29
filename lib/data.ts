@@ -507,20 +507,15 @@ const personalOfferings: Offering[] = [
     // timings all follow one person instead of a batch.
     details: [
       "Your plan is built around your body, your goals and where you are starting from",
-      "One to one live classes, not recordings, so your form is corrected on the spot",
-      "Helps you lose fat, build muscle and stay healthy",
-      "The workouts get harder at your own pace, as you get stronger",
-      "We use whatever you have at home: dumbbells, resistance bands, or just your body weight",
-      "The workouts keep changing, so you don't get bored",
-      "Class timings are set around your week",
+      "One to one live classes",
+      "Workouts get harder as you grow stronger",
+      "Workouts keep changing, so you don't get bored",
+      "Flexible timings",
     ],
     bestFor: [
       "Anyone who wants a plan made for their body and their goals",
       "Anyone training around an injury or a limitation",
-      "People with a specific goal and a date to hit it by",
-      "Busy professionals who can only spare an hour in a day",
       "People who travel often or work shifts and cannot hold a fixed class time",
-      "People who find gyms intimidating and would rather work out at home",
       "Women who feel more comfortable with a female trainer",
       "Beginners who don't know the workouts or the right form yet",
     ],
@@ -544,16 +539,15 @@ const personalOfferings: Offering[] = [
     formUrl: null,
     icon: User,
     details: [
-      "Asana, pranayama and meditation, paced to you",
-      "Postures adjusted for your body, not the room's average",
+      "Asana, pranayama and meditation, paced for you",
+      "Postures adjusted for your body",
       "A practice built around what you want to work on",
-      "Session times arranged around your week",
+      "Flexible timings",
     ],
     bestFor: [
-      "Complete beginners who want the basics taught properly",
       "Anyone practising around stiffness, injury or a health condition",
-      "Practitioners going deeper on specific postures",
-      "Anyone who finds a group's pace too fast or too slow",
+      "Anyone who wants a personal space to practise Yoga",
+      "Anyone interested to begin their Yoga journey"
     ],
     equipment: [
       { label: "Yoga Mat", icon: RectangleHorizontal },
@@ -637,7 +631,7 @@ export const offerings: Offering[] = [
     // Ordered by what matters most to someone deciding: what the class is,
     // then what it does for them, then how it is run.
     details: [
-      "Live classes, not recordings, so your form is corrected on the spot",
+      "Live classes, so your form is corrected immediately",
       "Helps you lose fat, build muscle and stay healthy",
       "Strength training that gets harder as you get stronger",
       "We use whatever you have at home: dumbbells, resistance bands, or just your body weight",
@@ -678,6 +672,10 @@ export const offerings: Offering[] = [
           classType: "Yoga",
           slots: [
             {
+              startTime: { hour: 7, meridiem: "am" },
+              endTime: { hour: 8, meridiem: "am" },
+            },
+            {
               startTime: { hour: 6, meridiem: "pm" },
               endTime: { hour: 7, meridiem: "pm" },
             },
@@ -699,7 +697,7 @@ export const offerings: Offering[] = [
     // Ordered by what matters most to someone deciding: what the class is,
     // then what it does for them, then how it is run.
     details: [
-      "Every class is different, and there is much more to it than suryanamaskar, so you never get bored",
+      "Every class is different, so you never get bored",
       "We use props like a chair, a strap or a dupatta, blocks, pillows and the wall",
       "Every class ends with pranayama, and sometimes meditation",
       "Live classes, not recordings, so your postures are corrected on the spot",
