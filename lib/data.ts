@@ -677,4 +677,24 @@ export const testimonials: Testimonial[] = [
     date: "17 Feb 2025",
     time: "3:00 AM",
   },
+  {
+    quote:
+      "As one of her OG students training w her for a year now, I’ve experienced an entire range of yoga (& emotions) under her guidance. I hate Surya Namaskars & she is by far the ONLY yoga teacher who knew enough to introduce me to a much much larger world of yoga practice. From Yin Yoga to stretching with a dupatta, she has blown my mind & made me a new person. I recommend experiencing Shreya’s version of Yoga to everyone struggling with their body & mind.",
+    name: "Megha S.",
+    location: "India",
+    course: "Yin for Yoga",
+    platform: "WhatsApp",
+    date: "29 August 2026",
+    time: "5:44 PM",
+  },
+  {
+    quote:
+      "I’ve struggled w small town gyms all my life. Male trainers who had no awareness or strategy to train a female body struggling with hormones, Thyroid, PCOD, & their zillion symptoms restricting body’s potential. Shreya’s combination of weight training & yoga has changed my life. She is the ONLY trainer in 29 years that managed to make me consistent. Allowed me the space to hold a 2 minute plank, cry on the mat while meditating, & just show up in any version that I could possibly manage. With such novel variety of exercises every bloody day, I can’t wait for more people to discover this whole new definition of what a workout can be.",
+    name: "Megha S.",
+    location: "India",
+    course: "Yin One-to-One",
+    platform: "WhatsApp",
+    date: "29 August 2026",
+    time: "5:56 PM",
+  },
 ];
