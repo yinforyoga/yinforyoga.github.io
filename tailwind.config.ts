@@ -26,6 +26,11 @@ const config: Config = {
         cream: "#fbfaf6",
         stone: "#e1e8e2",
         ember: "#d9654b",
+        // Ember taken down far enough to carry linen text. The accent itself is
+        // a background colour first — it fills buttons and badges — and at
+        // #d9654b white-on-ember is 3.4:1, so any badge set in it failed AA
+        // while looking, at a glance, perfectly legible.
+        ember_deep: "#b03a22",
         // Status-only green for "live now" indicators. Deliberately more
         // saturated than the palette's earthy greens, which at dot size read as
         // either black (forest) or grey (sage) rather than as a signal.

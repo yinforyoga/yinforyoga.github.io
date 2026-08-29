@@ -53,6 +53,37 @@ export function findOffering(format: OfferingFormat, focus: OfferingFocus) {
   );
 }
 
+/** A quadrant of the 2x2, used to point at an offering without naming it. */
+export type OfferingRef = { format: OfferingFormat; focus: OfferingFocus };
+
+/**
+ * An offering described by what is practised in it, for readers who have not
+ * met the brand names yet — "Strength Training + Yoga – Group classes" rather
+ * than "Yin for Strength".
+ *
+ * Derived rather than written down. The "+ Yoga" in that example is not an
+ * editorial flourish: it is the Thursday yoga class that offering actually
+ * runs, read off its own schedule, so an offering that stops running yoga stops
+ * advertising it here on the same edit. Testimonials name a quadrant and get
+ * this, which is why none of them can quietly describe an offering that no
+ * longer matches the card a visitor scrolls to next.
+ */
+export function offeringCourseLabel({ format, focus }: OfferingRef): string {
+  const offering = findOffering(format, focus);
+  if (!offering) return offeringFormatLabels[format];
+
+  // Everything on the timetable that isn't the offering's own focus — the
+  // classes a visitor would not guess from the headline alone.
+  const alsoTaught = offering.schedule
+    ? [...new Set(offering.schedule.split.map((item) => item.classType))].filter(
+        (classType) => classType !== focus,
+      )
+    : [];
+
+  const practised = [offering.headline, ...alsoTaught].join(" + ");
+  return `${practised} – ${offeringFormatLabels[format]}`;
+}
+
 export type OfferingWeekday =
   "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
 
@@ -98,6 +129,15 @@ export type OfferingScheduleItem = {
 export type OfferingSchedule = {
   timezone: OfferingTimezone;
   split: OfferingScheduleItem[];
+  /**
+   * How many people one batch takes. It lives on the schedule rather than on
+   * the offering because a cap is a fact about a batch, and a batch is what a
+   * schedule is — which makes it unsayable on a personal offering, where
+   * `schedule` is null because sessions are booked one at a time. `slots` being
+   * alternatives rather than extra sessions, this is the size of each one, not
+   * a total split between them.
+   */
+  batchCapacity: number;
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -251,10 +291,21 @@ export const noDurationDiscounts: DurationDiscounts = {
   3: 0,
 };
 
+/**
+ * A class an offering runs but does not require — taken or skipped per person.
+ * Its presence is what lets a card say "+ optional Yoga" beside the practice it
+ * is named for, so an offering that teaches two things says so on its face
+ * rather than only in its timetable.
+ */
 export type OfferingAddOn = {
   label: string;
   classType: OfferingClassType;
-  price: OfferingPrice;
+  /**
+   * A published monthly price, or `null` on the same terms as an offering's
+   * own `price`: quoted per person rather than listed. A personal offering has
+   * no price to add this to, so it has no figure to publish for it either.
+   */
+  price: OfferingPrice | null;
   durationDiscounts: DurationDiscounts;
 };
 
@@ -295,7 +346,6 @@ export type Offering = {
   /** Registration form, or `null` when the first step is a conversation. */
   formUrl: string | null;
   icon: LucideIcon;
-  description: string;
   /** What the offering gives you. Rendered as "What you get". */
   details: string[];
   /** Who it suits. Rendered as "Who it's for", beside `details`. */
@@ -310,7 +360,13 @@ export type Testimonial = {
   quote: string;
   name: string;
   location: string | null;
-  course: string;
+  /**
+   * Which offering the person took, as a quadrant rather than a name. Stored
+   * this way so the chip on a testimonial is rendered from the offering itself
+   * (`offeringCourseLabel`) and cannot go stale when an offering is renamed or
+   * its timetable changes.
+   */
+  course: OfferingRef;
   platform: "WhatsApp";
   date?: string;
   time?: string;
@@ -353,7 +409,7 @@ export const navItems = [
 // ─────────────────────────────────────────────────────────────────────────────
 const personalOfferings: Offering[] = [
   {
-    title: "Yin One-to-One",
+    title: "Yin One-to-One Strength",
     headline: "Strength Training",
     eyebrow: "On request",
     format: "Personal",
@@ -365,8 +421,15 @@ const personalOfferings: Offering[] = [
     mode: "Online",
     status: "Registrations Open",
     formUrl: null,
+    addOn: {
+      label: "Yoga",
+      classType: "Yoga",
+      // Quoted with the rest of the programme rather than listed, like this
+      // offering's own price.
+      price: null,
+      durationDiscounts: noDurationDiscounts,
+    },
     icon: Dumbbell,
-    description: "Programmed for You • Form Corrected Live • Flexible Timing",
     details: [
       "A programme built around your goals and starting point",
       "Undivided attention: every rep watched, form corrected as you go",
@@ -397,7 +460,6 @@ const personalOfferings: Offering[] = [
     status: "Registrations Open",
     formUrl: null,
     icon: Flower2,
-    description: "Paced to You • Adjusted Live • Flexible Timing",
     details: [
       "Asana, pranayama and meditation, paced to you",
       "Postures adjusted for your body, not the room's average",
@@ -432,6 +494,7 @@ export const offerings: Offering[] = [
         label: "IST",
         utcOffsetMinutes: 330,
       },
+      batchCapacity: 10,
       split: [
         {
           days: ["Mon", "Wed", "Fri"],
@@ -485,19 +548,24 @@ export const offerings: Offering[] = [
     status: "Registrations Open",
     formUrl: "https://docs.google.com/forms/d/e/1FAIpQLSeLPbLT6HMXT_r6DEidr1uPZmEQ6Z_k_FJs43pFsw1H9wJ7Eg/viewform?usp=dialog",
     icon: BicepsFlexed,
-    description:
-      "Home Workout • Strength Training • Guided",
+    // Ordered by what matters most to someone deciding: what the class is,
+    // then what it does for them, then how it is run.
     details: [
-      "Structured strength training that progresses week to week",
-      "Fat loss and lean muscle",
-      "Live classes with your form watched and corrected",
-      "A small group that keeps showing up",
+      "Live classes, not recordings, so your form is corrected on the spot",
+      "Helps you lose fat, build muscle and stay healthy",
+      "Strength training that gets harder as you get stronger",
+      "We use whatever you have at home: dumbbells, resistance bands, or just your body weight",
+      "The workouts keep changing, so you don't get bored",
+      "An active community that keeps each other accountable by celebrating wins like hitting your daily step goal",
     ],
     bestFor: [
-      "Busy professionals who can't make time for the gym",
-      "People who want to be led through a session, not plan one",
-      "Frequent travellers who train wherever they land",
-      "Anyone who finds gyms intimidating",
+      "Busy professionals who can only spare an hour in a day",
+      "People who don't want to work out every day of the week",
+      "Anyone who wants someone to guide them and keep them accountable",
+      "People who travel often",
+      "People who find gyms intimidating and would rather work out at home",
+      "Women who feel more comfortable with a female trainer",
+      "Beginners who don't know the workouts or the right form yet",
     ],
     equipment: [
       { label: "Dumbbells", icon: Dumbbell },
@@ -517,6 +585,7 @@ export const offerings: Offering[] = [
         label: "IST",
         utcOffsetMinutes: 330,
       },
+      batchCapacity: 10,
       split: [
         {
           days: ["Tue", "Thu"],
@@ -541,17 +610,21 @@ export const offerings: Offering[] = [
     status: "Registrations Open",
     formUrl: "https://docs.google.com/forms/d/e/1FAIpQLSfQIQ2l_FsHU6S0LR4obRv1HR57vj4HJe2vqR-6pgzpAN4IvQ/viewform?usp=header",
     icon: Sprout,
-    description:
-      "Asana • Pranayama • Meditation",
+    // Ordered by what matters most to someone deciding: what the class is,
+    // then what it does for them, then how it is run.
     details: [
-      "Flexibility and mobility",
-      "Breathwork and meditation",
-      "Postures broken down and corrected as you go",
+      "Every class is different, and there is much more to it than suryanamaskar, so you never get bored",
+      "We use props like a chair, a strap or a dupatta, blocks, pillows and the wall",
+      "Every class ends with pranayama, and sometimes meditation",
+      "Live classes, not recordings, so your postures are corrected on the spot",
     ],
     bestFor: [
-      "Beginners who want the basics taught properly",
-      "Improving practitioners",
-      "Anyone who wants to practise with others rather than alone",
+      "Anyone from a complete beginner to an intermediate practitioner",
+      "Busy people who want to practise yoga from home and not travel to a studio",
+      "People who want to add a regular yoga practice to their routine",
+      "People who want two days of yoga alongside their other fitness routine, rather than yoga every day of the week",
+      "People who want to improve their posture, mobility and flexibility",
+      "Gym goers who want to make yoga a part of their recovery and flexibility routine",
     ],
     equipment: [
       { label: "Yoga Mat", icon: RectangleHorizontal },
@@ -632,7 +705,7 @@ export const testimonials: Testimonial[] = [
       "I would like to share my experience with you so far firstly the class timings are very feasible even before this i was your student i equally enjoyed both yoga and strength training for some one like me who doesnt feel like going to gym this was the best for me i also got learn the right form which earlier i would end up doing wrong and had terrible cramps for next 2 days and also my quality of sleep improved ever since i started working out with you i feel rarely bloated over all it was all worth it ❤️🫶🏻and if u cld plan 5 classes a week or 4 for upcoming batch it would be great 🤗",
     name: "Arpita M.",
     location: "India",
-    course: "Yin for Strength",
+    course: { format: "Group", focus: "Strength" },
     platform: "WhatsApp",
     time: "3:44 PM",
     date: "1 July 2026",
@@ -642,7 +715,7 @@ export const testimonials: Testimonial[] = [
       "I have been taking online yoga classes with Shreya for the past two months, and it has been a truly transformative experience. My flexibility has improved significantly, and I feel much more at ease in my body. The pranayama sessions have also helped me manage stress better, bringing a sense of calm and clarity to my daily routine. Shreya is incredibly knowledgeable, patient, and encouraging. She guides each session with great attention to detail, ensuring that every posture is done correctly and safely. Her instructions are clear, making it easy to follow along, even in an online setting. What I love most is her holistic approach—each class is a perfect blend of asanas, breathing exercises, and relaxation techniques. I have also noticed an improvement in my posture, energy levels, and overall well-being. I highly recommend Shreya’s classes to anyone looking to improve their physical health, reduce stress, and cultivate mindfulness.",
     name: "Pramod M.",
     location: "USA",
-    course: "Personal Yoga Class",
+    course: { format: "Personal", focus: "Yoga" },
     platform: "WhatsApp",
     date: "20 Feb 2025",
     time: "9:49 AM"
@@ -652,7 +725,7 @@ export const testimonials: Testimonial[] = [
       "This was my first ever yoga journey. As someone who’s always been not so consistent and always wanted to show up. This yoga class made me more consistent and brought that discipline back. From not able to hold plank for 5secs to 15-20sec as of now I’m able to see progress in myself when it comes to strength and flexibility and all thanks to you🤗 after classes the mood lift which I feel is something I needed 💪🏻 also the self realisation that happens along is the journey felt so good. Overall it was such beautiful experience I had and wish to continue with Yin for Yoga and Strength ❤️",
     name: "Nikhita K.",
     location: "India",
-    course: "Yin for Strength",
+    course: { format: "Group", focus: "Strength" },
     platform: "WhatsApp",
     time: "3:55 PM",
     date: "1 July 2026"
@@ -662,7 +735,7 @@ export const testimonials: Testimonial[] = [
       "I’ve had an amazing experience learning yoga with Shreya! She is incredibly patient and takes the time to explain each pose in detail, ensuring we understand not just how to do it but also why it matters. What I truly appreciate is how she carefully observes and corrects our postures, helping us improve with small but impactful adjustments. Her attention to tiny details—like breathing techniques and subtle muscle engagements—makes a huge difference in refining the asanas. Every session feels both calming and rewarding, and I can see real progress in my practice. Highly recommend her to anyone looking for a dedicated and knowledgeable yoga teacher!",
     name: "Ankita N.",
     location: "USA",
-    course: "Personal Yoga Class",
+    course: { format: "Personal", focus: "Yoga" },
     platform: "WhatsApp",
     date: "25 Feb 2025",
     time: "5:15 AM",
@@ -672,7 +745,7 @@ export const testimonials: Testimonial[] = [
       "Hi Shreya, thank you very much for the yoga classes. You have been very patient and teach us the yoga techniques. I have started yoga 3months ago but now i feel i have better balance and flexible. I feel really good after yoga classes. You teach Asanas, pranayama and meditation with details background of each and very small thing . As i take online classes, the clarity of video and your voice is really good. Thank you very correcting all my mistakes and i want to continue the classes. Once again, thank you for the beautiful classes❤️☺️🧘",
     name: "Jyothi B.",
     location: "Germany",
-    course: "Group Yoga Class",
+    course: { format: "Group", focus: "Yoga" },
     platform: "WhatsApp",
     date: "17 Feb 2025",
     time: "3:00 AM",

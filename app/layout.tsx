@@ -26,7 +26,12 @@ const cormorant = Cormorant_Garamond({
 
 const newsreader = Newsreader({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  // 700 is here for the offering headlines. Cormorant tops out at 700 and even
+  // there stays airy — it is drawn with hairline joins and serifs, so weight
+  // thickens its stems without changing the colour of the word — which left the
+  // one line naming what an offering actually is reading lighter than the
+  // timetable under it.
+  weight: ["400", "500", "600", "700"],
   style: ["normal", "italic"],
   variable: "--font-newsreader",
   display: "swap",

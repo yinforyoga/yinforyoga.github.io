@@ -7,7 +7,17 @@
   --surface: #fbfaf6;
   --surface-soft: #e1e8e2;
   --ink: #1f2933;
-  --muted: #5f6f69;
+  /* Walnut, not the lighter grey-green this used to be (#5f6f69). Secondary
+     text is most of what a visitor actually has to read on an offering card —
+     the format line, the description, the CLASSES and BATCHES labels, the
+     "/ month" beside a price — and at #5f6f69 all of it sat at 5.07:1 on the
+     page and 3.95:1 on the sand pricing strip, which is below AA for text that
+     small. This is walnut (#38524c) taken a step further down again: walnut
+     cleared AA everywhere but still read faint on the page, because most of
+     this text is 13–14px at regular weight, where passing a ratio and looking
+     solid are not the same thing. Same green cast throughout — only the value
+     moves. */
+  --muted: #2c3f3a;
   --panel: rgba(251, 250, 246, 0.78);
   --panel-strong: rgba(251, 250, 246, 0.94);
   --ring: rgba(47, 93, 80, 0.16);
@@ -330,8 +340,61 @@ body::before {
   color: #d9e6df;
 }
 
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Offering card: the timetable
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* The face is a container so the timetable can answer to the card's own width
+   rather than the viewport's. The two cannot stand in for each other here: the
+   offerings grid is `auto-fit`, so one viewport width gives a card of ~1000px
+   while the cards run one-up and ~512px the moment they go two-up. A viewport
+   breakpoint would have to be wrong at one of those. */
+.offering-face {
+  container-type: inline-size;
+  container-name: offering-face;
+}
+
+.schedule-fields {
+  display: grid;
+  gap: 0.75rem;
+}
+
+/* Side by side once the card can hold both without the days breaking across
+   lines — which is what stacking them was avoiding in the first place. 33rem is
+   measured rather than guessed: the widest card needs 261px for its classes and
+   176px for its batches, which with the column gap and the face's own padding
+   comes to ~513px. Two-up cards sit just under that and keep stacking; a card
+   running the full width of the page — where all the awkward empty space was —
+   clears it comfortably. */
+@container offering-face (min-width: 33rem) {
+  .schedule-fields {
+    grid-template-columns: auto minmax(0, 1fr);
+    /* `stretch`, not `start`. The rule below hangs off the second column, so
+       its height is that column's height — and with `start` a one-line Batches
+       beside a two-line Classes drew a stub that stopped halfway down. The
+       fields' own content is top-aligned from the inside, so stretching the
+       boxes moves nothing but the line. */
+    align-items: stretch;
+    column-gap: 1.25rem;
+  }
+
+  /* Only between columns, and only while there are columns: stacked, the
+     fields are separated by the gap and a rule would cut across the card. The
+     sibling selector also means a card with no shared-batches field — one
+     child — draws nothing. Same hairline as the card's other borders. */
+  .schedule-fields > * + * {
+    border-left: 1px solid rgba(23, 63, 53, 0.12);
+    padding-left: 1.25rem;
+  }
+}
+
+.dark .schedule-fields > * + * {
+  border-left-color: rgba(251, 250, 246, 0.12);
+}
+
 .site-nav-link-idle {
-  color: rgba(56, 82, 76, 0.78);
+  color: #2c3f3a;
 }
 
 .site-nav-link-idle:hover {
@@ -433,7 +496,12 @@ body::before {
 
 .whatsapp-sender {
   margin-bottom: 0.35rem;
-  color: #c44f2e;
+  /* Darkened from #c44f2e. These are WhatsApp's own per-sender colours, but
+     WhatsApp sets them on its white bubble and ours is the green one, where the
+     originals landed at 4.02:1 — under AA. Each is the same hue taken a few
+     steps down in lightness, so the line still reads as a sender name rather
+     than as body text. */
+  color: #a8341a;
   font-size: 0.95rem;
   /* 800 was tuned for Manrope; in the WhatsApp stack a real sender line sits
      around semibold, so anything heavier reads as a shout. */
@@ -442,11 +510,11 @@ body::before {
 }
 
 .testimonial-frame-wrap:nth-child(2n) .whatsapp-sender {
-  color: #4267a8;
+  color: #31518c;
 }
 
 .testimonial-frame-wrap:nth-child(3n) .whatsapp-sender {
-  color: #8a5a12;
+  color: #6f470b;
 }
 
 .dark .testimonial-frame {
@@ -462,6 +530,23 @@ body::before {
 
 .dark .whatsapp-bubble {
   background: #173f35;
+}
+
+/* The sender colours are a light-theme set: they were authored against the pale
+   green bubble and never given a dark counterpart, so on the forest bubble they
+   ran 2.5:1 down to 1.97:1 — a dark hue on a dark ground. Each of these is the
+   same hue as its light-theme partner taken up in lightness instead of down,
+   which is the only direction that works once the bubble is dark. */
+.dark .whatsapp-sender {
+  color: #f2a58c;
+}
+
+.dark .testimonial-frame-wrap:nth-child(2n) .whatsapp-sender {
+  color: #9fc0f0;
+}
+
+.dark .testimonial-frame-wrap:nth-child(3n) .whatsapp-sender {
+  color: #e3bd6a;
 }
 
 @media (max-width: 767px) {

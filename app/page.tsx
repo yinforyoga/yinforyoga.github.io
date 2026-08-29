@@ -34,6 +34,7 @@ import {
   type OfferingTimeSlot,
   type OfferingWeekday,
   offerings,
+  offeringCourseLabel,
   offeringFormatLabels,
   resolvePrice,
   whatsappUrl,
@@ -373,7 +374,7 @@ function OfferingCard({
       >
         <div
           ref={faceRef}
-          className="flex flex-col bg-[color:var(--panel-strong)] p-4 dark:bg-white/[0.045] sm:p-6"
+          className="offering-face flex flex-col bg-[color:var(--panel-strong)] p-4 dark:bg-white/[0.045] sm:p-6"
         >
           {/* The icon sits beside the title at every width rather than above it
               on small screens: centring it cost a whole row of height on the
@@ -403,20 +404,69 @@ function OfferingCard({
                     the serif, the format is the quiet line under it, and the
                     brand name goes above in small caps, where it identifies
                     without competing. */}
-                <p className="text-[0.64rem] font-bold uppercase tracking-[0.1em] text-[color:var(--muted)] sm:text-[0.68rem]">
-                  {offering.title}
-                </p>
-                <h2 className="mt-1 font-serif text-xl font-medium leading-[1.15] text-bark dark:text-linen sm:text-2xl sm:leading-tight">
+                {/* Group only. A personal offering's name repeats both lines
+                    under it — "Yin One-to-One Yoga" over "Yoga" over "Personal
+                    classes" — so it spent the card's most prominent small-caps
+                    slot restating what the next two lines already say. The
+                    group names carry a word the rest of the card does not
+                    ("Yin for Strength"), so they stay.
+
+                    `title` itself is untouched: it is still the offering's
+                    identity, and anchor ids, React keys and testimonials all
+                    resolve through it whether or not the card prints it.
+
+                    Set in the accent rather than the muted grey the card's
+                    other small caps use, and at Manrope's heaviest. Colour and
+                    weight are the only levers at 0.64rem — the line can't grow
+                    without outranking the serif headline under it. 800 is free:
+                    Manrope is loaded as a variable face spanning 200–800, so
+                    this is a weight already downloaded rather than a fourth
+                    family added for one label. */}
+                {offering.format === "Group" ? (
+                  <p className="text-[0.64rem] font-extrabold italic uppercase tracking-[0.1em] text-forest dark:text-linen sm:text-[0.68rem]">
+                    {offering.title}
+                  </p>
+                ) : null}
+                {/* An offering that teaches a second thing says so here, beside
+                    the practice it is named for, rather than leaving it to the
+                    timetable's "(optional)" on one card and the pricing tab's
+                    toggle on another — neither of which a visitor sees while
+                    scanning four cards to pick one.
+
+                    Derived from `addOn` rather than written into `headline`:
+                    the add-on is what the optional class *is*, so the two can
+                    never disagree, and an offering that stops running one stops
+                    advertising it on the same edit. Set lighter than the
+                    headline it follows, because the offering is still a
+                    strength programme — the yoga is the choice, not the
+                    billing, and only the practice the card is named for is
+                    set bold. */}
+                <h2 className="mt-1 font-editorial text-xl font-bold leading-[1.15] text-bark dark:text-linen sm:text-2xl sm:leading-tight">
                   {offering.headline}
+                  {offering.addOn ? (
+                    <span className="font-medium text-[color:var(--muted)]">
+                      {" + "}
+                      {offering.addOn.label}{" "}
+                      {/* Smaller and italic: the qualifier is not part of the
+                          class's name, and at the headline's own size it read
+                          as though it were. Newsreader draws a true italic at
+                          this weight, so the slant is a real cut of the face —
+                          and it matches how the timetable below already marks
+                          the same class "(optional)". */}
+                      <span className="text-sm italic sm:text-base">
+                        (Optional)
+                      </span>
+                    </span>
+                  ) : null}
                 </h2>
-                {/* Cormorant's italic, not Newsreader's. The subtitle sits
-                    directly under a Cormorant headline, and a second serif at
-                    that distance read as a near-miss rather than a pairing —
-                    close enough in colour to look like the same face set
-                    wrongly. Newsreader keeps the card's data, where its sturdier
-                    strokes are the point; here, the headline's own italic is
-                    what belongs. */}
-                <p className="font-serif text-base italic leading-6 text-[color:var(--muted)] sm:text-lg">
+                {/* Newsreader italic, following the headline above it. The rule
+                    has always been that this line shares its headline's face —
+                    two serifs this close read as a near-miss rather than a
+                    pairing — and the headline moving to Newsreader is what moved
+                    this with it. Newsreader draws a true italic, so the slant
+                    here is a real cut of the face rather than an oblique the
+                    browser skewed for us. */}
+                <p className="font-editorial text-base font-bold italic leading-6 text-[color:var(--muted)] sm:text-lg">
                   {offeringFormatLabels[offering.format]}
                 </p>
               </div>
@@ -424,22 +474,25 @@ function OfferingCard({
             {/* An offering quoted per person has no form to submit — its first
                 step is a conversation, so the CTA opens that conversation on
                 WhatsApp with the offering already named, rather than dropping
-                someone at the contact section to work out what to ask for. */}
+                someone at the contact section to work out what to ask for.
+
+                It names the headline and the format rather than `title`,
+                because this button only ever appears on a personal offering and
+                those no longer print their `title` anywhere — an opening
+                message quoting a name the visitor never saw reads as though it
+                came from somewhere else. Both halves are needed: "Yoga" alone
+                is shared with the group card. */}
             <RegisterButton
               href={
                 offering.formUrl ??
                 whatsappUrl(
-                  `Hi! I'd like to know more about ${offering.headline}.`,
+                  `Hi! I'd like to know more about ${offering.headline} (${offeringFormatLabels[offering.format]}).`,
                 )
               }
               label={offering.formUrl ? "Register" : "Get in touch"}
               className="w-full shrink-0 sm:w-auto"
             />
           </div>
-
-          <p className="mt-3 text-[0.8rem] leading-5 text-[color:var(--muted)] sm:mt-4 sm:text-sm sm:leading-6">
-            {offering.description}
-          </p>
 
           {/* When the classes run is the one fact a visitor has to check
               against their own week before anything else matters, so it sits on
@@ -466,7 +519,7 @@ function OfferingCard({
         <OfferingPriceBand offering={offering} />
 
         <OfferingDrawerTabs
-          label={`${offering.title} details`}
+          label={`${offering.headline} (${offeringFormatLabels[offering.format]}) details`}
           tabs={tabs}
           openTab={openTab}
           panelId={panelId}
@@ -541,7 +594,7 @@ function OfferingPriceBand({ offering }: { offering: Offering }) {
         <p className="font-editorial text-xl font-medium leading-7 text-bark dark:text-linen sm:text-2xl sm:leading-8">
           {price.amount}
           {price.unit ? (
-            <span className="font-sans text-sm font-normal text-[color:var(--muted)]">
+            <span className="font-sans text-sm font-medium text-[color:var(--muted)]">
               {" "}
               {price.unit}
             </span>
@@ -705,7 +758,7 @@ function ScheduleSummary({ schedule }: { schedule: OfferingSchedule }) {
     // page; these cards run two to a row, and at that width the days broke
     // across lines to make room for the hours. A field that wraps costs more
     // than the pairing gains.
-    <div className="flex flex-col gap-3">
+    <div className="schedule-fields">
       <ScheduleField icon={CalendarDays} label="Classes">
         {/* Two columns from `sm` up, the rows' cells placed straight into them
             by `display: contents`, so every class's days start at the same
@@ -717,7 +770,7 @@ function ScheduleSummary({ schedule }: { schedule: OfferingSchedule }) {
               key={`${item.classType}-${days.join("-")}`}
               className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 sm:contents"
             >
-              <span className="text-[0.8rem] leading-6 text-[color:var(--muted)] sm:text-sm">
+              <span className="text-[0.8rem] font-medium leading-6 text-[color:var(--muted)] sm:text-sm">
                 {item.classType}
                 {item.optional ? (
                   <span className="font-editorial italic"> (optional)</span>
@@ -762,6 +815,7 @@ function ScheduleSummary({ schedule }: { schedule: OfferingSchedule }) {
           </ScheduleField>
         </>
       ) : null}
+
     </div>
   );
 }
@@ -981,11 +1035,15 @@ function PricingInfo({
   const resolve = (inr: number) =>
     resolvePrice(inr, { tier: getTier(region), region });
 
-  const withAddOn = Boolean(addOn && includeAddOn);
+  // Only an add-on with a published price takes part in this panel. One quoted
+  // on request has nothing to add to a total and nothing to put on a toggle —
+  // it is still named on the card's face, which is where a visitor meets it.
+  const pricedAddOn = addOn && addOn.price !== null ? addOn : undefined;
+  const withAddOn = Boolean(pricedAddOn && includeAddOn);
 
   const plans: PricingPlan[] = planDurations.map((duration) => {
-    const addOnInr = withAddOn && addOn ? addOn.price : 0;
-    const addOnDiscount = addOn?.durationDiscounts[duration] ?? 0;
+    const addOnInr = withAddOn && pricedAddOn ? pricedAddOn.price ?? 0 : 0;
+    const addOnDiscount = pricedAddOn?.durationDiscounts[duration] ?? 0;
 
     const actual = resolve(
       getDiscountedTotal(price, duration, durationDiscounts[duration]) +
@@ -1027,10 +1085,10 @@ function PricingInfo({
           />
         ))}
       </div>
-      {addOn ? (
+      {pricedAddOn ? (
         <AddOnToggle
-          label={addOn.label}
-          priceLabel={formatMoney(resolve(addOn.price))}
+          label={pricedAddOn.label}
+          priceLabel={formatMoney(resolve(pricedAddOn.price ?? 0))}
           checked={includeAddOn}
           onChange={setIncludeAddOn}
         />
@@ -1053,7 +1111,7 @@ function PricingPlanCard({
         : "border-forest/12 bg-[color:var(--panel)] dark:border-white/10 dark:bg-white/[0.04]"
         }`}
     >
-      <p className="text-[0.62rem] font-extrabold uppercase tracking-[0.14em] text-walnut/68 dark:text-stone">
+      <p className="text-[0.62rem] font-extrabold uppercase tracking-[0.14em] text-walnut dark:text-stone">
         {plan.duration} {plan.duration === 1 ? "month" : "months"}
       </p>
       {/* The line box is reserved whether or not this plan is discounted, so
@@ -1155,12 +1213,33 @@ function getRegionFromTimeZone(timeZone: string) {
 }
 
 function OfferingDetailsInfo({ offering }: { offering: Offering }) {
+  // The batch cap belongs in this list rather than on the card face: it is one
+  // of the things an offering gives you, which is exactly what this column is,
+  // and on the face it competed with the timetable for the same glance.
+  //
+  // Composed here rather than written into `details` so the number keeps a
+  // single source of truth — `batchCapacity` on the schedule — and so it
+  // appears on precisely the offerings that have batches at all. A personal
+  // offering has no schedule, and undivided attention is already its whole
+  // pitch, so nothing is inserted there.
+  //
+  // Phrased as a ceiling ("never more than") because that stays true on a
+  // morning when six people show up, where a flat count would be a promise the
+  // room has to keep. "Everyone gets watched" rather than "every rep" — both
+  // group offerings render this and rep-language is wrong for a yoga class.
+  const details = offering.schedule
+    ? [
+        `Never more than ${offering.schedule.batchCapacity} people in a class, so everyone gets attention`,
+        ...offering.details,
+      ]
+    : offering.details;
+
   return (
     // Two columns where there is room, stacked where there is not. The columns
     // are independent lists rather than one list flowing across both, so a
     // heading always sits directly above the items it names.
     <div className="grid gap-5 sm:grid-cols-2 sm:gap-x-6">
-      <OfferingListInfo heading="What you get" items={offering.details} />
+      <OfferingListInfo heading="What you get" items={details} />
       <OfferingListInfo heading="Who it's for" items={offering.bestFor} />
     </div>
   );
@@ -1175,14 +1254,14 @@ function OfferingListInfo({
 }) {
   return (
     <div>
-      <p className="text-[0.62rem] font-extrabold uppercase tracking-[0.14em] text-walnut/68 dark:text-stone">
+      <p className="text-[0.62rem] font-extrabold uppercase tracking-[0.14em] text-walnut dark:text-stone">
         {heading}
       </p>
       <ul className="mt-2.5 grid gap-2">
         {items.map((item) => (
           <li
             key={item}
-            className="flex gap-3 text-sm leading-6 text-[color:var(--muted)]"
+            className="flex gap-3 text-sm font-medium leading-6 text-[color:var(--muted)]"
           >
             <CheckCircle2 className="mt-1 shrink-0 text-ember" size={16} />
             <span>{item}</span>
@@ -1544,18 +1623,51 @@ function Testimonials() {
     >
       <div className="section-shell">
         <SectionHeading eyebrow="Testimonials" />
+        {/* Grouped by offering rather than run together. A visitor arrives here
+            having narrowed to one or two offerings, and a single mixed column
+            makes them read every quote to find the ones about the class they
+            are actually considering.
+
+            Driven off `offerings` rather than off the testimonials, so the
+            groups appear in the same order as the cards above and an offering
+            with nothing written about it yet simply does not appear — rather
+            than an empty heading advertising the absence. */}
+        {offerings
+          .map((offering) => ({
+            offering,
+            quotes: testimonials.filter(
+              (testimonial) =>
+                testimonial.course.format === offering.format &&
+                testimonial.course.focus === offering.focus,
+            ),
+          }))
+          .filter(({ quotes }) => quotes.length > 0)
+          .map(({ offering, quotes }) => (
+        <div key={offering.title} className="mt-7 first:mt-0">
+          {/* The same small caps the offering cards use for "What you get", so
+              a group heading reads as a label rather than as another section. */}
+          <p className="mb-3 text-[0.62rem] font-extrabold uppercase tracking-[0.14em] text-walnut dark:text-stone">
+            {offeringCourseLabel(offering)}
+          </p>
         <div className="testimonial-wrap">
-          {testimonials.map((testimonial, index) => (
+          {quotes.map((testimonial, index) => (
             <FadeUp
               key={`${testimonial.name}-${index}`}
               delay={index * 0.06}
               className="testimonial-frame-wrap"
             >
               <article className="testimonial-frame text-bark dark:text-linen">
+                {/* The course is named on the card as well as on the group's
+                    heading. Redundant while reading straight down, but a
+                    testimonial is the thing on this page most likely to be met
+                    out of context — linked to, screenshotted, or landed on
+                    mid-scroll with the heading already off screen — and a quote
+                    that does not say which class it is about is worth much less
+                    than one that does. */}
                 <div className="testimonial-details">
                   <span>
                     <BookOpen aria-hidden="true" size={14} />
-                    {testimonial.course}
+                    {offeringCourseLabel(testimonial.course)}
                   </span>
                   <span>
                     <MapPin aria-hidden="true" size={14} />
@@ -1572,7 +1684,7 @@ function Testimonials() {
                     {testimonial.quote}
                   </p>
                   {testimonial.time ? (
-                    <p className="mt-2 text-right text-[0.68rem] text-bark/48 dark:text-stone/55">
+                    <p className="mt-2 text-right text-[0.68rem] text-bark/70 dark:text-stone/75">
                       {testimonial.time}
                     </p>
                   ) : null}
@@ -1581,6 +1693,8 @@ function Testimonials() {
             </FadeUp>
           ))}
         </div>
+        </div>
+          ))}
       </div>
     </section>
   );
@@ -1684,14 +1798,14 @@ function CertificateCard({
             <div className="grid h-11 w-11 place-items-center rounded-full bg-stone/56 text-bark dark:bg-white/10 dark:text-linen">
               <Icon size={21} />
             </div>
-            <span className="rounded-full bg-ember px-3 py-1.5 text-[0.68rem] font-extrabold uppercase tracking-[0.18em] text-linen">
+            <span className="rounded-full bg-ember_deep px-3 py-1.5 text-[0.68rem] font-extrabold uppercase tracking-[0.18em] text-linen">
               {certificate.category}
             </span>
           </div>
           <h3 className="font-serif text-2xl leading-tight text-bark dark:text-linen">
             {certificate.title}
           </h3>
-          <p className="mt-2 text-sm font-bold text-walnut/70 dark:text-stone">
+          <p className="mt-2 text-sm font-bold text-walnut dark:text-stone">
             {certificate.issuer}
           </p>
         </a>
@@ -1737,7 +1851,7 @@ function Contact() {
       <div className="section-shell">
         <SectionHeading eyebrow="Contact" />
         <FadeUp className="-mt-3">
-          <p className="max-w-xl text-base leading-8 text-[color:var(--muted)]">
+          <p className="max-w-xl text-base font-medium leading-8 text-[color:var(--muted)]">
             Questions about classes or training? Get in touch.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
