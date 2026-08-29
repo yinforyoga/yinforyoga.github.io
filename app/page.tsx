@@ -34,6 +34,7 @@ import {
   type OfferingTimeSlot,
   type OfferingWeekday,
   offerings,
+  getMonthlyClassCount,
   offeringCourseLabel,
   offeringFormatLabels,
   resolvePrice,
@@ -536,6 +537,7 @@ function OfferingCard({
                 price={offering.price}
                 durationDiscounts={offering.durationDiscounts}
                 addOn={offering.addOn}
+                schedule={offering.schedule}
               />
             ) : null}
             {shownTab === "details" ? (
@@ -994,6 +996,8 @@ const planDurations: (1 | 2 | 3)[] = [1, 2, 3];
 type PricingPlan = {
   duration: 1 | 2 | 3;
   total: string;
+  /** How many classes the plan buys, or `null` where there is no timetable. */
+  classes: number | null;
   extrapolated?: string;
   // Absent at 1 month, where the per-month rate is just the total restated.
   perMonth?: string;
@@ -1020,10 +1024,12 @@ function PricingInfo({
   price,
   durationDiscounts,
   addOn,
+  schedule,
 }: {
   price: OfferingPrice;
   durationDiscounts: DurationDiscounts;
   addOn?: OfferingAddOn;
+  schedule: OfferingSchedule | null;
 }) {
   const region = useRegion();
   const [includeAddOn, setIncludeAddOn] = useState(false);
@@ -1040,6 +1046,13 @@ function PricingInfo({
   // it is still named on the card's face, which is where a visitor meets it.
   const pricedAddOn = addOn && addOn.price !== null ? addOn : undefined;
   const withAddOn = Boolean(pricedAddOn && includeAddOn);
+
+  // Counted with the optional class exactly when the visitor has bought it, so
+  // the number of classes and the total beside it always describe the same
+  // plan — toggling the add-on moves both together.
+  const classesPerMonth = schedule
+    ? getMonthlyClassCount(schedule, { includeOptional: withAddOn })
+    : null;
 
   const plans: PricingPlan[] = planDurations.map((duration) => {
     const addOnInr = withAddOn && pricedAddOn ? pricedAddOn.price ?? 0 : 0;
@@ -1059,6 +1072,7 @@ function PricingInfo({
     return {
       duration,
       total: formatMoney(actual),
+      classes: classesPerMonth === null ? null : classesPerMonth * duration,
       extrapolated: isDiscounted ? formatMoney(full) : undefined,
       perMonth:
         duration === 1
@@ -1076,6 +1090,19 @@ function PricingInfo({
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Above the plans, not below them. The toggle changes every figure in
+          the row underneath it — three totals, three monthly rates, three class
+          counts — so a visitor who meets it after reading those has read the
+          wrong numbers and has to start again. Sitting first, it is a choice
+          made before the comparison rather than a footnote after it. */}
+      {pricedAddOn ? (
+        <AddOnToggle
+          label={pricedAddOn.label}
+          priceLabel={formatMoney(resolve(pricedAddOn.price ?? 0))}
+          checked={includeAddOn}
+          onChange={setIncludeAddOn}
+        />
+      ) : null}
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         {plans.map((plan) => (
           <PricingPlanCard
@@ -1085,14 +1112,6 @@ function PricingInfo({
           />
         ))}
       </div>
-      {pricedAddOn ? (
-        <AddOnToggle
-          label={pricedAddOn.label}
-          priceLabel={formatMoney(resolve(pricedAddOn.price ?? 0))}
-          checked={includeAddOn}
-          onChange={setIncludeAddOn}
-        />
-      ) : null}
     </div>
   );
 }
@@ -1127,20 +1146,22 @@ function PricingPlanCard({
       <p className="font-sans text-base font-semibold leading-tight text-bark dark:text-linen sm:text-lg">
         {plan.total}
       </p>
+      {/* Manrope, not Cormorant's italic. This is a price at 11px, which is
+          precisely where a display serif goes spindly and its figures turn
+          wispy — the effective monthly rate, the number a visitor compares
+          plans on, was the least legible thing on the card. */}
       {plan.perMonth ? (
-        <p className="font-serif text-[0.72rem] italic leading-tight text-[color:var(--muted)]">
+        <p className="font-sans text-[0.78rem] font-semibold leading-tight text-[color:var(--muted)]">
           {plan.perMonth}/mo
         </p>
       ) : null}
-      {plan.savedPercent > 0 ? (
-        <span
-          className={`mt-0.5 rounded-full px-2 py-0.5 text-[0.6rem] font-extrabold uppercase tracking-[0.1em] ${isBest
-            ? "bg-ember text-linen"
-            : "bg-forest/10 text-forest dark:bg-linen/10 dark:text-linen"
-            }`}
-        >
-          Save {plan.savedPercent}%
-        </span>
+      {/* What the money actually buys. A price alone leaves the visitor doing
+          the arithmetic off the timetable two fields up, and the two plans
+          worth comparing differ in class count as much as in rate. */}
+      {plan.classes !== null ? (
+        <p className="mt-0.5 font-sans text-[0.7rem] font-medium leading-tight text-[color:var(--muted)]">
+          {plan.classes} classes
+        </p>
       ) : null}
     </div>
   );
@@ -1158,10 +1179,15 @@ function AddOnToggle({
   onChange: (checked: boolean) => void;
 }) {
   return (
+    // Set in the accent rather than the panel's own quiet border, because this
+    // is the one control in the drawer and it was reading as another row of
+    // information. Unchecked it is an offer to be noticed; checked it goes to
+    // the solid forest tint, so the state is legible from the colour alone
+    // rather than only from the switch at the far end of the row.
     <label
       className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 transition-colors ${checked
-        ? "border-forest/30 bg-forest/[0.07] dark:border-linen/25 dark:bg-linen/[0.08]"
-        : "border-forest/12 bg-[color:var(--panel)] hover:border-forest/25 dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-white/20"
+        ? "border-forest/35 bg-forest/[0.09] dark:border-linen/30 dark:bg-linen/[0.10]"
+        : "border-ember/45 bg-ember/[0.07] hover:border-ember/70 dark:border-ember/45 dark:bg-ember/[0.10] dark:hover:border-ember/70"
         }`}
     >
       <input

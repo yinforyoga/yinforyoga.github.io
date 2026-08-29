@@ -140,6 +140,34 @@ export type OfferingSchedule = {
   batchCapacity: number;
 };
 
+/**
+ * Weeks in a month, for turning a weekly timetable into a monthly count. Four,
+ * which is the same figure the yoga add-on's price is already authored against
+ * (₹100 a class × 4 classes a month) — so a count and a price can never
+ * disagree about how long a month is.
+ */
+const weeksPerMonth = 4;
+
+/**
+ * How many classes a month a schedule runs.
+ *
+ * Counted per day, never per slot: `slots` are alternatives — the same class
+ * offered at more than one hour so a visitor can take whichever fits — so a
+ * class that runs Mon/Wed/Fri at both 7am and 6pm is three classes a week, not
+ * six. Optional classes are excluded unless asked for, because they are what
+ * the add-on toggle buys rather than what the price already covers.
+ */
+export function getMonthlyClassCount(
+  schedule: OfferingSchedule,
+  { includeOptional = false }: { includeOptional?: boolean } = {},
+) {
+  const perWeek = schedule.split
+    .filter((item) => includeOptional || !item.optional)
+    .reduce((total, item) => total + item.days.length, 0);
+
+  return perWeek * weeksPerMonth;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Pricing
 //
@@ -430,16 +458,27 @@ const personalOfferings: Offering[] = [
       durationDiscounts: noDurationDiscounts,
     },
     icon: Dumbbell,
+    // The same ground the group card covers, said as one to one. What changes
+    // is not the training but who it is built for: the plan, the pace and the
+    // timings all follow one person instead of a batch.
     details: [
-      "A programme built around your goals and starting point",
-      "Undivided attention: every rep watched, form corrected as you go",
-      "Loads and progression adjusted as you get stronger",
-      "Session times arranged around your week",
+      "Your plan is built around your body, your goals and where you are starting from",
+      "One to one live classes, not recordings, so your form is corrected on the spot",
+      "Helps you lose fat, build muscle and stay healthy",
+      "The workouts get harder at your own pace, as you get stronger",
+      "We use whatever you have at home: dumbbells, resistance bands, or just your body weight",
+      "The workouts keep changing, so you don't get bored",
+      "Class timings are set around your week",
     ],
     bestFor: [
+      "Anyone who wants a plan made for their body and their goals",
       "Anyone training around an injury or a limitation",
       "People with a specific goal and a date to hit it by",
-      "Shift workers and frequent travellers who can't hold a fixed slot",
+      "Busy professionals who can only spare an hour in a day",
+      "People who travel often or work shifts and cannot hold a fixed class time",
+      "People who find gyms intimidating and would rather work out at home",
+      "Women who feel more comfortable with a female trainer",
+      "Beginners who don't know the workouts or the right form yet",
     ],
     equipment: [
       { label: "Dumbbells", icon: Dumbbell },
