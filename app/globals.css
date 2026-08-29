@@ -431,15 +431,22 @@ body::before {
   background: rgba(185, 208, 196, 0.2);
 }
 
+/* One flowing run of columns for every testimonial, not a grid per programme.
+   A grid gave each programme its own rigid rows, so a programme with a single
+   review left the cell beside it empty and quotes of very different lengths
+   were forced to share a row edge. Columns let each card take exactly its own
+   height and the next one start where the last ended, which is what keeps the
+   run free of holes. Programme grouping survives as ordering rather than as
+   structure — the list is built offering by offering. */
 .testimonial-wrap {
   columns: 2;
-  column-gap: 1rem;
+  column-gap: 1.5rem;
 }
 
 .testimonial-frame-wrap {
   display: inline-block;
   width: 100%;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   break-inside: avoid;
 }
 
@@ -522,10 +529,42 @@ body::before {
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.22);
 }
 
+/* The programme, set apart from the two chips beside it. Which class a review
+   is about is the reason a visitor is reading it — they arrive from a card's
+   Reviews chip looking for exactly that — while the country and the date are
+   context they may never need. Sharing one chip style made all three equally
+   findable, which in practice meant none of them was. Forest is the same
+   accent the offering cards name themselves in. */
+/* Scoped under `.testimonial-details` to outrank the `span` rule above rather
+   than to fight it with `!important`, which the font weight lost to when this
+   was a bare class. 800 is the top of Manrope's range.
+
+   The colours arrive as custom properties set per testimonial, one set per
+   offering, so every review of the same class is tagged identically. */
+.testimonial-details .testimonial-course {
+  border-color: var(--course-border);
+  background: var(--course-bg);
+  color: var(--course-color);
+  font-weight: 800;
+}
+
 .dark .testimonial-details span {
   border-color: rgba(185, 208, 196, 0.14);
   color: #d9e6df;
   background: rgba(185, 208, 196, 0.1);
+}
+
+.dark .testimonial-details .testimonial-course {
+  border-color: var(--course-border-dark);
+  background: var(--course-bg-dark);
+  color: var(--course-color-dark);
+}
+
+/* Weight alone, no colour of its own. The bubble is already a coloured surface
+   and these runs sit mid-sentence, so a second colour would read as a link or a
+   correction rather than as emphasis. */
+.whatsapp-highlight {
+  font-weight: 700;
 }
 
 .dark .whatsapp-bubble {

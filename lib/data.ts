@@ -68,6 +68,36 @@ export type OfferingRef = { format: OfferingFormat; focus: OfferingFocus };
  * this, which is why none of them can quietly describe an offering that no
  * longer matches the card a visitor scrolls to next.
  */
+/**
+ * A colour per offering, so every review of the same class is tagged the same
+ * way and a reader scanning the section can group them without reading a word.
+ *
+ * Keyed on the quadrant rather than on the title, so the colour survives a
+ * rename, and holding a light-theme and a dark-theme value because these are
+ * text colours: a hue dark enough to read on the page is invisible on the dark
+ * one. The dark values are the same hues taken up in lightness, matching the
+ * pairs the WhatsApp sender names already use.
+ */
+export const offeringAccents: Record<string, { light: string; dark: string }> = {
+  "Group/Strength": { light: "#b03a22", dark: "#f2a58c" },
+  "Group/Yoga": { light: "#173f35", dark: "#b9d0c4" },
+  "Personal/Strength": { light: "#6f470b", dark: "#e3bd6a" },
+  "Personal/Yoga": { light: "#31518c", dark: "#9fc0f0" },
+};
+
+export function offeringAccent({ format, focus }: OfferingRef) {
+  return offeringAccents[`${format}/${focus}`] ?? offeringAccents["Group/Yoga"];
+}
+
+/** Every testimonial written about one quadrant of the 2x2, in authored order. */
+export function getOfferingTestimonials({ format, focus }: OfferingRef) {
+  return testimonials.filter(
+    (testimonial) =>
+      testimonial.course.format === format &&
+      testimonial.course.focus === focus,
+  );
+}
+
 export function offeringCourseLabel({ format, focus }: OfferingRef): string {
   const offering = findOffering(format, focus);
   if (!offering) return offeringFormatLabels[format];
@@ -374,9 +404,9 @@ export type Offering = {
   /** Registration form, or `null` when the first step is a conversation. */
   formUrl: string | null;
   icon: LucideIcon;
-  /** What the offering gives you. Rendered as "What you get". */
+  /** What the offering gives you. Rendered as "Features". */
   details: string[];
-  /** Who it suits. Rendered as "Who it's for", beside `details`. */
+  /** Who it suits. Rendered as "Best for", beside `details`. */
   bestFor: string[];
   equipment?: {
     label: string;
@@ -395,6 +425,17 @@ export type Testimonial = {
    * its timetable changes.
    */
   course: OfferingRef;
+  /**
+   * Exact substrings of `quote` to set in bold — the sentence that says what
+   * actually changed for this person, which is the line a visitor is scanning
+   * for and the one that gets lost in an unbroken block of chat text.
+   *
+   * A separate field rather than markup inside `quote`, because these are other
+   * people's words: the quote stays byte-identical to what was sent, and the
+   * emphasis is presentation over the top of it. A phrase that stops matching
+   * simply stops being bold; nothing can silently rewrite a testimonial.
+   */
+  highlights?: string[];
   platform: "WhatsApp";
   date?: string;
   time?: string;
@@ -742,6 +783,12 @@ export const testimonials: Testimonial[] = [
   {
     quote:
       "I would like to share my experience with you so far firstly the class timings are very feasible even before this i was your student i equally enjoyed both yoga and strength training for some one like me who doesnt feel like going to gym this was the best for me i also got learn the right form which earlier i would end up doing wrong and had terrible cramps for next 2 days and also my quality of sleep improved ever since i started working out with you i feel rarely bloated over all it was all worth it ❤️🫶🏻and if u cld plan 5 classes a week or 4 for upcoming batch it would be great 🤗",
+    highlights: [
+      "the class timings are very feasible",
+      "i also got learn the right form",
+      "my quality of sleep improved",
+      "i feel rarely bloated",
+    ],
     name: "Arpita M.",
     location: "India",
     course: { format: "Group", focus: "Strength" },
@@ -752,6 +799,11 @@ export const testimonials: Testimonial[] = [
   {
     quote:
       "I have been taking online yoga classes with Shreya for the past two months, and it has been a truly transformative experience. My flexibility has improved significantly, and I feel much more at ease in my body. The pranayama sessions have also helped me manage stress better, bringing a sense of calm and clarity to my daily routine. Shreya is incredibly knowledgeable, patient, and encouraging. She guides each session with great attention to detail, ensuring that every posture is done correctly and safely. Her instructions are clear, making it easy to follow along, even in an online setting. What I love most is her holistic approach—each class is a perfect blend of asanas, breathing exercises, and relaxation techniques. I have also noticed an improvement in my posture, energy levels, and overall well-being. I highly recommend Shreya’s classes to anyone looking to improve their physical health, reduce stress, and cultivate mindfulness.",
+    highlights: [
+      "My flexibility has improved significantly",
+      "helped me manage stress better",
+      "an improvement in my posture, energy levels, and overall well-being",
+    ],
     name: "Pramod M.",
     location: "USA",
     course: { format: "Personal", focus: "Yoga" },
@@ -762,6 +814,11 @@ export const testimonials: Testimonial[] = [
   {
     quote:
       "This was my first ever yoga journey. As someone who’s always been not so consistent and always wanted to show up. This yoga class made me more consistent and brought that discipline back. From not able to hold plank for 5secs to 15-20sec as of now I’m able to see progress in myself when it comes to strength and flexibility and all thanks to you🤗 after classes the mood lift which I feel is something I needed 💪🏻 also the self realisation that happens along is the journey felt so good. Overall it was such beautiful experience I had and wish to continue with Yin for Yoga and Strength ❤️",
+    highlights: [
+      "This yoga class made me more consistent and brought that discipline back",
+      "From not able to hold plank for 5secs to 15-20sec",
+      "progress in myself when it comes to strength and flexibility",
+    ],
     name: "Nikhita K.",
     location: "India",
     course: { format: "Group", focus: "Strength" },
@@ -772,6 +829,10 @@ export const testimonials: Testimonial[] = [
   {
     quote:
       "I’ve had an amazing experience learning yoga with Shreya! She is incredibly patient and takes the time to explain each pose in detail, ensuring we understand not just how to do it but also why it matters. What I truly appreciate is how she carefully observes and corrects our postures, helping us improve with small but impactful adjustments. Her attention to tiny details—like breathing techniques and subtle muscle engagements—makes a huge difference in refining the asanas. Every session feels both calming and rewarding, and I can see real progress in my practice. Highly recommend her to anyone looking for a dedicated and knowledgeable yoga teacher!",
+    highlights: [
+      "she carefully observes and corrects our postures",
+      "I can see real progress in my practice",
+    ],
     name: "Ankita N.",
     location: "USA",
     course: { format: "Personal", focus: "Yoga" },
@@ -782,6 +843,10 @@ export const testimonials: Testimonial[] = [
   {
     quote:
       "Hi Shreya, thank you very much for the yoga classes. You have been very patient and teach us the yoga techniques. I have started yoga 3months ago but now i feel i have better balance and flexible. I feel really good after yoga classes. You teach Asanas, pranayama and meditation with details background of each and very small thing . As i take online classes, the clarity of video and your voice is really good. Thank you very correcting all my mistakes and i want to continue the classes. Once again, thank you for the beautiful classes❤️☺️🧘",
+    highlights: [
+      "i feel i have better balance and flexible",
+      "the clarity of video and your voice is really good",
+    ],
     name: "Jyothi B.",
     location: "Germany",
     course: { format: "Group", focus: "Yoga" },

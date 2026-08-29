@@ -14,6 +14,7 @@ import {
   JapaneseYen,
   PoundSterling,
   CheckCircle2,
+  ArrowDown,
   ChevronDown,
   Mail,
   MapPin,
@@ -29,12 +30,15 @@ import {
   type OfferingAddOn,
   type OfferingLocalTime,
   type OfferingPrice,
+  type OfferingRef,
   type OfferingSchedule,
   type OfferingScheduleItem,
   type OfferingTimeSlot,
   type OfferingWeekday,
   offerings,
   getMonthlyClassCount,
+  getOfferingTestimonials,
+  offeringAccent,
   offeringCourseLabel,
   offeringFormatLabels,
   resolvePrice,
@@ -300,18 +304,18 @@ type OfferingDrawerTab = "pricing" | "details";
 // tab that only restyles what is visible three inches above it costs a click to
 // learn nothing.
 //
-// "What you get" and "Who it's for" share one tab rather than holding two. They
-// are read together — what the class is only means something next to who it is
+// "Features" and "Best for" share one tab rather than holding two. They are
+// read together — what the class is only means something next to who it is
 // meant for — and splitting them made a visitor open both, one at a time, to
 // answer the single question "is this me?". Side by side under their own
 // headings they answer it in one look.
 //
-// The labels are verb phrases rather than nouns. "Pricing" and "Details" name
-// a topic, which reads as a caption on the card; "See pricing" names an action,
-// which is the only thing that tells a visitor the chip is theirs to press.
+// Order matters more than the labels do: pricing first, because it is the
+// question a visitor comparing four cards asks first, and the review link last,
+// because it is the only chip that leaves the card.
 const offeringDrawerTabs: { id: OfferingDrawerTab; label: string }[] = [
   { id: "pricing", label: "See pricing" },
-  { id: "details", label: "What's included" },
+  { id: "details", label: "Further details" },
 ];
 
 function OfferingCard({
@@ -339,6 +343,8 @@ function OfferingCard({
   const tabs = offeringDrawerTabs.filter(
     (tab) => tab.id !== "pricing" || offering.price !== null,
   );
+
+  const reviewCount = getOfferingTestimonials(offering).length;
 
   const toggleTab = (id: OfferingDrawerTab) => {
     setOpenTab(openTab === id ? null : id);
@@ -525,6 +531,13 @@ function OfferingCard({
           openTab={openTab}
           panelId={panelId}
           onToggle={toggleTab}
+          // Offered only where there is something to read. A chip that jumps to
+          // an empty stretch of the testimonials section is worse than no chip.
+          link={
+            reviewCount > 0
+              ? { href: `#${reviewsAnchorId(offering)}`, label: "Reviews" }
+              : undefined
+          }
         />
 
         {/* The padding sits on a child rather than on `Collapse` itself: the
@@ -903,12 +916,14 @@ function OfferingDrawerTabs({
   openTab,
   panelId,
   onToggle,
+  link,
 }: {
   label: string;
   tabs: { id: OfferingDrawerTab; label: string }[];
   openTab: OfferingDrawerTab | null;
   panelId: string;
   onToggle: (id: OfferingDrawerTab) => void;
+  link?: { href: string; label: string };
 }) {
   // A recessed band of chips rather than a strip of captions. The tabs used to
   // be borderless text set in 10px letterspaced caps, which a visitor who
@@ -957,8 +972,75 @@ function OfferingDrawerTabs({
           />
         </button>
       ))}
+      {link ? (
+        /* A link, not a tab. It goes somewhere rather than opening something,
+           so it carries an arrow where the others carry a chevron — the chip
+           looks like its neighbours because it belongs in the row, but nothing
+           about it promises a panel below. */
+        <a
+          href={link.href}
+          className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border border-forest/25 bg-forest/[0.04] px-3 text-[0.8rem] font-bold text-bark transition hover:-translate-y-px hover:border-forest/45 hover:bg-forest/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-forest/40 dark:border-white/20 dark:bg-white/[0.06] dark:text-linen dark:hover:border-white/40 dark:hover:bg-white/[0.12] dark:focus-visible:ring-white/40 sm:h-9 sm:px-3.5"
+        >
+          {link.label}
+          <ArrowDown aria-hidden="true" size={14} strokeWidth={3} className="shrink-0" />
+        </a>
+      ) : null}
     </div>
   );
+}
+
+/**
+ * Where a card's Reviews chip lands: the first testimonial written about that
+ * offering. Derived from `title` like the card's own anchor, so the two ids
+ * stay in step and neither is written down twice.
+ */
+function reviewsAnchorId(offering: OfferingRef & { title: string }) {
+  return `${slugify(offering.title)}-reviews`;
+}
+
+/**
+ * The chip's three colours from one hex. Stored as `#rrggbb` and expanded here
+ * so an accent is authored once rather than as a text colour plus a tint plus a
+ * border that could drift apart.
+ */
+function withAlpha(hex: string, alpha: number) {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function courseAccentStyle(course: OfferingRef) {
+  const { light, dark } = offeringAccent(course);
+
+  return {
+    "--course-color": light,
+    "--course-bg": withAlpha(light, 0.1),
+    "--course-border": withAlpha(light, 0.24),
+    "--course-color-dark": dark,
+    "--course-bg-dark": withAlpha(dark, 0.14),
+    "--course-border-dark": withAlpha(dark, 0.32),
+  } as React.CSSProperties;
+}
+
+/**
+ * A quote split into its plain runs and its emphasised ones. The quote is never
+ * rewritten — it is cut at the highlight boundaries and reassembled — so what
+ * renders is always exactly the characters the person sent.
+ *
+ * Longest highlight first, so one phrase containing another cannot be
+ * half-consumed by the shorter match.
+ */
+function emphasiseQuote(quote: string, highlights: string[] = []) {
+  if (highlights.length === 0) return [{ text: quote, strong: false }];
+
+  const pattern = [...highlights]
+    .sort((a, b) => b.length - a.length)
+    .map((highlight) => highlight.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .join("|");
+
+  return quote
+    .split(new RegExp(`(${pattern})`))
+    .filter((part) => part !== "")
+    .map((part) => ({ text: part, strong: highlights.includes(part) }));
 }
 
 function slugify(value: string) {
@@ -1265,8 +1347,8 @@ function OfferingDetailsInfo({ offering }: { offering: Offering }) {
     // are independent lists rather than one list flowing across both, so a
     // heading always sits directly above the items it names.
     <div className="grid gap-5 sm:grid-cols-2 sm:gap-x-6">
-      <OfferingListInfo heading="What you get" items={details} />
-      <OfferingListInfo heading="Who it's for" items={offering.bestFor} />
+      <OfferingListInfo heading="Features" items={details} />
+      <OfferingListInfo heading="Best for" items={offering.bestFor} />
     </div>
   );
 }
@@ -1649,40 +1731,35 @@ function Testimonials() {
     >
       <div className="section-shell">
         <SectionHeading eyebrow="Testimonials" />
-        {/* Grouped by offering rather than run together. A visitor arrives here
-            having narrowed to one or two offerings, and a single mixed column
-            makes them read every quote to find the ones about the class they
-            are actually considering.
+        {/* Grouped by offering as ordering rather than as structure. Sorting the
+            list offering by offering keeps quotes about the same class together
+            without giving each programme its own container — which is what left
+            holes in the run, since a programme with one review had nothing to
+            put beside it.
 
-            Driven off `offerings` rather than off the testimonials, so the
-            groups appear in the same order as the cards above and an offering
-            with nothing written about it yet simply does not appear — rather
-            than an empty heading advertising the absence. */}
-        {offerings
-          .map((offering) => ({
-            offering,
-            quotes: testimonials.filter(
-              (testimonial) =>
-                testimonial.course.format === offering.format &&
-                testimonial.course.focus === offering.focus,
-            ),
-          }))
-          .filter(({ quotes }) => quotes.length > 0)
-          .map(({ offering, quotes }) => (
-        <div key={offering.title} className="mt-7 first:mt-0">
-          {/* The same small caps the offering cards use for "What you get", so
-              a group heading reads as a label rather than as another section. */}
-          <p className="mb-3 text-[0.62rem] font-extrabold uppercase tracking-[0.14em] text-walnut dark:text-stone">
-            {offeringCourseLabel(offering)}
-          </p>
+            The first quote of each programme carries that offering's anchor, so
+            the Reviews chip on a card lands on its own reviews rather than at
+            the top of the section. Built off `offerings`, so the order follows
+            the cards above and a programme nobody has written about yet is
+            simply absent. */}
         <div className="testimonial-wrap">
-          {quotes.map((testimonial, index) => (
+          {offerings
+            .flatMap((offering) =>
+              getOfferingTestimonials(offering).map((testimonial, index) => ({
+                testimonial,
+                anchorId: index === 0 ? reviewsAnchorId(offering) : undefined,
+              })),
+            )
+            .map(({ testimonial, anchorId }, index) => (
             <FadeUp
               key={`${testimonial.name}-${index}`}
               delay={index * 0.06}
               className="testimonial-frame-wrap"
             >
-              <article className="testimonial-frame text-bark dark:text-linen">
+              <article
+                id={anchorId}
+                className="testimonial-frame scroll-mt-28 text-bark dark:text-linen"
+              >
                 {/* The course is named on the card as well as on the group's
                     heading. Redundant while reading straight down, but a
                     testimonial is the thing on this page most likely to be met
@@ -1691,7 +1768,10 @@ function Testimonials() {
                     that does not say which class it is about is worth much less
                     than one that does. */}
                 <div className="testimonial-details">
-                  <span>
+                  <span
+                    className="testimonial-course"
+                    style={courseAccentStyle(testimonial.course)}
+                  >
                     <BookOpen aria-hidden="true" size={14} />
                     {offeringCourseLabel(testimonial.course)}
                   </span>
@@ -1707,7 +1787,18 @@ function Testimonials() {
                 <div className="whatsapp-bubble">
                   <p className="whatsapp-sender">~ {testimonial.name}</p>
                   <p className="whitespace-pre-line text-[0.98rem] leading-7">
-                    {testimonial.quote}
+                    {emphasiseQuote(
+                      testimonial.quote,
+                      testimonial.highlights,
+                    ).map((part, partIndex) =>
+                      part.strong ? (
+                        <strong key={partIndex} className="whatsapp-highlight">
+                          {part.text}
+                        </strong>
+                      ) : (
+                        <Fragment key={partIndex}>{part.text}</Fragment>
+                      ),
+                    )}
                   </p>
                   {testimonial.time ? (
                     <p className="mt-2 text-right text-[0.68rem] text-bark/70 dark:text-stone/75">
@@ -1719,8 +1810,6 @@ function Testimonials() {
             </FadeUp>
           ))}
         </div>
-        </div>
-          ))}
       </div>
     </section>
   );
