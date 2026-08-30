@@ -903,4 +903,53 @@ export const testimonials: Testimonial[] = [
     date: "29 August 2026",
     time: "5:56 PM",
   },
+  {
+    quote:
+      `What I love most about Shreya’s classes is how calm she is. She has this peaceful way of training us where I never feel pressured or agitated. I genuinely feel like I’m having fun with the workout — sometimes it almost feels like meditation, except my muscles are working!
+
+She explains every exercise so well — which muscles are working, where to concentrate, how to hold the posture, and where to put our energy. So I’m not just blindly doing movements; I actually understand what my body is doing. She is also extremely approachable and friendly.
+
+I love how she focuses on consistency rather than making unrealistic promises. Even the way she encourages us to complete our 10k steps has helped make movement a part of our everyday routine.
+
+What makes me happiest is her good command over what she teaches we genuinely feel that in every class. For me, her classes are not just about working out — they have become something I genuinely look forward to which has helped me in being consistent!!!!`,
+    highlights: [
+      "peaceful way of training",
+      "never feel pressured or agitated",
+      "having fun with the workout",
+      "it almost feels like meditation",
+      "explains every exercise so well",
+      "approachable and friendly.",
+      "focuses on consistency rather than making unrealistic promises.",
+      "encourages us to complete our 10k steps",
+      "good command over what she teaches",
+      "her classes are not just about working out — they have become something I genuinely look forward to",
+    ],
+    name: "Shreya H.",
+    location: "India",
+    course: { format: "Group", focus: "Strength" },
+    platform: "WhatsApp",
+    date: "30 August 2026",
+    time: "12:17 AM",
+  },
+  {
+    quote:
+      `I’ve completed five one-to-one online yoga sessions with Shreya, and the experience has been excellent so far. She is consistently punctual, starts on time, and makes the full session feel focused and well-structured.
+Shreya teaches very clearly and explains each asana in a way that’s easy to follow, even online. She listens carefully to any issues or limitations I mention and adapts the poses and sequence accordingly, which makes the practice feel safe and personalized.
+I especially appreciate how she checks in about how my body feels and modifies the practice based on that. Whether you’re a beginner or looking to deepen your practice with individual attention, I highly recommend Shreya’s yoga classes.`,
+    highlights: [
+      "the experience has been excellent so far",
+      "consistently punctual, starts on time, and makes the full session feel focused and well-structured",
+      "teaches very clearly",
+      "explains each asana in a way that’s easy to follow, even online",
+      "listens carefully to any issues",
+      "adapts the poses and sequence accordingly,",
+      "checks in about how my body feels and modifies the practice",
+    ],
+    name: "Sagar R.",
+    location: "Germany",
+    course: { format: "Personal", focus: "Yoga" },
+    platform: "WhatsApp",
+    date: "30 August 2026",
+    time: "12:38 PM",
+  },
 ];
