@@ -236,6 +236,8 @@ function useEqualFaceHeights(containerRef: RefObject<HTMLElement | null>) {
       // so the row positions read below are the ones the cleared faces produce.
       faces.forEach((face) => {
         face.style.minHeight = "";
+        const header = face.querySelector<HTMLElement>(".offering-header");
+        if (header) header.style.minHeight = "";
       });
 
       // Group by the row a face actually landed on — layout positions rather
@@ -255,6 +257,16 @@ function useEqualFaceHeights(containerRef: RefObject<HTMLElement | null>) {
       // viewport — has nothing to line up with, and keeps its own height.
       rows.forEach((row) => {
         if (row.length < 2) return;
+        // Equal headers put every schedule at the same starting height.
+        // The remaining face height stays below the shorter schedule.
+        const headers = row.flatMap((face) => {
+          const header = face.querySelector<HTMLElement>(".offering-header");
+          return header ? [header] : [];
+        });
+        const tallestHeader = Math.max(0, ...headers.map((header) => header.offsetHeight));
+        headers.forEach((header) => {
+          header.style.minHeight = `${tallestHeader}px`;
+        });
         const tallest = Math.max(...row.map((face) => face.offsetHeight));
         row.forEach((face) => {
           face.style.minHeight = `${tallest}px`;
@@ -276,7 +288,12 @@ function useEqualFaceHeights(containerRef: RefObject<HTMLElement | null>) {
     // no further callback is queued.
     const observer = new ResizeObserver(measure);
     observer.observe(container);
-    facesRef.current.forEach((face) => face && observer.observe(face));
+    facesRef.current.forEach((face) => {
+      if (!face) return;
+      observer.observe(face);
+      const header = face.querySelector<HTMLElement>(".offering-header");
+      if (header) observer.observe(header);
+    });
 
     // A viewport change reflows the row without necessarily resizing any single
     // face — two cards wrapping onto separate rows keep their heights.
@@ -363,7 +380,7 @@ function OfferingCard({
           lives in the drawer, one tab at a time.
 
           Exactly one element owns the border, radius and shadow — the article —
-          and clips the rest with `overflow-hidden`. The face used to be a
+          and lets the headline annotation extend beyond its edge. The face used to be a
           second rounded, bordered box stacked on top, which doubled the rim at
           the top corners and left a wedge of the shell exposed where the face's
           bottom corners curved away. */}
@@ -378,17 +395,17 @@ function OfferingCard({
           anyone arriving on a link straight to this card. */}
       <article
         id={slugify(offering.title)}
-        className="w-full scroll-mt-28 overflow-hidden rounded-[28px] border border-walnut/10 bg-sand/70 shadow-earthy backdrop-blur dark:border-white/10 dark:bg-[color:var(--panel-strong)] dark:backdrop-blur-none"
+        className="w-full scroll-mt-28 rounded-[28px] border border-walnut/10 bg-sand/70 shadow-earthy backdrop-blur dark:border-white/10 dark:bg-[color:var(--panel-strong)] dark:backdrop-blur-none"
       >
         <div
           ref={faceRef}
-          className="offering-face flex flex-col bg-[color:var(--panel-strong)] p-4 dark:bg-white/[0.045] sm:p-6"
+          className="offering-face flex flex-col rounded-t-[27px] bg-[color:var(--panel-strong)] p-4 dark:bg-white/[0.045] sm:p-6"
         >
           {/* The icon sits beside the title at every width rather than above it
               on small screens: centring it cost a whole row of height on the
               viewport that can least afford one, and bought nothing a
               left-aligned card doesn't already read as. */}
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="offering-header flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex min-w-0 flex-1 items-start gap-2.5 sm:gap-3">
               {/* The icon hangs from the top of the title block rather than
                   centring on it: headlines wrap at one width and not another,
@@ -428,7 +445,7 @@ function OfferingCard({
                     strength programme — the yoga is the choice, not the
                     billing, and only the practice the card is named for is
                     set bold. */}
-                <h2 className="mt-1 font-editorial text-[1.05rem] font-bold leading-[1.2] text-bark dark:text-linen sm:text-2xl sm:leading-tight">
+                <h2 className={`mt-1 font-editorial text-[1.05rem] font-bold leading-[1.2] text-bark dark:text-linen sm:text-2xl sm:leading-tight${offering.addOn ? " whitespace-nowrap" : ""}`}>
                   {offering.headline}
                   {offering.addOn ? (
                     <span className="font-medium text-[color:var(--muted)]">
@@ -446,7 +463,7 @@ function OfferingCard({
                           the line and the annotation sits above it. Ember,
                           because an annotation is the one thing on the card
                           that is not the card talking. */}
-                      <span className="whitespace-nowrap">
+                      <span className="relative inline-block whitespace-nowrap">
                         + {offering.addOn.label}{" "}
                         {/* Drawn, not reconstructed — and its word is real
                             text, so a screen reader reads "… + Yoga Optional"
@@ -715,18 +732,9 @@ function getCurrencySymbol(currency: string) {
 
 function OfferingSchedulePanel({ schedule }: { schedule: OfferingSchedule }) {
   return (
-    // No box and no "When" label. A bordered panel had to be filled, and the
-    // slack the height equalisation hands a short card was filling it with
-    // nothing — a one-line timetable sat at the top of an otherwise empty
-    // frame. Unboxed the slack is just card, and `mt-auto` spends it *above*
-    // the timetable rather than below it, so the days land just over the tab
-    // strip on every card instead of leaving a short one with a trailing
-    // void — cards side by side then agree on where their timetable sits.
-    //
-    // The label went with the frame: it sat flush to the gutter while the
-    // pills beside it carry their own padding, so it always read as hanging further left
-    // than the row it introduced, and days-plus-time needs no announcing.
-    <div className="mt-auto pt-4 sm:pt-5">
+    // Headers are equalised within each card row; schedules follow directly,
+    // leaving any extra face height below the timetable.
+    <div className="pt-4 sm:pt-5">
       <ScheduleSummary schedule={schedule} />
     </div>
   );
@@ -738,116 +746,133 @@ function OfferingSchedulePanel({ schedule }: { schedule: OfferingSchedule }) {
 // timetable: a label naming what the value is, and the value large enough to be
 // taken in at a glance rather than parsed.
 //
-// The days are prose now, not pills. Set as "Mon · Wed · Fri" in the serif they
-// sit level with the hours beside them and read as one calm line; as chips they
-// were the loudest thing on the card, and a card the visitor has not yet chosen
-// does not need its weekdays shouting. Cadence survives the change — three
-// names separated by dots are still counted before they are read.
+// Keep class names, weekdays, and hours in aligned columns, including when
+// timezone conversion splits a class into rows with different weekdays.
 function ScheduleSummary({ schedule }: { schedule: OfferingSchedule }) {
   const displayTimeZone = useDisplayTimeZone(schedule);
-  // Alternative hours for the same class share a line rather than repeating the
-  // class and its days once per slot. A row splits only where the days would
-  // actually differ, which in a visitor's own zone they can: an evening slot
-  // and a morning one need not land on the same weekday once converted.
-  const rows = schedule.split.flatMap((item) =>
-    groupSlotsByDays(item, schedule, displayTimeZone),
-  );
-  // Where every class runs at the same set of hours — the usual case, and the
-  // whole of this site's timetable today — the hours are a fact about the card,
-  // not about each row: one timetable, offered in two batches. That is what
-  // earns them a field of their own. `null` puts the times back beside the days
-  // they belong to, which is where they belong the day two classes disagree.
-  const sharedBatches = getSharedBatches(schedule, displayTimeZone);
+  const dayRows = schedule.split.flatMap((item, classIndex) => {
+    const dayRows = item.days.flatMap((day) =>
+      groupSlotsByDays({ ...item, days: [day] }, schedule, displayTimeZone),
+    );
+    return dayRows.map((row, index) => ({
+      ...row,
+      classIndex,
+      classRowSpan: index === 0 ? dayRows.length : 0,
+    }));
+  });
+
+  // Merge consecutive days with one identical displayed time range.
+  const dayTimingKeys = dayRows.map(({ item, slots }) => {
+    if (slots.length !== 1) return null;
+    const slot = slots[0];
+    const clockParts = (time: OfferingLocalTime) =>
+      displayTimeZone
+        ? getDateTimeClockParts(
+            getScheduleDate(time, schedule, item.days[0]),
+            displayTimeZone,
+          )
+        : formatScheduleClockParts(time);
+    return JSON.stringify([clockParts(slot.startTime), clockParts(slot.endTime)]);
+  });
+  const rows: typeof dayRows = [];
+  const timingKeys: (string | null)[] = [];
+  dayRows.forEach((row, index) => {
+    const previous = rows[rows.length - 1];
+    const key = dayTimingKeys[index];
+    if (
+      previous && key !== null &&
+      previous.classIndex === row.classIndex &&
+      timingKeys[timingKeys.length - 1] === key
+    ) {
+      previous.days.push(...row.days);
+    } else {
+      rows.push({ ...row, days: [...row.days] });
+      timingKeys.push(key);
+    }
+  });
+  rows.forEach((row, index) => {
+    row.classRowSpan = index > 0 && rows[index - 1].classIndex === row.classIndex
+      ? 0
+      : rows.filter((candidate) => candidate.classIndex === row.classIndex).length;
+  });
+  const timingRowSpans = rows.map((_, index) => {
+    const key = timingKeys[index];
+    if (key === null) return 1;
+    if (index > 0 && timingKeys[index - 1] === key) return 0;
+    let end = index + 1;
+    while (end < rows.length && timingKeys[end] === key) end++;
+    return end - index;
+  });
 
   return (
-    // The two fields stack rather than sitting side by side. Side by side is
-    // the shape the reference uses, and it wants a card the full width of the
-    // page; these cards run two to a row, and at that width the days broke
-    // across lines to make room for the hours. A field that wraps costs more
-    // than the pairing gains.
-    <div className="schedule-fields">
-      <ScheduleField label="Classes">
-        {/* Two columns from `sm` up, the rows' cells placed straight into them
-            by `display: contents`, so every class's days start at the same
-            offset however long the class before it was named. Below `sm` the
-            columns are dropped and each row wraps on its own. */}
-        <ul className="grid gap-1.5 sm:grid-cols-[auto_1fr] sm:items-baseline sm:gap-x-3 sm:gap-y-1">
-          {rows.map(({ item, slots, days }) => (
-            <li
-              key={`${item.classType}-${days.join("-")}`}
-              className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 sm:contents"
-            >
-              <span className="text-[0.8rem] font-medium leading-6 text-[color:var(--muted)] sm:text-sm">
+    <table className="schedule-table">
+      <thead>
+        <tr>
+          <th scope="col">Classes</th>
+          <th scope="col">Days</th>
+          <th scope="col">Timing</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map(({ item, slots, days, classRowSpan }, index) => (
+          <tr key={`${item.classType}-${item.days.join("-")}-${days.join("-")}`}>
+            {classRowSpan > 0 ? (
+              <th
+                scope="row"
+                rowSpan={classRowSpan}
+                className="schedule-class"
+              >
                 {item.classType}
                 {item.optional ? (
                   <span className="font-editorial italic"> (optional)</span>
                 ) : null}
-              </span>
-              <span className="font-editorial text-base leading-6 text-bark dark:text-linen sm:text-lg">
-                {days.join(" · ")}
-                {/* Only where the classes keep different hours; otherwise the
-                    hours are one field over, said once. */}
-                {sharedBatches ? null : (
-                  <>
-                    <ScheduleDivider />
-                    <BatchTimes
-                      slots={slots}
-                      days={item.days}
-                      schedule={schedule}
-                      timeZone={displayTimeZone}
-                    />
-                  </>
-                )}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </ScheduleField>
-      {sharedBatches ? (
-        <>
-          {/* The word inflects, the field does not move: a card offering one
-              hour says "Batch" where one offering two says "Batches". */}
-          <ScheduleField
-            label={sharedBatches.slots.length > 1 ? "Batches" : "Batch"}
-          >
-            <p className="font-editorial text-base leading-6 text-bark dark:text-linen sm:text-lg">
-              <BatchTimes
-                slots={sharedBatches.slots}
-                days={sharedBatches.days}
-                schedule={schedule}
-                timeZone={displayTimeZone}
-              />
-            </p>
-          </ScheduleField>
-        </>
-      ) : null}
-
-    </div>
+              </th>
+            ) : null}
+            <td className="schedule-days"><ScheduleDays days={days} /></td>
+            {timingRowSpans[index] > 0 ? (
+              <td rowSpan={timingRowSpans[index]} className="schedule-timing">
+                <BatchTimes
+                  slots={slots}
+                  days={item.days}
+                  schedule={schedule}
+                  timeZone={displayTimeZone}
+                />
+              </td>
+            ) : null}
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
-/** An icon, a small-caps label, and whatever the label names underneath it. */
-function ScheduleField({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+// Measure the actual days text so the choice follows the column width and font.
+function ScheduleDays({ days }: { days: string[] }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLSpanElement>(null);
+  const [fits, setFits] = useState(false);
+  const label = days.join(" · ");
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    const text = textRef.current;
+    if (!container || !text) return;
+    const measure = () => setFits(text.offsetWidth <= container.clientWidth);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(container);
+    observer.observe(text);
+    return () => observer.disconnect();
+  }, [label]);
+
   return (
-    <div className="flex min-w-0 gap-3">
-      {/* The icon sits in a medallion rather than bare. Loose on the page it
-          had no relationship to anything: a 18px outline floating to the left
-          of a 11px label, aligned to neither its cap height nor its baseline,
-          reading as a stray mark. A disc gives it an edge to sit in, a size to
-          be measured against, and the same soft-filled circle the site already
-          uses for an offering's own icon at the top of the card. */}
-      <div className="min-w-0">
-        <p className="text-[0.64rem] font-bold uppercase leading-5 tracking-[0.1em] text-[color:var(--muted)] sm:text-[0.68rem]">
-          {label}
-        </p>
-        <div className="mt-0.5">{children}</div>
-      </div>
+    <div ref={containerRef} className="relative">
+      <span ref={textRef} aria-hidden="true" className="invisible absolute whitespace-nowrap">
+        {label}
+      </span>
+      {fits ? <span className="whitespace-nowrap">{label}</span> : days.map((day) => (
+        <span className="block" key={day}>{day}</span>
+      ))}
     </div>
   );
 }
@@ -1362,45 +1387,6 @@ function OfferingListInfo({
   );
 }
 
-
-/**
- * The hours every class in the schedule runs at — one hour or several — or
- * `null` when the classes do not all run at the same ones, in which case an
- * hour is a fact about a class and has to be printed beside its days.
- *
- * The agreement has to hold on the visitor's clock, not on the authored one:
- * a conversion can pull one class's morning batch onto a different weekday
- * (`groupSlotsByDays` splits the row) or, across a DST boundary that falls
- * between two classes' weekdays, onto a different hour. Either breaks the claim
- * a field of its own would make, so either sends the times back to the days.
- */
-function getSharedBatches(schedule: OfferingSchedule, timeZone: string | null) {
-  const first = schedule.split[0];
-  if (!first) return null;
-
-  const startMinutes = (item: OfferingScheduleItem, slot: OfferingTimeSlot) =>
-    getSlotStartMinutes(slot, item.days, schedule, timeZone);
-  const firstClocks = new Map(
-    first.slots.map((slot) => [formatSlotKey(slot), startMinutes(first, slot)]),
-  );
-
-  for (const item of schedule.split) {
-    if (groupSlotsByDays(item, schedule, timeZone).length !== 1) return null;
-    if (item.slots.length !== first.slots.length) return null;
-    for (const slot of item.slots) {
-      if (firstClocks.get(formatSlotKey(slot)) !== startMinutes(item, slot)) {
-        return null;
-      }
-    }
-  }
-
-  return {
-    slots: [...first.slots].sort(
-      (a, b) => startMinutes(first, a) - startMinutes(first, b),
-    ),
-    days: first.days,
-  };
-}
 
 /**
  * The zone a schedule should be printed in, or `null` to print it as authored.

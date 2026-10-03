@@ -16,10 +16,9 @@
  */
 export function OptionalMark() {
   return (
-    // Laid out in the line rather than positioned over it, so the mark reserves
-    // its own width and cannot land on the Register button. The lift is a
-    // transform, which costs no layout height.
-    <span className="ml-0.5 inline-flex translate-y-[-0.58em] items-center gap-0.5 align-middle text-ember dark:text-[#f2a58c] sm:ml-1">
+    // Anchor to the class label without reserving width, so the annotation can
+    // extend beyond the card without pushing Yoga onto another line.
+    <span className="pointer-events-none absolute left-full top-0 ml-0.5 inline-flex origin-bottom-left -translate-x-[0.25em] translate-y-[-0.58em] -rotate-[18deg] items-center gap-0.5 whitespace-nowrap text-ember dark:text-[#f2a58c] sm:ml-1">
       {/* The tail starts at the mark's lower left, which is what puts the
           beginning of the stroke against the end of the word it annotates. */}
       <svg
