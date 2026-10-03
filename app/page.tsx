@@ -766,7 +766,7 @@ function ScheduleSummary({ schedule }: { schedule: OfferingSchedule }) {
     // across lines to make room for the hours. A field that wraps costs more
     // than the pairing gains.
     <div className="schedule-fields">
-      <ScheduleField icon={CalendarDays} label="Classes">
+      <ScheduleField label="Classes">
         {/* Two columns from `sm` up, the rows' cells placed straight into them
             by `display: contents`, so every class's days start at the same
             offset however long the class before it was named. Below `sm` the
@@ -808,7 +808,6 @@ function ScheduleSummary({ schedule }: { schedule: OfferingSchedule }) {
           {/* The word inflects, the field does not move: a card offering one
               hour says "Batch" where one offering two says "Batches". */}
           <ScheduleField
-            icon={Clock3}
             label={sharedBatches.slots.length > 1 ? "Batches" : "Batch"}
           >
             <p className="font-editorial text-base leading-6 text-bark dark:text-linen sm:text-lg">
@@ -829,11 +828,9 @@ function ScheduleSummary({ schedule }: { schedule: OfferingSchedule }) {
 
 /** An icon, a small-caps label, and whatever the label names underneath it. */
 function ScheduleField({
-  icon: Icon,
   label,
   children,
 }: {
-  icon: LucideIcon;
   label: string;
   children: React.ReactNode;
 }) {
@@ -845,12 +842,6 @@ function ScheduleField({
           reading as a stray mark. A disc gives it an edge to sit in, a size to
           be measured against, and the same soft-filled circle the site already
           uses for an offering's own icon at the top of the card. */}
-      <span
-        aria-hidden
-        className="mt-px flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-forest/10 bg-forest/[0.05] text-forest/70 dark:border-linen/12 dark:bg-linen/[0.06] dark:text-linen/65"
-      >
-        <Icon size={13} strokeWidth={1.6} />
-      </span>
       <div className="min-w-0">
         <p className="text-[0.64rem] font-bold uppercase leading-5 tracking-[0.1em] text-[color:var(--muted)] sm:text-[0.68rem]">
           {label}
