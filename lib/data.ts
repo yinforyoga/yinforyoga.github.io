@@ -581,10 +581,6 @@ export const offerings: Offering[] = [
               startTime: { hour: 6, meridiem: "pm" },
               endTime: { hour: 7, meridiem: "pm" },
             },
-            {
-              startTime: { hour: 7, meridiem: "am" },
-              endTime: { hour: 8, meridiem: "am" },
-            },
           ],
         },
         {
@@ -594,10 +590,6 @@ export const offerings: Offering[] = [
             {
               startTime: { hour: 6, meridiem: "pm" },
               endTime: { hour: 7, meridiem: "pm" },
-            },
-            {
-              startTime: { hour: 7, meridiem: "am" },
-              endTime: { hour: 8, meridiem: "am" },
             },
           ],
           optional: true,
@@ -671,10 +663,6 @@ export const offerings: Offering[] = [
           days: ["Tue", "Thu"],
           classType: "Yoga",
           slots: [
-            {
-              startTime: { hour: 7, meridiem: "am" },
-              endTime: { hour: 8, meridiem: "am" },
-            },
             {
               startTime: { hour: 6, meridiem: "pm" },
               endTime: { hour: 7, meridiem: "pm" },
